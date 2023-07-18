@@ -1,0 +1,17 @@
+argparse
+pyyaml
+pandas
+torchvision==0.9.0
+torchtext==0.9
+matplotlib
+tabulate
+psutil
+colorlog
+paramiko
+spacy
+paramparse
+joblib
+scipy
+setuptools==59.5.0
+tensorboard
+

@@ -1,0 +1,664 @@
+{
+    "database": {
+        "train_0_cornsilk_255_248_220": {
+            "duration": 66.66666666666667,
+            "subset": "training",
+            "annotations": [
+                {
+                    "segment": [
+                        0.0,
+                        1.7
+                    ],
+                    "id": 0,
+                    "sentence": "E1 E2 F2 F3 F4 F4 G5 G5 G6 H7 H7 H8 H8 I9 I10 I10 J11 J11 J12 J13 K13 K14 K14 L15 L16 L16 L17 M17 M18 M19 M19 N20 N20 N21 O22 O22 O23 O23 P24 P25 P25 Q26 Q26 Q27 Q28 R28 R29 R29 R30 S31 S31 S32"
+                },
+                {
+                    "segment": [
+                        1.7333333333333334,
+                        3.2666666666666666
+                    ],
+                    "id": 1,
+                    "sentence": "M32 M31 M31 M30 M29 M29 M28 M27 M27 M26 M25 M25 M24 M23 M23 M22 N21 N21 N20 N19 N19 N18 N17 N17 N16 N15 N15 N14 N13 N13 N12 N11 N11 N10 N10 O9 O8 O8 O7 O6 O6 O5 O4 O4 O3 O2 O2"
+                },
+                {
+                    "segment": [
+                        3.3,
+                        5.033333333333333
+                    ],
+                    "id": 2,
+                    "sentence": "V32 V31 V31 V30 U30 U29 U28 T28 T27 T27 S26 S26 S25 R24 R24 R23 Q23 Q22 Q21 P21 P20 P20 P19 O19 O18 O17 N17 N16 N16 M15 M14 M14 L13 L13 L12 K12 K11 K10 J10 J9 J9 J8 I8 I7 I6 H6 H5 H5 G4 G3 G3 F2 F2"
+                },
+                {
+                    "segment": [
+                        5.066666666666666,
+                        6.8
+                    ],
+                    "id": 3,
+                    "sentence": "R32 R31 R31 Q30 Q30 Q29 P28 P28 P27 P27 O26 O26 O25 N24 N24 N23 M23 M22 M21 L21 L20 L20 L19 K18 K18 K17 J17 J16 J16 I15 I14 I14 H13 H13 H12 G11 G11 G10 G10 F9 F9 F8 E7 E7 E6 D6 D5 D4 C4 C3 C3 C2 B1"
+                },
+                {
+                    "segment": [
+                        6.833333333333333,
+                        8.466666666666667
+                    ],
+                    "id": 4,
+                    "sentence": "P1 P2 P2 P3 O4 O4 O5 O6 O6 N7 N7 N8 N9 N9 M10 M11 M11 M12 L12 L13 L14 L14 L15 K16 K16 K17 K17 J18 J19 J19 J20 J21 I21 I22 I22 I23 I24 H24 H25 H26 H26 G27 G27 G28 G29 G29 F30 F31 F31 F32"
+                },
+                {
+                    "segment": [
+                        8.5,
+                        10.066666666666666
+                    ],
+                    "id": 5,
+                    "sentence": "AF6 AE6 AE6 AD6 AC7 AC7 AB7 AA7 AA7 Z7 Y7 Y7 X8 X8 W8 V8 V8 U8 T8 T8 S9 R9 R9 Q9 P9 P9 O9 N10 N10 M10 L10 L10 K10 K10 J10 I11 I11 H11 G11 G11 F11 E11 E11 D12 C12 C12 B12 A12"
+                },
+                {
+                    "segment": [
+                        10.1,
+                        11.7
+                    ],
+                    "id": 6,
+                    "sentence": "W1 W2 W2 W3 W4 W4 X5 X6 X6 X7 X8 X8 Y9 Y9 Y10 Y11 Y11 Y12 Z13 Z13 Z14 Z15 Z15 Z16 AA17 AA17 AA18 AA18 AA19 AA20 AB20 AB21 AB22 AB22 AB23 AB24 AC24 AC25 AC25 AC26 AC27 AD27 AD28 AD29 AD29 AD30 AD31 AE31 AE32"
+                },
+                {
+                    "segment": [
+                        11.733333333333333,
+                        13.4
+                    ],
+                    "id": 7,
+                    "sentence": "AD32 AD31 AC31 AC30 AC30 AB29 AB28 AB28 AB27 AA26 AA26 AA25 AA25 Z24 Z23 Z23 Z22 Y22 Y21 Y20 Y20 X19 X19 X18 X17 W17 W16 W16 V15 V14 V14 V13 U12 U12 U11 U11 T10 T9 T9 T8 S8 S7 S6 S6 R5 R5 R4 Q3 Q3 Q2 Q2"
+                },
+                {
+                    "segment": [
+                        13.433333333333334,
+                        15.0
+                    ],
+                    "id": 8,
+                    "sentence": "U1 U2 T2 T3 T4 T4 T5 T6 T6 T7 T8 S8 S9 S10 S10 S11 S12 S12 S13 S14 R14 R15 R16 R16 R17 R17 R18 R19 R19 Q20 Q21 Q21 Q22 Q23 Q23 Q24 Q25 Q25 P26 P27 P27 P28 P29 P29 P30 P31 P31 O32"
+                },
+                {
+                    "segment": [
+                        15.033333333333333,
+                        16.566666666666666
+                    ],
+                    "id": 9,
+                    "sentence": "P32 P31 P31 P30 P29 P29 P28 P27 P27 P26 Q25 Q25 Q24 Q23 Q23 Q22 Q21 Q21 Q20 Q19 Q19 Q18 Q17 Q17 Q16 Q15 Q15 Q14 R13 R13 R12 R12 R11 R10 R10 R9 R8 R8 R7 R6 R6 R5 R4 R4 R3 R2 R2"
+                },
+                {
+                    "segment": [
+                        16.6,
+                        18.633333333333333
+                    ],
+                    "id": 10,
+                    "sentence": "AD32 AC31 AC31 AC30 AB30 AB29 AA29 AA28 Z28 Z27 Y27 Y26 Y26 X25 X25 W25 W24 V24 V23 V23 U22 U22 T21 T21 S20 S20 R19 R19 R18 Q18 Q17 P17 P16 O16 O15 O15 N14 N14 M13 M13 L12 L12 K11 K11 K10 J10 J9 I9 I8 H8 H7 H7 G6 G6 F5 F5 E4 E4 D3 D3 D2 C2"
+                },
+                {
+                    "segment": [
+                        18.666666666666668,
+                        20.3
+                    ],
+                    "id": 11,
+                    "sentence": "AF9 AE9 AE9 AD9 AC9 AC10 AB10 AB10 AA10 Z11 Z11 Y11 X11 X11 W12 W12 V12 U12 U13 T13 S13 S13 R13 R14 Q14 P14 P14 O14 N15 N15 M15 M15 L16 K16 K16 J16 I16 I17 H17 H17 G17 F17 F18 E18 D18 D18 C19 C19 B19 A19"
+                },
+                {
+                    "segment": [
+                        20.333333333333332,
+                        21.866666666666667
+                    ],
+                    "id": 12,
+                    "sentence": "A18 B18 B18 C17 D17 D17 E17 F17 F17 G17 H17 H17 I17 J17 J17 K17 L17 L17 M17 N17 N17 O16 P16 P16 Q16 R16 R16 S16 T16 T16 U16 V16 V16 W16 X16 X16 Y16 Z16 Z15 AA15 AB15 AB15 AC15 AD15 AD15 AE15 AF15"
+                },
+                {
+                    "segment": [
+                        21.9,
+                        23.433333333333334
+                    ],
+                    "id": 13,
+                    "sentence": "J32 J31 J31 J30 J29 J29 J28 J27 J27 J26 J25 J25 J24 J23 K23 K22 K21 K21 K20 K19 K19 K18 K17 K17 K16 K16 K15 K14 L14 L13 L12 L12 L11 L10 L10 L9 L8 L8 L7 L6 L6 L5 M4 M4 M3 M2 M2"
+                },
+                {
+                    "segment": [
+                        23.466666666666665,
+                        25.066666666666666
+                    ],
+                    "id": 14,
+                    "sentence": "R1 R2 R2 R3 R4 S4 S5 S6 S6 S7 S8 T8 T9 T9 T10 T11 T11 U12 U13 U13 U14 U15 V15 V16 V16 V17 V18 V18 W19 W20 W20 W21 W22 X22 X23 X23 X24 X25 X25 Y26 Y27 Y27 Y28 Y29 Y29 Z30 Z31 Z31 Z32"
+                },
+                {
+                    "segment": [
+                        25.1,
+                        26.966666666666665
+                    ],
+                    "id": 15,
+                    "sentence": "A26 B25 B25 C24 C24 D24 D23 E23 F23 F22 G22 G21 H21 H21 I20 I20 J20 J19 K19 L18 L18 M18 M17 N17 N17 O16 O16 P15 P15 Q15 R14 R14 S14 S13 T13 T12 U12 U12 V11 V11 W11 W10 X10 Y9 Y9 Z9 Z8 AA8 AA8 AB7 AB7 AC6 AC6 AD6 AE5 AE5 AF4"
+                },
+                {
+                    "segment": [
+                        27.0,
+                        28.7
+                    ],
+                    "id": 16,
+                    "sentence": "AF32 AE32 AE31 AD31 AD31 AC30 AB30 AB30 AA30 AA29 Z29 Y29 Y28 X28 X28 W28 V27 V27 U27 U26 T26 S26 S26 R25 R25 Q25 P24 P24 O24 O24 N23 M23 M23 L22 L22 K22 J22 J21 I21 I21 H21 G20 G20 F20 F19 E19 D19 D19 C18 C18 B18 A17"
+                },
+                {
+                    "segment": [
+                        28.733333333333334,
+                        30.266666666666666
+                    ],
+                    "id": 17,
+                    "sentence": "A1 A2 A2 A3 A4 A4 A5 A6 A6 A7 A8 A8 A9 A10 A10 A11 A12 A12 A13 A14 A14 A15 A16 A16 A17 A18 A18 A19 A20 A20 A21 A22 A22 A23 A24 A24 A25 A26 A26 A27 A28 A28 A29 A30 A30 A31 A32"
+                },
+                {
+                    "segment": [
+                        30.3,
+                        31.9
+                    ],
+                    "id": 18,
+                    "sentence": "AF16 AE16 AE15 AD15 AC15 AC15 AB15 AB15 AA14 Z14 Z14 Y14 X14 X13 W13 V13 V13 U13 T13 T12 S12 S12 R12 Q12 Q11 P11 O11 O11 N11 M11 M10 L10 L10 K10 J10 J10 I9 H9 H9 G9 F9 F8 E8 E8 D8 C8 C8 B7 A7"
+                },
+                {
+                    "segment": [
+                        31.933333333333334,
+                        33.5
+                    ],
+                    "id": 19,
+                    "sentence": "A21 B22 B22 C22 D22 D22 E22 F22 F22 G22 H22 H23 I23 J23 J23 K23 L23 L23 M23 N23 N23 O24 P24 P24 Q24 R24 R24 S24 T24 T24 U24 U25 V25 W25 W25 X25 Y25 Y25 Z25 AA25 AA25 AB26 AC26 AC26 AD26 AE26 AE26 AF26"
+                },
+                {
+                    "segment": [
+                        33.53333333333333,
+                        35.06666666666667
+                    ],
+                    "id": 20,
+                    "sentence": "A15 B15 B15 C15 D15 D15 E15 F15 F15 G15 H15 H15 I15 J15 J15 K15 L15 L15 M15 N15 N15 O15 P15 P15 Q15 R15 R15 S15 T15 T15 U15 V15 V15 W15 X14 X14 Y14 Z14 Z14 AA14 AB14 AB14 AC14 AD14 AD14 AE14 AF14"
+                },
+                {
+                    "segment": [
+                        35.1,
+                        36.63333333333333
+                    ],
+                    "id": 21,
+                    "sentence": "S32 S31 S31 S30 S29 S29 S28 S27 S27 S26 S25 S25 S24 S23 S23 S22 S21 S21 S20 S19 S19 S18 S17 S17 T16 T15 T15 T14 T13 T13 T12 T11 T11 T10 T9 T9 T8 T7 T7 T6 T5 T5 T4 T3 T3 T2 T2"
+                },
+                {
+                    "segment": [
+                        36.666666666666664,
+                        38.2
+                    ],
+                    "id": 22,
+                    "sentence": "A24 B24 B24 C24 D24 D24 E24 F25 F25 G25 H25 H25 I25 J25 J25 K25 L25 L25 M25 N25 N25 O25 P25 P25 Q25 R25 R25 S25 T26 T26 U26 V26 V26 W26 X26 X26 Y26 Z26 Z26 AA26 AB26 AB26 AC26 AD26 AD26 AE26 AF26"
+                },
+                {
+                    "segment": [
+                        38.233333333333334,
+                        39.766666666666666
+                    ],
+                    "id": 23,
+                    "sentence": "AB1 AB2 AB2 AB3 AB4 AB4 AB5 AB6 AB6 AA7 AA8 AA8 AA9 AA10 AA10 AA11 AA12 AA12 AA13 AA14 AA14 AA15 AA16 AA16 AA17 AA18 AA18 AA19 AA20 AA20 AA21 AA22 AA22 AA23 AA24 AA24 AA25 AA26 AA26 AA27 AA28 AA28 AA29 AA30 AA30 AA31 AA32"
+                },
+                {
+                    "segment": [
+                        39.8,
+                        41.333333333333336
+                    ],
+                    "id": 24,
+                    "sentence": "E32 E31 E31 E30 E29 E29 E28 E27 E27 E26 E25 E25 E24 E23 E23 E22 E21 E21 E20 E19 E19 E18 E17 E17 D16 D15 D15 D14 D13 D13 D12 D11 D11 D10 D9 D9 D8 D7 D7 D6 D6 D5 D4 D4 D3 D2 D2"
+                },
+                {
+                    "segment": [
+                        41.36666666666667,
+                        42.9
+                    ],
+                    "id": 25,
+                    "sentence": "U1 U2 U2 U3 U4 U4 U5 U6 U6 U7 U8 V8 V9 V10 V10 V11 V12 V12 V13 V14 V14 V15 V16 W16 W17 W18 W18 W19 W20 W20 W21 W22 W22 W23 W23 X24 X25 X25 X26 X27 X27 X28 X29 X29 X30 X31 X31"
+                },
+                {
+                    "segment": [
+                        42.93333333333333,
+                        44.6
+                    ],
+                    "id": 26,
+                    "sentence": "B32 C31 C31 C30 C30 D29 D28 D28 D27 E26 E26 E25 E25 F24 F23 F23 F22 G22 G21 G20 G20 H19 H18 H18 H17 I17 I16 I15 I15 J14 J14 J13 J12 K12 K11 K10 K10 L9 L9 L8 L7 M7 M6 M6 M5 N4 N4 N3 N2 O2 O1"
+                },
+                {
+                    "segment": [
+                        44.63333333333333,
+                        46.166666666666664
+                    ],
+                    "id": 27,
+                    "sentence": "C32 C31 C31 C30 C29 C29 C28 C27 C27 C26 C25 C25 C24 C23 C23 C22 C21 C21 C20 C19 C19 C18 C17 C17 C16 C15 C15 C14 C13 C13 C12 C11 C11 C10 C9 C9 C8 C7 C7 C6 C5 C5 C4 C3 C3 C2 C1"
+                },
+                {
+                    "segment": [
+                        46.2,
+                        47.8
+                    ],
+                    "id": 28,
+                    "sentence": "AF12 AE13 AE13 AD13 AC13 AC13 AB14 AB14 AA14 Z14 Z14 Y14 X15 X15 W15 V15 V15 U16 U16 T16 S16 S16 R16 Q17 Q17 P17 O17 O17 N18 M18 M18 L18 L18 K18 J19 J19 I19 H19 H19 G20 F20 F20 E20 E20 D20 C21 C21 B21 A21"
+                },
+                {
+                    "segment": [
+                        47.833333333333336,
+                        49.666666666666664
+                    ],
+                    "id": 29,
+                    "sentence": "AA32 AA31 AA31 Z30 Z30 Z29 Y29 Y28 Y28 X27 X26 W26 W25 W25 V24 V24 V23 U23 U22 U21 T21 T20 S20 S19 S19 R18 R18 R17 Q16 Q16 Q15 P15 P14 O14 O13 O13 N12 N12 N11 M10 M10 L9 L9 L8 K8 K7 K7 J6 J5 J5 I4 I4 H3 H3 H2 G2"
+                },
+                {
+                    "segment": [
+                        49.7,
+                        51.233333333333334
+                    ],
+                    "id": 30,
+                    "sentence": "Z1 Z2 Z2 Z3 Z4 Z4 AA5 AA6 AA6 AA7 AA8 AA8 AA9 AA10 AA10 AA11 AA12 AA12 AB13 AB14 AB14 AB15 AB16 AB16 AB17 AB18 AB18 AB19 AB20 AC20 AC21 AC22 AC22 AC23 AC23 AC24 AC25 AC25 AC26 AC27 AC27 AD28 AD29 AD29 AD30 AD31 AD31"
+                },
+                {
+                    "segment": [
+                        51.266666666666666,
+                        52.8
+                    ],
+                    "id": 31,
+                    "sentence": "Y32 Y31 Y31 Y30 Y29 Y29 Y28 Y27 Z27 Z26 Z25 Z25 Z24 Z23 Z23 Z22 Z21 Z21 Z20 Z19 Z19 AA18 AA18 AA17 AA16 AA16 AA15 AA14 AA14 AA13 AA12 AA12 AA11 AB10 AB10 AB9 AB8 AB8 AB7 AB6 AB6 AB5 AB4 AB4 AB3 AC2 AC2"
+                },
+                {
+                    "segment": [
+                        52.833333333333336,
+                        54.36666666666667
+                    ],
+                    "id": 32,
+                    "sentence": "S1 S2 S2 S3 S4 S4 S5 S6 S6 S7 S8 S8 S9 T10 T10 T11 T12 T12 T13 T14 T14 T15 T16 T16 T17 T18 T18 T19 T20 U20 U21 U22 U22 U23 U24 U24 U25 U26 U26 U27 U28 U28 U29 U30 V30 V31 V31"
+                },
+                {
+                    "segment": [
+                        54.4,
+                        55.93333333333333
+                    ],
+                    "id": 33,
+                    "sentence": "U32 U31 U31 U30 U29 U29 U28 U27 U27 U26 U25 U25 U24 U23 U23 U22 U21 T21 T20 T19 T19 T18 T17 T17 T16 T15 T15 T14 T13 T13 T12 T11 T11 T10 T10 T9 T8 S8 S7 S6 S6 S5 S4 S4 S3 S2 S2"
+                },
+                {
+                    "segment": [
+                        55.96666666666667,
+                        57.53333333333333
+                    ],
+                    "id": 34,
+                    "sentence": "V1 V2 V2 V3 V4 V4 V5 V6 V6 V7 U8 U8 U9 U10 U10 U11 U12 U12 U13 U14 T14 T15 T16 T16 T17 T18 T18 T19 T20 T20 S21 S21 S22 S23 S23 S24 S25 S25 S26 S27 R27 R28 R29 R29 R30 R31 R31 R32"
+                },
+                {
+                    "segment": [
+                        57.56666666666667,
+                        59.5
+                    ],
+                    "id": 35,
+                    "sentence": "C1 C2 D2 D3 E3 E4 E4 F5 F5 G6 G6 G7 H7 H8 I9 I9 I10 J10 J11 K11 K12 K12 L13 L13 M14 M14 M15 N15 N16 O16 O17 O17 P18 P19 Q19 Q20 Q20 R21 R21 S22 S22 T23 T23 T24 U24 U25 V25 V26 V26 W27 W27 X28 X29 X29 Y30 Y30 Z31 Z31 Z32"
+                },
+                {
+                    "segment": [
+                        59.53333333333333,
+                        61.233333333333334
+                    ],
+                    "id": 36,
+                    "sentence": "A30 B30 B29 C29 D29 D29 E28 E28 F28 G27 G27 H27 H27 I26 J26 J26 K25 K25 L25 M25 M24 N24 N24 O23 P23 P23 Q23 Q22 R22 S22 S21 T21 T21 U21 V20 V20 W20 W19 X19 X19 Y19 Z18 Z18 AA18 AA17 AB17 AC17 AC17 AD16 AD16 AE16 AF15"
+                },
+                {
+                    "segment": [
+                        61.266666666666666,
+                        62.8
+                    ],
+                    "id": 37,
+                    "sentence": "AF28 AE27 AE27 AD27 AC27 AC27 AB27 AA27 AA27 Z27 Y27 Y27 X27 W26 W26 V26 U26 U26 T26 S26 S26 R26 R26 Q26 P25 P25 O25 N25 N25 M25 L25 L25 K25 J25 J25 I25 H24 H24 G24 F24 F24 E24 D24 D24 C24 B24 B24"
+                },
+                {
+                    "segment": [
+                        62.833333333333336,
+                        64.56666666666666
+                    ],
+                    "id": 38,
+                    "sentence": "Z1 Z2 Y2 Y3 Y3 Y4 X5 X5 X6 W6 W7 W8 V8 V9 V9 U10 U10 U11 T12 T12 T13 S13 S14 S15 R15 R16 R16 R17 Q17 Q18 Q19 P19 P20 P20 O21 O22 O22 N23 N23 N24 M24 M25 M26 L26 L27 L27 L28 K29 K29 K30 J30 J31 J31"
+                },
+                {
+                    "segment": [
+                        64.6,
+                        66.26666666666667
+                    ],
+                    "id": 39,
+                    "sentence": "C32 C31 C31 C30 D30 D29 D28 D28 E27 E26 E26 E25 F25 F24 F23 F23 F22 G21 G21 G20 G20 H19 H18 H18 H17 I17 I16 I15 I15 J14 J13 J13 J12 K12 K11 K10 K10 L9 L9 L8 L7 M7 M6 M5 M5 N4 N4 N3 N2 O2 O1"
+                },
+                {
+                    "segment": [
+                        66.3,
+                        66.63333333333334
+                    ],
+                    "id": 40,
+                    "sentence": "W32 W31 W31 W30 V30 V29 V28 V28 U27 U26"
+                }
+            ]
+        },
+        "test_0_slate_gray_112_138_144": {
+            "duration": 66.66666666666667,
+            "subset": "validation",
+            "annotations": [
+                {
+                    "segment": [
+                        0.0,
+                        1.6333333333333333
+                    ],
+                    "id": 0,
+                    "sentence": "A23 B23 B23 C23 D22 D22 E22 F22 F21 G21 G21 H21 I21 I20 J20 J20 K20 L19 L19 M19 N19 N18 O18 O18 P18 Q18 Q17 R17 S17 S17 T16 T16 U16 V16 V15 W15 X15 X15 Y15 Y14 Z14 AA14 AA14 AB13 AB13 AC13 AD13 AD12 AE12 AF12"
+                },
+                {
+                    "segment": [
+                        1.6666666666666667,
+                        3.2
+                    ],
+                    "id": 1,
+                    "sentence": "A8 B8 B8 C8 D8 D8 E9 F9 F9 G9 H9 H9 I9 J9 J9 K9 L9 L10 M10 N10 N10 O10 P10 P10 Q10 R10 R10 S10 T11 T11 U11 V11 V11 W11 W11 X11 Y11 Y11 Z11 AA12 AA12 AB12 AC12 AC12 AD12 AE12 AE12"
+                },
+                {
+                    "segment": [
+                        3.2333333333333334,
+                        5.1
+                    ],
+                    "id": 2,
+                    "sentence": "AF5 AE5 AE5 AD6 AD6 AC7 AC7 AB7 AB8 AA8 AA8 Z9 Y9 Y10 X10 X10 W11 W11 V11 V12 U12 U13 T13 S13 S14 R14 R14 Q15 Q15 P16 P16 O16 O17 N17 M17 M18 L18 L19 K19 K19 J20 J20 I20 I21 H21 G22 G22 F22 F23 E23 E23 D24 D24 C25 C25 B25 A26"
+                },
+                {
+                    "segment": [
+                        5.133333333333334,
+                        6.833333333333333
+                    ],
+                    "id": 3,
+                    "sentence": "A32 B31 B31 C31 D31 D30 E30 E30 F29 G29 G29 H29 H28 I28 J28 J28 K27 K27 L27 M26 M26 N26 N26 O25 P25 P25 Q25 Q24 R24 S24 S23 T23 T23 U23 V22 V22 W22 W21 X21 Y21 Y21 Z20 Z20 AA20 AB20 AB19 AC19 AC19 AD18 AE18 AE18 AF18"
+                },
+                {
+                    "segment": [
+                        6.866666666666666,
+                        8.4
+                    ],
+                    "id": 4,
+                    "sentence": "AF12 AE12 AE12 AD12 AC12 AC12 AB12 AA12 AA12 Z11 Y11 Y11 X11 W11 W11 V11 U11 U11 T11 S11 S11 R11 Q10 Q10 P10 P10 O10 N10 N10 M10 L10 L10 K10 J10 J9 I9 H9 H9 G9 F9 F9 E9 D9 D9 C9 B9 B9"
+                },
+                {
+                    "segment": [
+                        8.433333333333334,
+                        9.966666666666667
+                    ],
+                    "id": 5,
+                    "sentence": "S1 S2 R2 R3 R4 R4 R5 R6 R6 R7 R8 R8 R9 R10 R10 R11 R12 R12 R13 R14 R14 R15 Q16 Q16 Q17 Q18 Q18 Q19 Q20 Q20 Q21 Q22 Q22 Q23 Q24 Q24 Q25 Q26 Q26 Q27 Q28 Q28 P29 P30 P30 P31 P32"
+                },
+                {
+                    "segment": [
+                        10.0,
+                        11.566666666666666
+                    ],
+                    "id": 6,
+                    "sentence": "AF18 AE18 AE18 AD18 AC18 AC18 AB18 AA18 AA17 Z17 Y17 Y17 X17 W17 W17 V17 V17 U16 T16 T16 S16 R16 R16 Q16 P16 P16 O15 N15 N15 M15 L15 L15 K15 J15 J15 I14 H14 H14 G14 G14 F14 E14 E14 D14 C13 C13 B13 A13"
+                },
+                {
+                    "segment": [
+                        11.6,
+                        13.266666666666667
+                    ],
+                    "id": 7,
+                    "sentence": "U1 U2 T2 T3 T4 T4 S5 S5 S6 S7 R7 R8 R9 R9 R10 Q10 Q11 Q12 Q12 P13 P13 P14 P15 O15 O16 O17 O17 N18 N18 N19 N20 M20 M21 M21 M22 L23 L23 L24 L25 K25 K26 K26 K27 J28 J28 J29 J29 I30 I31 I31 I32"
+                },
+                {
+                    "segment": [
+                        13.3,
+                        15.133333333333333
+                    ],
+                    "id": 8,
+                    "sentence": "A10 B10 B10 C11 C11 D11 E12 E12 F13 F13 G13 G14 H14 H14 I15 J15 J15 K16 K16 L16 L17 M17 M18 N18 O18 O19 P19 P19 Q20 Q20 R20 R21 S21 T21 T22 U22 U23 V23 V23 W24 X24 X24 Y25 Y25 Z25 Z26 AA26 AA26 AB27 AC27 AC27 AD28 AD28 AE29 AE29 AF29"
+                },
+                {
+                    "segment": [
+                        15.166666666666666,
+                        16.833333333333332
+                    ],
+                    "id": 9,
+                    "sentence": "AA1 AA2 Z2 Z3 Z4 Z4 Z5 Y5 Y6 Y7 Y7 X8 X9 X9 X10 W10 W11 W12 W12 V13 V13 V14 V15 U15 U16 U17 U17 T18 T18 T19 T20 S20 S21 S22 S22 R23 R23 R24 R25 R25 Q26 Q26 Q27 Q28 P28 P29 P30 P30 O31 O31 O32"
+                },
+                {
+                    "segment": [
+                        16.866666666666667,
+                        18.833333333333332
+                    ],
+                    "id": 10,
+                    "sentence": "B32 C31 C31 D30 D30 D29 E29 E28 F28 F27 F27 G26 G26 H25 H25 H24 I24 I23 J23 J22 K22 K21 K21 L20 L20 M19 M18 M18 N17 N17 O16 O16 O15 P15 P14 Q14 Q13 R13 R12 R12 S11 S11 T10 T10 T9 U9 U8 V8 V7 V7 W6 W6 X5 X4 Y4 Y3 Y3 Z2 Z2 AA1"
+                },
+                {
+                    "segment": [
+                        18.866666666666667,
+                        20.433333333333334
+                    ],
+                    "id": 11,
+                    "sentence": "I1 I2 I2 H3 H4 H4 H5 H6 H6 H7 G8 G8 G9 G10 G10 G11 G12 F12 F13 F13 F14 F15 F15 F16 F17 E17 E18 E19 E19 E20 E21 E21 D22 D23 D23 D24 D25 D25 D26 C26 C27 C28 C28 C29 C30 C30 C31 B32"
+                },
+                {
+                    "segment": [
+                        20.466666666666665,
+                        22.0
+                    ],
+                    "id": 12,
+                    "sentence": "A23 B23 B23 C23 D23 D23 E23 F23 F23 G23 H23 H23 I23 J23 J23 K23 L24 L24 M24 N24 N24 O24 P24 P24 Q24 R24 R24 S24 T24 T24 U24 V24 V24 W24 X24 X24 Y24 Z24 Z24 AA24 AB24 AB25 AC25 AD25 AD25 AE25 AF25"
+                },
+                {
+                    "segment": [
+                        22.033333333333335,
+                        23.766666666666666
+                    ],
+                    "id": 13,
+                    "sentence": "Y32 Y31 X31 X30 X30 W29 W28 W28 V27 V27 V26 U26 U25 U24 U24 T23 T23 T22 S21 S21 S20 R20 R19 R19 Q18 Q17 Q17 P16 P16 P15 O14 O14 O13 O13 N12 N12 N11 M10 M10 M9 L9 L8 L7 K7 K6 K6 J5 J5 J4 J3 I3 I2 I2"
+                },
+                {
+                    "segment": [
+                        23.8,
+                        25.366666666666667
+                    ],
+                    "id": 14,
+                    "sentence": "N1 N2 N2 N3 M4 M4 M5 M6 M6 M7 L8 L8 L9 L10 L10 L11 L11 K12 K13 K13 K14 K15 K15 J16 J17 J17 J18 J19 J19 J20 I21 I21 I22 I22 I23 I24 I24 H25 H26 H26 H27 H28 H28 G29 G30 G30 G31 G31"
+                },
+                {
+                    "segment": [
+                        25.4,
+                        27.0
+                    ],
+                    "id": 15,
+                    "sentence": "A21 B20 B20 C20 D20 D20 E19 F19 F19 G19 H19 H19 I18 I18 J18 K18 K18 L17 M17 M17 N17 O17 O17 P16 P16 Q16 R16 R16 S15 T15 T15 U15 V15 V15 W14 W14 X14 Y14 Y14 Z14 AA13 AA13 AB13 AC13 AC13 AD12 AD12 AE12 AF12"
+                },
+                {
+                    "segment": [
+                        27.033333333333335,
+                        28.633333333333333
+                    ],
+                    "id": 16,
+                    "sentence": "AF18 AE17 AE17 AD17 AC17 AC17 AB16 AB16 AA16 Z16 Z16 Y15 X15 X15 W15 V15 V14 U14 U14 T14 S14 S13 R13 Q13 Q13 P13 P13 O12 N12 N12 M12 L12 L11 K11 J11 J11 I11 I10 H10 G10 G10 F10 E9 E9 D9 C9 C9 B8 B8"
+                },
+                {
+                    "segment": [
+                        28.666666666666668,
+                        30.233333333333334
+                    ],
+                    "id": 17,
+                    "sentence": "T32 T31 T31 T30 T29 S29 S28 S27 S27 S26 S26 R25 R24 R24 R23 R22 R22 R21 Q20 Q20 Q19 Q18 Q18 Q17 P17 P16 P15 P15 P14 P13 P13 O12 O11 O11 O10 O9 O9 N8 N7 N7 N6 N6 N5 N4 M4 M3 M2 M2"
+                },
+                {
+                    "segment": [
+                        30.266666666666666,
+                        31.833333333333332
+                    ],
+                    "id": 18,
+                    "sentence": "A12 B12 B12 C12 D12 D11 E11 F11 F11 G11 H11 H11 I11 J11 J11 K10 L10 L10 M10 N10 N10 O10 P10 P10 Q9 Q9 R9 S9 S9 T9 U9 U9 V9 W8 W8 X8 Y8 Y8 Z8 AA8 AA8 AB8 AC8 AC7 AD7 AE7 AE7 AF7"
+                },
+                {
+                    "segment": [
+                        31.866666666666667,
+                        33.46666666666667
+                    ],
+                    "id": 19,
+                    "sentence": "A15 B15 B15 C15 D15 D14 E14 F14 F14 G14 H13 H13 I13 I13 J13 K12 K12 L12 M12 M12 N11 N11 O11 P11 P11 Q11 R10 R10 S10 T10 T10 U9 U9 V9 W9 W9 X8 Y8 Y8 Z8 AA8 AA8 AB7 AB7 AC7 AD7 AD7 AE6 AF6"
+                },
+                {
+                    "segment": [
+                        33.5,
+                        35.266666666666666
+                    ],
+                    "id": 20,
+                    "sentence": "AF20 AE20 AE20 AD19 AD19 AC19 AB18 AB18 AA18 AA17 Z17 Z17 Y16 X16 X16 W16 W15 V15 V15 U14 T14 T14 S13 S13 R13 R12 Q12 P12 P11 O11 O11 N10 M10 M10 L9 L9 K9 K8 J8 I8 I7 H7 H7 G6 G6 F6 E5 E5 D5 D5 C4 B4 B4 A3"
+                },
+                {
+                    "segment": [
+                        35.3,
+                        36.833333333333336
+                    ],
+                    "id": 21,
+                    "sentence": "AF20 AE20 AE20 AD20 AC20 AC20 AB20 AA20 AA20 Z20 Y20 Y20 X20 W20 W20 V20 U20 U20 T20 S20 S20 R20 Q20 Q20 P20 O20 O20 N20 M20 M20 L21 K21 K21 J21 I21 I21 H21 G21 G21 F21 E21 E21 D21 C21 C21 B21 B21"
+                },
+                {
+                    "segment": [
+                        36.86666666666667,
+                        38.4
+                    ],
+                    "id": 22,
+                    "sentence": "A26 B26 B26 C26 D26 D26 E26 F26 F26 G26 H26 H26 I26 J26 J26 K26 L26 L26 M26 N26 N26 O26 P26 P26 Q26 R26 R26 S26 T26 T26 U26 V26 V26 W26 X26 X26 Y26 Z26 Z26 AA26 AB26 AB26 AC26 AD26 AD26 AE26 AF26"
+                },
+                {
+                    "segment": [
+                        38.43333333333333,
+                        39.96666666666667
+                    ],
+                    "id": 23,
+                    "sentence": "AF22 AE22 AE22 AD22 AC22 AC22 AB22 AA22 AA22 Z22 Y22 Y22 X22 W22 W22 V22 U22 U22 T22 S23 S23 R23 Q23 Q23 P23 O23 O23 N23 M23 M23 L23 K23 K23 J23 I23 I23 H23 G23 G23 F23 E23 E23 D23 C23 C23 B23 B23"
+                },
+                {
+                    "segment": [
+                        40.0,
+                        41.666666666666664
+                    ],
+                    "id": 24,
+                    "sentence": "V1 V2 V2 V3 U4 U4 U5 U5 T6 T7 T7 S8 S8 S9 S10 R10 R11 R11 R12 Q13 Q13 Q14 Q14 P15 P16 P16 O17 O18 O18 O19 N19 N20 N21 N21 M22 M22 M23 L24 L24 L25 L25 K26 K27 K27 K28 J28 J29 J30 J30 I31 I31"
+                },
+                {
+                    "segment": [
+                        41.7,
+                        43.333333333333336
+                    ],
+                    "id": 25,
+                    "sentence": "N32 N31 N31 O30 O29 O29 O28 P28 P27 P26 P26 P25 Q24 Q24 Q23 Q23 Q22 R21 R21 R20 R19 R19 S18 S18 S17 S16 T16 T15 T14 T14 T13 U13 U12 U11 U11 U10 V9 V9 V8 V7 W7 W6 W6 W5 W4 X4 X3 X2 X2 X1"
+                },
+                {
+                    "segment": [
+                        43.36666666666667,
+                        45.43333333333333
+                    ],
+                    "id": 26,
+                    "sentence": "AF1 AE2 AE2 AD3 AD3 AC4 AC4 AB5 AB5 AB6 AA6 AA7 Z7 Z8 Y8 Y9 X9 X10 X10 W11 W11 V11 V12 U12 U13 T13 T14 T14 S15 S15 R16 R16 Q17 Q17 P18 P18 P19 O19 O20 N20 N21 M21 M22 L22 L23 L23 K24 K24 J25 J25 I26 I26 H27 H27 H28 G28 G29 F29 F30 E30 E31 D31 D32"
+                },
+                {
+                    "segment": [
+                        45.46666666666667,
+                        47.0
+                    ],
+                    "id": 27,
+                    "sentence": "G1 G2 G2 G3 G4 G4 G5 G6 G6 G7 G8 G8 G9 G10 G10 G11 G12 G12 G13 G14 G14 G15 G16 G16 H17 H18 H18 H19 H20 H20 H21 H22 H22 H23 H24 H24 H25 H26 H26 H27 H28 H28 H29 H30 H30 H31 H32"
+                },
+                {
+                    "segment": [
+                        47.03333333333333,
+                        48.7
+                    ],
+                    "id": 28,
+                    "sentence": "O32 O31 O31 N30 N30 N29 N28 M28 M27 M26 M26 L25 L25 L24 L23 K23 K22 K21 K21 J20 J20 J19 J18 J18 I17 I17 I16 I15 H15 H14 H13 H13 G12 G12 G11 G10 F10 F9 F9 F8 E7 E7 E6 E5 D5 D4 D4 D3 C2 C2 C1"
+                },
+                {
+                    "segment": [
+                        48.733333333333334,
+                        50.6
+                    ],
+                    "id": 29,
+                    "sentence": "AF29 AE29 AE28 AD28 AD27 AC27 AC27 AB26 AB26 AA26 AA25 Z25 Y24 Y24 X24 X23 W23 W23 V22 V22 U21 U21 T21 S20 S20 R20 R19 Q19 Q18 P18 P18 O17 O17 N17 M16 M16 L15 L15 K15 K14 J14 J14 I13 I13 H12 G12 G12 F11 F11 E11 E10 D10 D9 C9 C9 B8 A8"
+                },
+                {
+                    "segment": [
+                        50.63333333333333,
+                        52.266666666666666
+                    ],
+                    "id": 30,
+                    "sentence": "AC1 AC2 AB2 AB3 AB4 AB4 AA5 AA6 AA6 AA7 AA7 Z8 Z9 Z9 Z10 Z11 Y11 Y12 Y12 Y13 Y14 X14 X15 X16 X16 X17 W18 W18 W19 W19 V20 V21 V21 V22 V23 U23 U24 U24 U25 U26 T26 T27 T28 T28 T29 S29 S30 S31 S31 S32"
+                },
+                {
+                    "segment": [
+                        52.3,
+                        53.96666666666667
+                    ],
+                    "id": 31,
+                    "sentence": "AF25 AE24 AE24 AD24 AD24 AC23 AB23 AB23 AA23 AA22 Z22 Y22 Y22 X21 W21 W21 V20 V20 U20 T20 T19 S19 S19 R19 Q18 Q18 P18 P17 O17 N17 N17 M16 M16 L16 K16 K15 J15 J15 I15 H14 H14 G14 G13 F13 E13 E13 D12 C12 C12 B12 B11"
+                },
+                {
+                    "segment": [
+                        54.0,
+                        55.56666666666667
+                    ],
+                    "id": 32,
+                    "sentence": "A2 B2 B2 C2 D2 D2 E3 F3 F3 G3 H3 H3 I3 J3 J4 K4 L4 L4 M4 N4 N4 O4 O5 P5 Q5 Q5 R5 S5 S5 T5 U6 U6 V6 W6 W6 X6 Y6 Y6 Z7 AA7 AA7 AB7 AB7 AC7 AD7 AD7 AE7 AF8"
+                },
+                {
+                    "segment": [
+                        55.6,
+                        57.13333333333333
+                    ],
+                    "id": 33,
+                    "sentence": "A12 B12 B12 C12 D12 D12 E12 F12 F12 G12 H12 H12 I12 J12 J12 K12 L12 L13 M13 N13 N13 O13 P13 P13 Q13 R13 R13 S13 T13 T13 U13 V13 V13 W13 X13 X13 Y13 Z13 Z13 AA13 AB13 AB13 AC13 AD13 AD14 AE14 AF14"
+                },
+                {
+                    "segment": [
+                        57.166666666666664,
+                        58.7
+                    ],
+                    "id": 34,
+                    "sentence": "A26 B26 B26 C26 D26 D26 E26 F26 F26 G26 H26 H26 I26 J26 J26 K26 L26 L26 M26 N26 N26 O26 P26 P26 Q26 R26 R26 S26 T26 T26 U26 V26 V27 W27 X27 X27 Y27 Z27 Z27 AA27 AB27 AB27 AC27 AD27 AD27 AE27 AF27"
+                },
+                {
+                    "segment": [
+                        58.733333333333334,
+                        60.333333333333336
+                    ],
+                    "id": 35,
+                    "sentence": "U32 U31 U31 U30 U29 U29 T28 T27 T27 T26 T26 T25 S24 S24 S23 S22 S22 S21 R20 R20 R19 R19 R18 R17 Q17 Q16 Q15 Q15 Q14 P13 P13 P12 P11 P11 P10 O10 O9 O8 O8 O7 O6 N6 N5 N4 N4 N3 N3 M2 M1"
+                },
+                {
+                    "segment": [
+                        60.36666666666667,
+                        62.1
+                    ],
+                    "id": 36,
+                    "sentence": "O32 P31 P31 P30 P30 Q29 Q28 Q28 R27 R27 R26 S25 S25 S24 S24 T23 T22 T22 U21 U21 U20 V20 V19 V18 V18 W17 W17 W16 X15 X15 X14 X14 Y13 Y12 Y12 Z11 Z11 Z10 AA9 AA9 AA8 AA8 AB7 AB6 AB6 AC5 AC5 AC4 AD4 AD3 AD2 AD2 AE1"
+                },
+                {
+                    "segment": [
+                        62.13333333333333,
+                        63.666666666666664
+                    ],
+                    "id": 37,
+                    "sentence": "A7 B7 B8 C8 D8 D8 E8 F8 F8 G8 H8 H8 I8 J8 J8 K8 L8 L8 M8 N8 N8 O8 P8 P9 Q9 R9 R9 S9 T9 T9 U9 V9 V9 W9 X9 X9 Y9 Z9 Z9 AA9 AB9 AB9 AC9 AD10 AD10 AE10 AF10"
+                },
+                {
+                    "segment": [
+                        63.7,
+                        65.26666666666667
+                    ],
+                    "id": 38,
+                    "sentence": "AF23 AE23 AE23 AD23 AC23 AC23 AB23 AA24 AA24 Z24 Y24 Y24 X24 W24 W24 V25 V25 U25 T25 T25 S25 R25 R25 Q25 P26 P26 O26 N26 N26 M26 L26 L26 K27 J27 J27 I27 H27 H27 G27 G27 F27 E28 E28 D28 C28 C28 B28 A28"
+                },
+                {
+                    "segment": [
+                        65.3,
+                        66.63333333333334
+                    ],
+                    "id": 39,
+                    "sentence": "M1 M2 M2 M3 M4 M4 N5 N6 N6 N7 N8 N8 N9 N10 N10 N11 N12 N12 N13 O14 O14 O15 O16 O16 O17 O18 O18 O19 O20 O20 O21 O22 P22 P23 P24 P24 P25 P25 P26 P27"
+                }
+            ]
+        }
+    }
+}
