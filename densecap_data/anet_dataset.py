@@ -425,6 +425,8 @@ class ANetDataset(Dataset):
         img_feat = torch.from_numpy(np.zeros(
             (self.slide_window_size, resnet_feat.size(1) + bn_feat.size(1)),
         )).float()
+
+        """simply ignoring features from frames after slide_window_size"""
         torch.cat((resnet_feat, bn_feat), dim=1,
                   out=img_feat[:min(total_frame, self.slide_window_size)])
 
@@ -437,7 +439,7 @@ def _get_pos_neg(vid_info,
                  save_samplelist, sample_list_dir, out_txt_dir):
     """
     try to find a matching anchor for every single GT segment by choosing the anchor with the maximum temporal IOU
-    with each GT segment and hoping that each of the latter has at least one anchor with IOU n> 0.7
+    with each GT segment and hoping that each of the latter has at least one anchor with IOU > 0.7
     also find anchor segments that can be classified as negative as being those whose temporal IOU
     with every single GT segment  < 0.3
 
@@ -484,7 +486,7 @@ def _get_pos_neg(vid_info,
 
     for anc_idx in anc_iter:
         """
-        anchor centres and length are in units of frames
+        anchor centres and length are in units of frames - sampled rather than original
         """
         anc_cen = anc_cen_all[anc_idx]
         anc_len = anc_len_all[anc_idx]
@@ -528,7 +530,7 @@ def _get_pos_neg(vid_info,
 
             anc_start = anc_cen - anc_len / 2.
 
-            if window_start_t > seg[0] or window_end_t + sampling_sec * 2 < seg[1]:
+            if window_start_t > gt_start_raw or window_end_t + sampling_sec * 2 < gt_end_raw:
                 continue
 
             """iou between anchor and GT"""
@@ -622,7 +624,8 @@ def _get_pos_neg(vid_info,
 
     if matched_ann_idx != n_annotations:
         n_miss_props = n_annotations - n_matched_ann
-        out_txt += f'{n_miss_props} / {n_annotations} annotations in {vid} have no matching proposal'
+        pc_miss_props = (n_miss_props / n_annotations)*100
+        out_txt += f'{n_miss_props} / {n_annotations} ({pc_miss_props}%) annotations in {vid} have no matching proposal\n'
 
         # print()
         for ann_idx in unmatched_ann_idx:

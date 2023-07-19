@@ -216,6 +216,14 @@ def main():
     # paramparse.process(args)
 
     # arguments inspection
+
+    """
+    slide_window_size is in units of SAMPLED frames rather than original ones
+    this is also a misnomer since there is an implicit and 
+    mind bogglingly annoying assumption underlying this entire gunky operation that none of the 
+    training or testing videos exceed this length otherwise the excess part will be ignored rather than 
+    any kind of actual sliding window operation happening to process the long video piecewise
+    """
     assert (args.slide_window_size >= args.slide_window_stride)
     # assert (args.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
 
