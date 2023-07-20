@@ -94,6 +94,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
 
     input_params = copy.deepcopy(params.input)  # type: Input.Params
 
+    """end_id is exclusive but Input expects inclusive"""
     input_params.frame_ids = (start_id, end_id - 1)
 
     _input = Input(input_params, _logger)
