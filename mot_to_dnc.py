@@ -341,15 +341,16 @@ def main():
     json_dict = dict(
         database=database
     )
+    
     json_path = linux_path(out_dir, f'{set_name}_annotations_trainval.json')
-
-    print(f'saving json with {n_seq} sequences and {n_trajectories} trajectories to: {json_path}')
+    print(f'saving json with {n_seq} sequences and {n_trajectories} trajectories')
+    print(f'json_path: {json_path}')
     with open(json_path, 'w') as f:
         output_json_data = json.dumps(json_dict, indent=4)
         f.write(output_json_data)
 
     csv_path = os.path.join(out_dir, f'{set_name}_duration_frame.csv')
-    print(f'saving duration_frame_csv to: {csv_path}')
+    print(f'csv_path: {csv_path}')
     df = pd.DataFrame(duration_frame_csv_rows)
     df.to_csv(csv_path, index=False, header=False)
 
