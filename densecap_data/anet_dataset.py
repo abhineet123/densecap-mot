@@ -315,8 +315,8 @@ class ANetDataset(Dataset):
         for vid, val in tqdm(self.raw_data.items(), desc='generating vid_info_list', ncols=100, total=self.n_vids):
             annotations = val['annotations']
 
-            if '__' in vid:
-                vid_name, vid_frame_ids = vid.split('__')
+            if '--' in vid:
+                vid_name, vid_frame_ids = vid.split('--')
                 vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
             else:
                 vid_name = vid

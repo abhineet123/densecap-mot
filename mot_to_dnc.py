@@ -102,7 +102,7 @@ def run(seq_id, seq_suffix, start_id, end_id, n_seq, out_dir, traj_lengths_out_d
     seq_name = _data.seq_name
 
     if seq_suffix:
-        seq_name = f'{seq_name}-{seq_suffix}}'
+        seq_name = f'{seq_name}--{seq_suffix}'
 
     print(f'\nseq {seq_id + 1} / {n_seq}: {seq_name}\n')
 
