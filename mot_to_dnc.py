@@ -69,7 +69,7 @@ class Params:
         self.ann = Annotations.Params()
 
 
-def run(seq_id, seq_suffix, start_id, end_id, n_seq, out_dir, traj_lengths_out_dir, params):
+def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
     """
 
     :param seq_id:
@@ -82,7 +82,7 @@ def run(seq_id, seq_suffix, start_id, end_id, n_seq, out_dir, traj_lengths_out_d
     :return:
     """
 
-
+    seq_id, seq_suffix, start_id, end_id = seq_info
 
     _logger = CustomLogger.setup(__name__)
 
@@ -200,19 +200,20 @@ def main():
     if not seq_ids:
         seq_ids = tuple(range(n_sequences))
 
-    n_seq = len(seq_ids)
     interval = params.interval
     if interval <= 0:
         interval = 1
 
     seq_info = []
-    for seq_id in seq_ids:
+    pbar = tqdm(seq_ids)
+    for seq_id in pbar:
 
         if not _data.initialize(params.set, seq_id, 0, _logger):
             _logger.error('Data module could not be initialized')
             return None
 
         start_id = 0
+        seq_name = _data.seq_name
 
         win_size = params.win_size
         if win_size <= 0:
@@ -239,7 +240,13 @@ def main():
 
             seq_info.append((seq_id, suffix, abs_start_id, abs_end_id))
 
+            pbar.set_description(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
+
             start_id += win_stride
+
+    n_seq = len(seq_info)
+
+    exit()
 
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S_%f")
     out_dir = linux_path('log', f'build_targets_densecap_{timestamp}')
@@ -274,7 +281,7 @@ def main():
 
         print(f'running in parallel over {n_proc} processes')
         with multiprocessing.Pool(n_proc) as pool:
-            results = pool.map(func, params.seq)
+            results = pool.map(func, seq_info)
 
         results.sort(key=lambda x: x[0])
     else:
