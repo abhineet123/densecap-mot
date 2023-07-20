@@ -237,7 +237,7 @@ def main():
             abs_end_id = int(end_id * interval)
 
             if abs_end_id >= seq_n_frames:
-                abs_end_id = seq_n_frames
+                abs_end_id = seq_n_frames - 1
                 end_id = int(abs_end_id / interval)
 
             suffix = f'{start_id}_{end_id}'
