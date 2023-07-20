@@ -19,6 +19,7 @@ import json
 from tqdm import tqdm
 from datetime import datetime
 
+import copy
 import paramparse
 
 """deep mdp modules"""
@@ -31,7 +32,7 @@ from utilities import CustomLogger, SIIF, linux_path
 from densecap_utilities import build_targets_densecap, build_targets_seq
 
 
-class GenMOTParams:
+class Params:
     """
     :ivar mode:
     0: build_targets_densecap
@@ -53,9 +54,12 @@ class GenMOTParams:
 
         self.grid_res = (32, 32)
         self.frame_gap = 1
-        self.win_size = 0
         self.fps = 30
         self.vis = 0
+
+        self.interval = 15
+        self.win_size = 480
+        self.win_stride = 0
 
         self.n_proc = 1
 
@@ -65,7 +69,21 @@ class GenMOTParams:
         self.ann = Annotations.Params()
 
 
-def run(seq_id, n_seq, out_dir, traj_lengths_out_dir, params):
+def run(seq_id, seq_suffix, start_id, end_id, n_seq, out_dir, traj_lengths_out_dir, params):
+    """
+
+    :param seq_id:
+    :param start_id:
+    :param end_id:
+    :param n_seq:
+    :param out_dir:
+    :param traj_lengths_out_dir:
+    :param Params params:
+    :return:
+    """
+
+
+
     _logger = CustomLogger.setup(__name__)
 
     _data = Data(params.data, _logger)
@@ -74,11 +92,17 @@ def run(seq_id, n_seq, out_dir, traj_lengths_out_dir, params):
         _logger.error('Data module could not be initialized')
         return None
 
-    seq_name = _data.seq_name
-
     subset = "training" if _data.split == 'train' else "validation"
 
-    _input = Input(params.input, _logger)
+    input_params = copy.deepcopy(params.input)  # type: Input.Params
+
+    input_params.frame_ids = (start_id, end_id)
+
+    _input = Input(input_params, _logger)
+    seq_name = _data.seq_name
+
+    if seq_suffix:
+        seq_name = f'{seq_name}-{seq_suffix}}'
 
     print(f'\nseq {seq_id + 1} / {n_seq}: {seq_name}\n')
 
@@ -155,7 +179,7 @@ def main():
     converts annotations from MOT format into JSON and CSV for training densecap
     with optional temporal sliding windows that might be useful for inference
     """
-    params = GenMOTParams()
+    params = Params()
     paramparse.process(params)
 
     SIIF.setup()
@@ -171,10 +195,51 @@ def main():
     set_name = _data.sets[params.set]
     n_sequences = len(_data.sequences[set_name])
 
-    if not params.seq:
-        params.seq = tuple(range(n_sequences))
+    seq_ids = params.seq
 
-    n_seq = len(params.seq)
+    if not seq_ids:
+        seq_ids = tuple(range(n_sequences))
+
+    n_seq = len(seq_ids)
+    interval = params.interval
+    if interval <= 0:
+        interval = 1
+
+    seq_info = []
+    for seq_id in seq_ids:
+
+        if not _data.initialize(params.set, seq_id, 0, _logger):
+            _logger.error('Data module could not be initialized')
+            return None
+
+        start_id = 0
+
+        win_size = params.win_size
+        if win_size <= 0:
+            win_size = int(_data.seq_n_frames / interval)
+
+        win_stride = params.win_stride
+        if win_stride <= 0:
+            win_stride = win_size
+
+        while True:
+            abs_start_id = int(start_id * interval)
+
+            if abs_start_id >= _data.seq_n_frames:
+                break
+
+            end_id = start_id + win_size - 1
+
+            suffix = f'{start_id}_{end_id}'
+
+            abs_end_id = int(end_id * interval)
+
+            if abs_end_id >= _data.seq_n_frames:
+                abs_end_id = _data.seq_n_frames
+
+            seq_info.append((seq_id, suffix, abs_start_id, abs_end_id))
+
+            start_id += win_stride
 
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S_%f")
     out_dir = linux_path('log', f'build_targets_densecap_{timestamp}')

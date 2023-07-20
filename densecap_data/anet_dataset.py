@@ -314,11 +314,19 @@ class ANetDataset(Dataset):
         vid_info_list = []
         for vid, val in tqdm(self.raw_data.items(), desc='generating vid_info_list', ncols=100, total=self.n_vids):
             annotations = val['annotations']
+
+            if '__' in vid:
+                vid_name, vid_frame_ids = vid.split('__')
+                vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+            else:
+                vid_name = vid
+                vid_frame_ids = None
+
             for split, split_path in zip(self.splits, self.split_paths):
                 if val['subset'] != split:
                     continue
 
-                video_prefix = os.path.join(split_path, vid)
+                video_prefix = os.path.join(split_path, vid_name)
 
                 # n_total_frames = int(9600 / 15)
 
@@ -335,7 +343,13 @@ class ANetDataset(Dataset):
 
                 assert resnet_feat.shape[0] == n_total_frames, 'resnet and bn feature mismatch'
 
-                vid_info = (annotations, vid, vid_idx, video_prefix, n_total_frames, self.frame_to_second[vid])
+                if vid_frame_ids is None:
+                    vid_frame_ids = (0, n_total_frames - 1)
+                else:
+                    n_total_frames = vid_frame_ids[1] - vid_frame_ids[0] + 1
+
+                vid_info = (
+                annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_total_frames, self.frame_to_second[vid])
                 vid_info_list.append(vid_info)
                 vid_idx += 1
 
@@ -389,7 +403,7 @@ class ANetDataset(Dataset):
                 continue
 
             vid_counter += 1
-            video_prefix, n_total_frames, pos_seg, neg_seg, is_missing, n_pos_seg = result
+            video_prefix, vid_frame_ids, n_total_frames, pos_seg, neg_seg, is_missing, n_pos_seg = result
 
             """Only used to maintain account of any GT segments that failed to associate with any of the anchor 
             segments probably as an indicator of incorrectly chosen anchors since the latter must be chosen 
@@ -413,12 +427,21 @@ class ANetDataset(Dataset):
         return len(self.sample_list)
 
     def __getitem__(self, index):
-        video_prefix, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
+        video_prefix, vid_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
         sentence = torch.from_numpy(np.asarray(sentence))
 
+        start_id, end_id = vid_frame_ids
+
         start = time.time_ns()
-        resnet_feat = torch.from_numpy(np.load(video_prefix + '_resnet.npy')).float()
-        bn_feat = torch.from_numpy(np.load(video_prefix + '_bn.npy')).float()
+        resnet_feat = np.load(video_prefix + '_resnet.npy')
+        bn_feat = np.load(video_prefix + '_bn.npy')
+
+        resnet_feat = resnet_feat[start_id:end_id + 1, ...]
+        bn_feat = bn_feat[start_id:end_id + 1, ...]
+
+        resnet_feat = torch.from_numpy(resnet_feat).float()
+        bn_feat = torch.from_numpy(bn_feat).float()
+
         end = time.time_ns()
         load_t = (end - start) / 1e6
 
@@ -444,7 +467,7 @@ def _get_pos_neg(vid_info,
     with every single GT segment  < 0.3
 
     """
-    annotations, vid, vid_idx, video_prefix, n_frames, sampling_sec = vid_info
+    annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_frames, sampling_sec = vid_info
 
     print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
 
@@ -624,8 +647,9 @@ def _get_pos_neg(vid_info,
 
     if matched_ann_idx != n_annotations:
         n_miss_props = n_annotations - n_matched_ann
-        pc_miss_props = (n_miss_props / n_annotations)*100
-        out_txt += f'{n_miss_props} / {n_annotations} ({pc_miss_props}%) annotations in {vid} have no matching proposal\n'
+        pc_miss_props = (n_miss_props / n_annotations) * 100
+        out_txt += f'{n_miss_props} / {n_annotations} ({pc_miss_props}%) annotations in {vid} have no matching ' \
+            f'proposal\n'
 
         # print()
         for ann_idx in unmatched_ann_idx:
@@ -694,7 +718,7 @@ def _get_pos_neg(vid_info,
         pos_anc_info = [s[:-1] for s in all_segs]
 
         sample_list.append(
-            (video_prefix, pos_anc_info, sentence_idx, neg_anc_info, n_frames))
+            (video_prefix, vid_frame_ids, pos_anc_info, sentence_idx, neg_anc_info, n_frames))
         n_pos_seg += len(pos_seg[k])
 
     if save_samplelist:
@@ -712,7 +736,7 @@ def _get_pos_neg(vid_info,
         fid.write(out_txt)
     print(f'\n{vid} : done')
 
-    return video_prefix, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
+    return video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
 
 
 def anet_collate_fn(batch_lst):

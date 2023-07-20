@@ -5,16 +5,63 @@ sys.path.append('/home/abhineet/isl_labeling_tool/deep_mdp')
 
 import paramparse
 
-from extract_feature_params import ExtractFeatureParams
-
 from input import Input
 from data import Data
+from objects import Annotations
 
 from utilities import CustomLogger, linux_path
 
 
+class Params:
+    """
+    :ivar gpu:
+    :type gpu: int
+
+    :ivar use_flow:
+    :type use_flow: bool
+
+    """
+
+    def __init__(self):
+        self.cfg = ('',)
+        self.gpu = 0
+        self.use_flow = 1
+
+        self.set = ''
+        self.seq = ()
+        self.start_seq = 0
+        self.end_seq = -1
+        self.out_path = ''
+
+        """
+        number of consecutive frames from which the optical flow features are extracted
+        each such set of frames contributes a single feature vector to the network
+        """
+        self.length = 6
+        """
+        this is the number of sampled frames, i.e. number of frames represented by a single feature in the dnc input
+        assuming fps=30,  interval=15 frames corresponds to 0.5 seconds
+        """
+        self.interval = 15
+
+        self.slide_window_size = 15
+        self.slide_window_stride = 15
+
+        self.new_size = (340, 256)
+
+        self.input = Input.Params(source_type=-1, batch_mode=False)
+        self.data = Data.Params()
+        self.ann = Annotations.Params()
+
+        self.n_proc = 1
+        self.n_gpu = -1
+        self.win_id = 'x99'
+        self.pane_id = 6
+
+
+
 def main():
-    params = ExtractFeatureParams()
+    params = Params()
     paramparse.process(params)
 
     try:
