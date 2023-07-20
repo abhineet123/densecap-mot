@@ -214,6 +214,9 @@ def main():
 
         start_id = 0
         seq_name = _data.seq_name
+        seq_n_frames = _data.seq_n_frames
+
+        assert seq_n_frames % interval == 0, f"interval {interval} does not divide seq_n_frames {seq_n_frames} evenly"
 
         win_size = params.win_size
         if win_size <= 0:
@@ -226,21 +229,22 @@ def main():
         while True:
             abs_start_id = int(start_id * interval)
 
-            if abs_start_id >= _data.seq_n_frames:
+            if abs_start_id >= seq_n_frames:
                 break
 
             end_id = start_id + win_size - 1
 
-            suffix = f'{start_id}_{end_id}'
-
             abs_end_id = int(end_id * interval)
 
-            if abs_end_id >= _data.seq_n_frames:
-                abs_end_id = _data.seq_n_frames
+            if abs_end_id >= seq_n_frames:
+                abs_end_id = seq_n_frames
+                end_id = int(abs_end_id / interval)
+
+            suffix = f'{start_id}_{end_id}'
 
             seq_info.append((seq_id, suffix, abs_start_id, abs_end_id))
 
-            pbar.set_description(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
+            print(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
 
             start_id += win_stride
 
