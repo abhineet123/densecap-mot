@@ -88,7 +88,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
 
     _data = Data(params.data, _logger)
 
-    if not _data.initialize(params.set, seq_id, 0, _logger):
+    if not _data.initialize(params.set, seq_id, 0, _logger, silent=1):
         _logger.error('Data module could not be initialized')
         return None
 
