@@ -203,7 +203,7 @@ def main():
     if interval <= 0:
         interval = 1
 
-    seq_info = []
+    seq_info_list = []
     pbar = tqdm(seq_ids)
     for seq_id in pbar:
 
@@ -241,13 +241,13 @@ def main():
 
             suffix = f'{start_id}_{end_id}'
 
-            seq_info.append((seq_id, suffix, abs_start_id, abs_end_id))
+            seq_info_list.append((seq_id, suffix, abs_start_id, abs_end_id))
 
             print(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
 
             start_id += win_stride
 
-    n_seq = len(seq_info)
+    n_seq = len(seq_info_list)
 
     # exit()
 
@@ -284,13 +284,13 @@ def main():
 
         print(f'running in parallel over {n_proc} processes')
         with multiprocessing.Pool(n_proc) as pool:
-            results = pool.map(func, seq_info)
+            results = pool.map(func, seq_info_list)
 
         results.sort(key=lambda x: x[0])
     else:
         results = []
-        for seq_id in params.seq:
-            result = func(seq_id)
+        for seq_info in seq_info_list:
+            result = func(seq_info)
 
             results.append(result)
 
