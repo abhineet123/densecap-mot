@@ -258,11 +258,8 @@ def main():
     out_dir = linux_path('log', f'mot_to_dnc', f'{set_name}_{timestamp}')
     os.makedirs(out_dir, exist_ok=1)
 
-    print(f'out_dir: {out_dir}')
-
     traj_lengths_out_dir = linux_path(out_dir, 'traj_lengths')
     os.makedirs(traj_lengths_out_dir, exist_ok=1)
-    print(f'traj_lengths_out_dir: {traj_lengths_out_dir}')
 
     database = {}
     duration_frame_csv_rows = []
@@ -355,6 +352,9 @@ def main():
     print(f'saving duration_frame_csv to: {csv_path}')
     df = pd.DataFrame(duration_frame_csv_rows)
     df.to_csv(csv_path, index=False, header=False)
+
+    print(f'traj_lengths_out_dir: {traj_lengths_out_dir}')
+    print(f'out_dir: {out_dir}')
 
 
 if __name__ == "__main__":
