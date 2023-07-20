@@ -232,12 +232,12 @@ def main():
             if abs_start_id >= seq_n_frames:
                 break
 
-            end_id = start_id + win_size - 1
+            end_id = start_id + win_size
 
             abs_end_id = int(end_id * interval)
 
             if abs_end_id >= seq_n_frames:
-                abs_end_id = seq_n_frames - 1
+                abs_end_id = seq_n_frames
                 end_id = int(abs_end_id / interval)
 
             suffix = f'{start_id}_{end_id}'
