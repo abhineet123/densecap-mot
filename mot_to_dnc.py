@@ -57,7 +57,7 @@ class Params:
         self.fps = 30
         self.vis = 0
 
-        self.interval = 15
+        self.interval = 1
         self.win_size = 480
         self.win_stride = 0
 
@@ -208,7 +208,7 @@ def main():
     pbar = tqdm(seq_ids)
     for seq_id in pbar:
 
-        if not _data.initialize(params.set, seq_id, 0, _logger):
+        if not _data.initialize(params.set, seq_id, 0, _logger, silent=1):
             _logger.error('Data module could not be initialized')
             return None
 
