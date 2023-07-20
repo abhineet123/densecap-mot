@@ -72,9 +72,7 @@ class Params:
 def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
     """
 
-    :param seq_id:
-    :param start_id:
-    :param end_id:
+    :param seq_info:
     :param n_seq:
     :param out_dir:
     :param traj_lengths_out_dir:
@@ -96,7 +94,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
 
     input_params = copy.deepcopy(params.input)  # type: Input.Params
 
-    input_params.frame_ids = (start_id, end_id)
+    input_params.frame_ids = (start_id, end_id - 1)
 
     _input = Input(input_params, _logger)
     seq_name = _data.seq_name
