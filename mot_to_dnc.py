@@ -40,6 +40,11 @@ class Params:
 
     """
 
+    class SlidingWindow:
+        interval = 1
+        size = 480
+        stride = 0
+
     def __init__(self):
         self.gpu = ''
         self.cfg = ('',)
@@ -57,14 +62,12 @@ class Params:
         self.fps = 30
         self.vis = 0
 
-        self.interval = 1
-        self.win_size = 480
-        self.win_stride = 0
+        self.win_size = 0
 
         self.n_proc = 1
 
+        self.slide = Params.SlidingWindow()
         self.input = Input.Params(source_type=-1, batch_mode=False)
-
         self.data = Data.Params()
         self.ann = Annotations.Params()
 
@@ -199,7 +202,7 @@ def main():
     if not seq_ids:
         seq_ids = tuple(range(n_sequences))
 
-    interval = params.interval
+    interval = params.slide.interval
     if interval <= 0:
         interval = 1
 
@@ -217,11 +220,11 @@ def main():
 
         assert seq_n_frames % interval == 0, f"interval {interval} does not divide seq_n_frames {seq_n_frames} evenly"
 
-        win_size = params.win_size
+        win_size = params.slide.size
         if win_size <= 0:
             win_size = int(_data.seq_n_frames / interval)
 
-        win_stride = params.win_stride
+        win_stride = params.slide.stride
         if win_stride <= 0:
             win_stride = win_size
 
