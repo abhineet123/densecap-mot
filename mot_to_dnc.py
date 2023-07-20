@@ -252,7 +252,7 @@ def main():
     # exit()
 
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S_%f")
-    out_dir = linux_path('log', f'mot_to_dnc', f'{timestamp}')
+    out_dir = linux_path('log', f'mot_to_dnc', f'{set_name}_{timestamp}')
     os.makedirs(out_dir, exist_ok=1)
 
     print(f'out_dir: {out_dir}')
