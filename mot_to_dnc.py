@@ -242,7 +242,7 @@ def main():
                 abs_end_id = seq_n_frames
                 end_id = int(abs_end_id / interval)
 
-            suffix = f'{start_id}_{end_id}'
+            suffix = f'{abs_start_id}_{abs_end_id}'
 
             seq_info_list.append((seq_id, suffix, abs_start_id, abs_end_id))
 
