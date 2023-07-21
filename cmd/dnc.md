@@ -49,7 +49,7 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_25_2400_var/seq_0_25__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg --batch_size 32 --num_workers 4
 <a id="all_seq_6_6___1k_9600_n_3_"></a>
 ### all_seq__6_6       @ 1k-9600/n-3-->dnc
-python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_6.cfg --batch_size 32 --num_workers 4 --n_proc 12
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_6.cfg --batch_size 28 --num_workers 4 --n_proc 12
 
 ```
 ulimit -n 40960
