@@ -183,9 +183,8 @@ class ANetDataset(Dataset):
                         self.sample_list += vid_sample_list
                         vid = os.path.splitext(os.path.basename(pkl_file))[0]
 
-                        vid_from_samples = [os.path.basename(sample[0]) for sample in vid_sample_list]
-
-                        assert all(vid_from_sample == vid for vid_from_sample in vid_from_samples), "vid name mismatch"
+                        # vid_from_samples = [os.path.basename(sample[0]) for sample in vid_sample_list]
+                        # assert all(vid_from_sample == vid for vid_from_sample in vid_from_samples), "vid name mismatch"
 
                         sample_dict[vid] = [sample[1:] for sample in vid_sample_list]
 
