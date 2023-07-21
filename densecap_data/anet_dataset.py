@@ -127,7 +127,6 @@ def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
 
     return text_proc, raw_data, n_train_videos, n_val_videos
 
-
 # dataloader for training
 class ANetDataset(Dataset):
     def __init__(self, image_path,
@@ -184,7 +183,8 @@ class ANetDataset(Dataset):
                         vid = os.path.splitext(os.path.basename(pkl_file))[0]
 
                         # vid_from_samples = [os.path.basename(sample[0]) for sample in vid_sample_list]
-                        # assert all(vid_from_sample == vid for vid_from_sample in vid_from_samples), "vid name mismatch"
+                        # assert all(vid_from_sample == vid for vid_from_sample in vid_from_samples), \
+                        #     "vid name mismatch"
 
                         sample_dict[vid] = [sample[1:] for sample in vid_sample_list]
 
@@ -427,7 +427,9 @@ class ANetDataset(Dataset):
                 continue
 
             vid_counter += 1
-            video_prefix, vid_frame_ids, n_feat_frames, pos_seg, neg_seg, is_missing, n_pos_seg = result
+            sample_list, video_prefix, vid_frame_ids, n_feat_frames, pos_seg, neg_seg, is_missing, n_pos_seg = result
+
+            self.sample_list += sample_list
 
             """Only used to maintain account of any GT segments that failed to associate with any of the anchor 
             segments probably as an indicator of incorrectly chosen anchors since the latter must be chosen 
@@ -760,7 +762,7 @@ def _get_pos_neg(vid_info,
         fid.write(out_txt)
     print(f'\n{vid} : done')
 
-    return video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
+    return sample_list, video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
 
 
 def anet_collate_fn(batch_lst):
