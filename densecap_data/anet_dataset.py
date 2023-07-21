@@ -458,7 +458,7 @@ class ANetDataset(Dataset):
 
         feat_start_id, feat_end_id = feat_frame_ids
 
-        start = time.time_ns()
+        start = time.time()
         resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
         bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
 
@@ -468,8 +468,8 @@ class ANetDataset(Dataset):
         resnet_feat = torch.from_numpy(resnet_feat).float()
         bn_feat = torch.from_numpy(bn_feat).float()
 
-        end = time.time_ns()
-        load_t = (end - start) / 1e6
+        end = time.time()
+        load_t = (end - start) * 1000
 
         img_feat = torch.from_numpy(np.zeros(
             (self.slide_window_size, resnet_feat.size(1) + bn_feat.size(1)),
