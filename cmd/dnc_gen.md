@@ -234,7 +234,7 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var n_proc=12
 
 <a id="slide_6_480___1k_9600_n_3_mot_to_dnc_"></a>
 #### slide-6-480       @ 1k-9600/n-3/mot_to_dnc-->dnc_gen
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide interval=6 size=480 @ seq=0,1000 n_proc=12
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide interval=6 size=480 @ n_proc=12
 
 <a id="n_5___mot_to_dnc_"></a>
 ## n-5       @ mot_to_dnc-->dnc_gen

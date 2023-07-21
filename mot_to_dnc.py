@@ -341,7 +341,7 @@ def main():
     json_dict = dict(
         database=database
     )
-    
+
     json_path = linux_path(out_dir, f'{set_name}_annotations_trainval.json')
     print(f'saving json with {n_seq} sequences and {n_trajectories} trajectories')
     print(f'json_path: {json_path}')
