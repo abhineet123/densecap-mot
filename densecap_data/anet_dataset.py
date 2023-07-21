@@ -461,6 +461,9 @@ class ANetDataset(Dataset):
         resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
         bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
 
+        resnet_feat = np.array(resnet_feat)
+        bn_feat = np.array(bn_feat)
+
         resnet_feat = torch.from_numpy(resnet_feat).float()
         bn_feat = torch.from_numpy(bn_feat).float()
 
