@@ -275,6 +275,11 @@ class ANetDataset(Dataset):
         """frame_to_second is a single factor that, when multiplied with the frame ID, 
         gives the corresponding temporal location in seconds"""
         self.frame_to_second = {}
+        self.sampled_frames = {}
+        self.fps = {}
+        self.vid_dur = {}
+        self.vid_frame = {}
+
         with open(dur_file) as f:
             if dataset == 'anet':
                 for line in f:
@@ -293,6 +298,11 @@ class ANetDataset(Dataset):
                     # vid_fps = float(vid_frame) / float(vid_dur)
                     # sampling_frames = math.ceil(vid_fps * sampling_sec)
                     # frame_to_second[vid_name] = float(vid_dur) * sampling_frames / float(vid_frame)
+                    self.vid_dur[vid_name] = float(vid_dur)
+                    self.vid_frame[vid_name] = float(vid_frame)
+                    self.fps[vid_name] = float(vid_frame) / float(vid_dur)
+                    self.sampled_frames[vid_name] = int(self.fps[vid_name]*sampling_sec)
+
                     self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
                         float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)
             else:
@@ -316,19 +326,30 @@ class ANetDataset(Dataset):
             annotations = val['annotations']
 
             if '--' in vid:
-                vid_name, vid_frame_ids = vid.split('--')
+                feat_name, vid_frame_ids = vid.split('--')
                 vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+
+                start_id, end_id = vid_frame_ids
+
+                n_subseq_frames = end_id - start_id
+                assert n_subseq_frames == self.vid_frame[vid], \
+                    f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
+
+                feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
+                    end_id / self.sampled_frames[vid])
+
+                feat_frame_ids = (feat_start_id, feat_end_id)
             else:
-                vid_name = vid
-                vid_frame_ids = None
+                feat_name = vid
+                feat_frame_ids = None
 
             for split, split_path in zip(self.splits, self.split_paths):
                 if val['subset'] != split:
                     continue
 
-                video_prefix = os.path.join(split_path, vid_name)
+                video_prefix = os.path.join(split_path, feat_name)
 
-                # n_total_frames = int(9600 / 15)
+                # n_feat_frames = int(9600 / 15)
 
                 resnet_feat_path = video_prefix + '_resnet.npy'
                 assert os.path.isfile(resnet_feat_path), f"nonexistent resnet_feat_path: {resnet_feat_path}"
@@ -339,17 +360,21 @@ class ANetDataset(Dataset):
                 resnet_feat = np.load(resnet_feat_path)
                 bn_feat = np.load(bn_feat_path)
 
-                n_total_frames = bn_feat.shape[0]
+                n_feat_frames = bn_feat.shape[0]
 
-                assert resnet_feat.shape[0] == n_total_frames, 'resnet and bn feature mismatch'
+                assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
 
-                if vid_frame_ids is None:
-                    vid_frame_ids = (0, n_total_frames - 1)
+                if feat_frame_ids is None:
+                    feat_frame_ids = (0, n_feat_frames)
                 else:
-                    n_total_frames = vid_frame_ids[1] - vid_frame_ids[0] + 1
+                    feat_start_id, feat_end_id = feat_frame_ids
+                    n_feat_frames = feat_end_id - feat_start_id
+
+                assert self.slide_window_size >= n_feat_frames, \
+                    f"n_feat_frames: {n_feat_frames} exceeds slide_window_size: {self.slide_window_size}"
 
                 vid_info = (
-                annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_total_frames, self.frame_to_second[vid])
+                    annotations, vid, vid_idx, video_prefix, feat_frame_ids, n_feat_frames, self.frame_to_second[vid])
                 vid_info_list.append(vid_info)
                 vid_idx += 1
 
@@ -403,7 +428,7 @@ class ANetDataset(Dataset):
                 continue
 
             vid_counter += 1
-            video_prefix, vid_frame_ids, n_total_frames, pos_seg, neg_seg, is_missing, n_pos_seg = result
+            video_prefix, vid_frame_ids, n_feat_frames, pos_seg, neg_seg, is_missing, n_pos_seg = result
 
             """Only used to maintain account of any GT segments that failed to associate with any of the anchor 
             segments probably as an indicator of incorrectly chosen anchors since the latter must be chosen 
@@ -427,17 +452,14 @@ class ANetDataset(Dataset):
         return len(self.sample_list)
 
     def __getitem__(self, index):
-        video_prefix, vid_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
+        video_prefix, feat_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
         sentence = torch.from_numpy(np.asarray(sentence))
 
-        start_id, end_id = vid_frame_ids
+        feat_start_id, feat_end_id = feat_frame_ids
 
         start = time.time_ns()
-        resnet_feat = np.load(video_prefix + '_resnet.npy')
-        bn_feat = np.load(video_prefix + '_bn.npy')
-
-        resnet_feat = resnet_feat[start_id:end_id + 1, ...]
-        bn_feat = bn_feat[start_id:end_id + 1, ...]
+        resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+        bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
 
         resnet_feat = torch.from_numpy(resnet_feat).float()
         bn_feat = torch.from_numpy(bn_feat).float()
