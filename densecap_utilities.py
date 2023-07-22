@@ -53,6 +53,8 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations, grid_res, 
     vocab_annotations = [None] * annotations.n_traj
     traj_lengths = []
 
+    max_traj_length = 0
+
     for traj_id in range(annotations.n_traj):
         traj_frame_ids = list(annotations.traj_idx_by_frame[traj_id].keys())
         min_frame_id, max_frame_id = np.amin(traj_frame_ids), np.amax(traj_frame_ids)
@@ -61,6 +63,26 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations, grid_res, 
 
         traj_lengths.append(traj_length)
 
+        if traj_length > max_traj_length:
+            max_traj_length = traj_length
+            obj_id = annotations.traj_to_obj[obj_id]
+            if vis:
+                for _frame_id in range(min_frame_id, max_frame_id+1):
+                    frame = frames[_frame_id]
+                    frame_disp = np.copy(frame)
+                    ann_idx = annotations.idx[_frame_id]
+                    frame_ann_data = annotations.data[ann_idx]
+                    curr_obj_data = [_data for _data in frame_ann_data if _data[1] == obj_id]
+
+                    assert len(curr_obj_data) == 1, "something annoying going on"
+
+                    curr_obj_data = curr_obj_data[0]
+
+                    draw_box(frame_disp, curr_obj_data[2:6], color='green', _id=f'{traj_id}: {traj_length}')
+
+                    cv2.imshow('frame_disp', frame_disp)
+                    cv2.waitKey(0)
+                    
         # if traj_length > 200:
         #     print(f'excessive trajectory length: {traj_length}')
 

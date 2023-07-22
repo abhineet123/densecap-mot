@@ -59,7 +59,6 @@ class Params:
         self.pane_id = 6
 
 
-
 def main():
     params = Params()
     paramparse.process(params)
