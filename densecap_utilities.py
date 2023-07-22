@@ -79,7 +79,7 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
 
                 img_h, img_w = frames[min_frame_id].shape[:2]
 
-                video_out = cv2.VideoWriter(img_path, fourcc, fps, (img_w, img_h))
+                video_out = cv2.VideoWriter(vis_out_path, fourcc, fps, (img_w, img_h))
 
                 for _frame_id in range(min_frame_id, max_frame_id + 1):
                     frame = frames[_frame_id]
