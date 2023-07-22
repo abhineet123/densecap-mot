@@ -56,6 +56,7 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
     traj_lengths = []
 
     max_traj_length = 0
+    min_traj_length = np.inf
 
     for traj_id in range(annotations.n_traj):
         traj_frame_ids = list(annotations.traj_idx_by_frame[traj_id].keys())
@@ -65,8 +66,17 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
 
         traj_lengths.append(traj_length)
 
+        vis_traj = 0
+
+        if traj_length < min_traj_length:
+            min_traj_length = traj_length
+            vis_traj = 1
+
         if traj_length > max_traj_length:
             max_traj_length = traj_length
+            vis_traj = 1
+
+        if vis_traj:
             obj_id = annotations.traj_to_obj[traj_id]
             if vis:
                 codec = 'mp4v'
