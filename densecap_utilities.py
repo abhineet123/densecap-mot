@@ -108,7 +108,7 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
                     video_out.write(frame_disp)
 
                     cv2.imshow('frame_disp', frame_disp)
-                    cv2.waitKey(0)
+                    cv2.waitKey(1)
 
                 video_out.release()
 
