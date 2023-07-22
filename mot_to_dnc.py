@@ -136,18 +136,19 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
         n_frames = _input.n_frames
         frame_size = _input.frame_size
 
-        vocab_annotations, traj_lengths = build_targets_densecap(n_frames,
-                                                                 frame_size,
-                                                                 _input.all_frames,
-                                                                 _annotations,
-                                                                 seq_name=seq_name,
-                                                                 grid_res=params.grid_res,
-                                                                 frame_gap=params.frame_gap,
-                                                                 win_size=params.win_size,
-                                                                 fps=params.fps,
-                                                                 out_dir=out_dir,
-                                                                 vis=params.vis,
-                                                                 )
+        vocab_annotations, traj_lengths = build_targets_densecap(
+            n_frames,
+            frame_size,
+            _input.all_frames,
+            _annotations,
+            seq_name=seq_name,
+            grid_res=params.grid_res,
+            frame_gap=params.frame_gap,
+            win_size=params.win_size,
+            fps=params.fps,
+            out_dir=out_dir,
+            vis=params.vis,
+        )
         mean_traj_length = np.mean(traj_lengths)
         std_traj_length = np.std(traj_lengths)
         median_traj_length = np.median(traj_lengths)
