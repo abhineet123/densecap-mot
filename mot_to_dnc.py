@@ -140,6 +140,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
                                                                  frame_size,
                                                                  _input.all_frames,
                                                                  _annotations,
+                                                                 seq_name=seq_name,
                                                                  grid_res=params.grid_res,
                                                                  frame_gap=params.frame_gap,
                                                                  win_size=params.win_size,

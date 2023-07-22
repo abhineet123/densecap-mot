@@ -10,7 +10,9 @@ from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_t
 from objects import Annotations
 
 
-def build_targets_densecap(n_frames, frame_size, frames, annotations, grid_res, frame_gap, win_size, fps, out_dir, vis):
+def build_targets_densecap(n_frames, frame_size, frames, annotations,
+                           seq_name,
+                           grid_res, frame_gap, win_size, fps, out_dir, vis):
     """
 
     :param Annotations annotations:
@@ -67,7 +69,19 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations, grid_res, 
             max_traj_length = traj_length
             obj_id = annotations.traj_to_obj[obj_id]
             if vis:
-                for _frame_id in range(min_frame_id, max_frame_id+1):
+                codec = 'mp4v'
+                fourcc = cv2.VideoWriter_fourcc(*codec)
+                vis_out_dir = linux_path(out_dir, 'vis')
+                os.makedirs(vis_out_dir, exist_ok=1)
+                vis_out_path = linux_path(vis_out_dir, f'{seq_name}_{traj_id}_{traj_length}.mp4')
+
+                print(f'vis_out_path: {vis_out_path}')
+
+                img_h, img_w = frames[min_frame_id].shape[:2]
+
+                video_out = cv2.VideoWriter(img_path, fourcc, fps, (img_w, img_h))
+
+                for _frame_id in range(min_frame_id, max_frame_id + 1):
                     frame = frames[_frame_id]
                     frame_disp = np.copy(frame)
                     ann_idx = annotations.idx[_frame_id]
@@ -78,11 +92,15 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations, grid_res, 
 
                     curr_obj_data = curr_obj_data[0]
 
-                    draw_box(frame_disp, curr_obj_data[2:6], color='green', _id=f'{traj_id}: {traj_length}')
+                    draw_box(frame_disp, curr_obj_data[2:6], color='green')
+
+                    video_out.write(frame_disp)
 
                     cv2.imshow('frame_disp', frame_disp)
                     cv2.waitKey(0)
-                    
+
+                video_out.release()
+
         # if traj_length > 200:
         #     print(f'excessive trajectory length: {traj_length}')
 
