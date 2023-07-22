@@ -67,7 +67,7 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
 
         if traj_length > max_traj_length:
             max_traj_length = traj_length
-            obj_id = annotations.traj_to_obj[obj_id]
+            obj_id = annotations.traj_to_obj[traj_id]
             if vis:
                 codec = 'mp4v'
                 fourcc = cv2.VideoWriter_fourcc(*codec)
