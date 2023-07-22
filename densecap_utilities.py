@@ -5,7 +5,7 @@ from datetime import datetime
 from tqdm import tqdm
 
 from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_to_rgb2, draw_traj2, resize_ar, \
-    linux_path
+    linux_path, CVText
 
 from objects import Annotations
 
@@ -92,7 +92,8 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
 
                     curr_obj_data = curr_obj_data[0]
 
-                    draw_box(frame_disp, curr_obj_data[2:6], color='green')
+                    draw_box(frame_disp, curr_obj_data[2:6], color='green',
+                             header=f'frame {_frame_id}', header_fmt=CVText(color='red'))
 
                     video_out.write(frame_disp)
 
