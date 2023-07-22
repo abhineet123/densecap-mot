@@ -41,8 +41,8 @@ class Params:
     """
 
     class SlidingWindow:
-        interval = 1
-        size = 480
+        interval = 0
+        size = 0
         stride = 0
 
     def __init__(self):
