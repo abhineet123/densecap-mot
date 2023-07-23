@@ -97,10 +97,12 @@ def main():
 
         start_seq_id = end_seq_id + 1
 
-    out_file = 'cmd_list.txt'
-    print(f'out_file: {out_file}')
     cmd_list_str = '\n'.join(cmd_list)
     print(cmd_list_str)
+
+    out_file = 'cmd_list.txt'
+    print(f'out_file: {out_file}')
+
     with open(out_file, 'w') as fid:
         fid.write(cmd_list_str)
 
@@ -117,6 +119,7 @@ def main():
     #         kill_all = True
     #         p.kill()
     #         p.wait()
+
 
 if __name__ == "__main__":
     main()
