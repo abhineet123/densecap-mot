@@ -97,9 +97,11 @@ def main():
 
         start_seq_id = end_seq_id + 1
 
+    out_file = 'cmd_list.txt'
+    print(f'out_file: {out_file}')
     cmd_list_str = '\n'.join(cmd_list)
     print(cmd_list_str)
-    with open('cmd_list.txt', 'w') as fid:
+    with open(out_file, 'w') as fid:
         fid.write(cmd_list_str)
 
     # kill_all = False
