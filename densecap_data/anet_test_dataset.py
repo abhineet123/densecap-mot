@@ -13,7 +13,8 @@ from torch.utils.data import Dataset
 
 class ANetTestDataset(Dataset):
     def __init__(self, image_path, slide_window_size,
-                 text_proc, raw_data, split, learn_mask=False):
+                 dur_file, dataset, sampling_sec,
+                 text_proc, raw_data, split, learn_mask):
         super(ANetTestDataset, self).__init__()
 
         self.split = split
@@ -27,7 +28,7 @@ class ANetTestDataset(Dataset):
         for vid, val in raw_data.items():
             annotations = val['annotations']
             if val['subset'] == self.split:
-                file_path = os.path.join(split_path, vid+'_bn.npy')
+                file_path = os.path.join(split_path, vid + '_bn.npy')
                 if not os.path.isfile(file_path):
                     print("file does not exist: {}".format(file_path))
                 video_prefix = os.path.join(split_path, vid)
@@ -38,15 +39,15 @@ class ANetTestDataset(Dataset):
 
         test_sentences = list(map(text_proc.preprocess, test_sentences))
         sentence_idx = text_proc.numericalize(text_proc.pad(test_sentences),
-                                                   device=None)  # put in memory
+                                              device=None)  # put in memory
 
         if sentence_idx.nelement() != 0 and len(test_sentences) != 0:
             if sentence_idx.size(0) != len(test_sentences):
-                raise Exception("Error in numericalize sentences")
+                raise Exception("Error in numericalizing sentences")
 
         idx = 0
         for vid, val in raw_data.items():
-            if val['subset'] == self.split and os.path.isfile(os.path.join(split_path, vid+'_bn.npy')):
+            if val['subset'] == self.split and os.path.isfile(os.path.join(split_path, vid + '_bn.npy')):
                 for ann in val['annotations']:
                     ann['sentence_idx'] = sentence_idx[idx]
                     idx += 1
@@ -54,6 +55,38 @@ class ANetTestDataset(Dataset):
         print('total number of samples (unique videos): {}'.format(
             len(self.sample_list)))
         print('total number of sentences: {}'.format(len(test_sentences)))
+
+        self.frame_to_second = {}
+        self.sampled_frames = {}
+        self.fps = {}
+        self.vid_dur = {}
+        self.vid_frame = {}
+
+        with open(dur_file) as f:
+            if dataset == 'anet':
+                for line in f:
+                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    self.frame_to_second[vid_name] = float(vid_dur) * int(
+                        float(vid_frame) * 1. / int(float(vid_dur)) * sampling_sec) * 1. / float(vid_frame)
+                self.frame_to_second['_0CqozZun3U'] = sampling_sec  # a missing video in anet
+            elif dataset == 'yc2':
+                import math
+                for line in f:
+                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
+                        float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)  # for yc2
+            elif dataset.startswith('MNIST_MOT_RGB'):
+                for line in f:
+                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    self.frame_to_second[vid_name] = float(vid_dur) * int(
+                        float(vid_frame) * 1. / int(float(vid_dur)) * sampling_sec) * 1. / float(vid_frame)
+
+                    self.vid_dur[vid_name] = float(vid_dur)
+                    self.vid_frame[vid_name] = float(vid_frame)
+                    self.fps[vid_name] = float(vid_frame) / float(vid_dur)
+                    self.sampled_frames[vid_name] = int(self.fps[vid_name]*sampling_sec)
+            else:
+                raise NotImplementedError(f"Unsupported dataset: {dataset}")
 
     def __len__(self):
         return len(self.sample_list)
@@ -65,8 +98,8 @@ class ANetTestDataset(Dataset):
         bn_feat = torch.from_numpy(np.load(video_prefix + '_bn.npy')).float()
 
         if self.learn_mask:
-            img_feat = torch.FloatTensor(np.zeros((self.slide_window_size,
-                                                   resnet_feat.size(1)+bn_feat.size(1))))
+            img_feat = torch.from_numpy(np.zeros((self.slide_window_size,
+                                                  resnet_feat.size(1) + bn_feat.size(1)))).float()
             torch.cat((resnet_feat, bn_feat), dim=1,
                       out=img_feat[:min(bn_feat.size(0), self.slide_window_size)])
         else:
@@ -91,7 +124,7 @@ def anet_test_collate_fn(batch_lst):
     for batch_idx in range(batch_size):
         img_feat, T, vid = batch_lst[batch_idx]
 
-        img_batch[batch_idx,:] = img_feat
+        img_batch[batch_idx, :] = img_feat
         frame_length[batch_idx] = T
         video_prefix.append(vid)
 

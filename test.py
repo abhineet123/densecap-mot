@@ -53,7 +53,7 @@ def get_dataset(args):
                              shuffle=False, num_workers=args.num_workers,
                              collate_fn=anet_test_collate_fn)
 
-    return test_loader, text_proc
+    return test_loader, test_dataset, text_proc
 
 
 def get_model(text_proc, args):
@@ -85,7 +85,7 @@ def get_model(text_proc, args):
     return model
 
 
-def validate(model, loader, args):
+def validate(model, loader, dataset, args):
     """
 
     :param model:
@@ -105,28 +105,6 @@ def validate(model, loader, args):
 
     os.makedirs(out_dir, exist_ok=1)
 
-    frame_to_second = {}
-    with open(args.dur_file) as f:
-        if args.dataset == 'anet':
-            for line in f:
-                vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
-                frame_to_second[vid_name] = float(vid_dur) * int(
-                    float(vid_frame) * 1. / int(float(vid_dur)) * args.sampling_sec) * 1. / float(vid_frame)
-            frame_to_second['_0CqozZun3U'] = args.sampling_sec  # a missing video in anet
-        elif args.dataset == 'yc2':
-            import math
-            for line in f:
-                vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
-                frame_to_second[vid_name] = float(vid_dur) * math.ceil(
-                    float(vid_frame) * 1. / float(vid_dur) * args.sampling_sec) * 1. / float(vid_frame)  # for yc2
-        elif args.dataset.startswith('MNIST_MOT_RGB'):
-            for line in f:
-                vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
-                frame_to_second[vid_name] = float(vid_dur) * int(
-                    float(vid_frame) * 1. / int(float(vid_dur)) * args.sampling_sec) * 1. / float(vid_frame)
-        else:
-            raise NotImplementedError(f"Unsupported dataset: {args.dataset}")
-
     for data in loader:
         image_feat, original_num_frame, video_prefix = data
         video_name = video_prefix[0].split('/')[-1]
@@ -138,9 +116,10 @@ def validate(model, loader, args):
                 image_feat = image_feat.cuda()
 
             dtype = image_feat.data.type()
-            if video_name not in frame_to_second:
+            if video_name not in dataset.frame_to_second:
                 frame_to_second[video_name] = args.sampling_sec
                 print(f"cannot find frame_to_second for video {video_name}")
+
             sampling_sec = frame_to_second[video_name]  # batch_size has to be 1
             all_proposal_results = model.inference(image_feat,
                                                    original_num_frame,
@@ -236,12 +215,12 @@ def main():
         "slide_window_size must be > slide_window_stride!"
 
     print('loading dataset')
-    test_loader, text_proc = get_dataset(params)
+    test_loader, test_dataset, text_proc = get_dataset(params)
 
     print('building model')
     model = get_model(text_proc, params)
 
-    recall_area = validate(model, test_loader, params)
+    recall_area = validate(model, test_loader, test_dataset, params)
 
     print('proposal recall area: {:.6f}'.format(recall_area))
 

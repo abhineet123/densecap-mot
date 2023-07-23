@@ -21,7 +21,7 @@ import paramparse
 import subprocess
 import shlex
 
-from extract_feature_params import ExtractFeatureParams
+from extract_feature import Params
 
 from data import Data
 
@@ -29,7 +29,7 @@ from utilities import CustomLogger
 
 
 def main():
-    params = ExtractFeatureParams()
+    params = Params()
     args_in = paramparse.process(params)
     print(f'args_in: {args_in}')
 
