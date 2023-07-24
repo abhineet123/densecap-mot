@@ -8,7 +8,7 @@ CUDA_VISIBLE_DEVICES=0 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_100
 CUDA_VISIBLE_DEVICES=0 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 start_seq=22 end_seq=32
 
 ## @ x99:6.3
-CUDA_VISIBLE_DEVICES=0 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 start_seq=33 end_seq=43
+CUDA_VISIBLE_DEVICES=0 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 start_seq=1 end_seq=1
 
 ## @ x99:6.4
 CUDA_VISIBLE_DEVICES=0 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 start_seq=44 end_seq=54

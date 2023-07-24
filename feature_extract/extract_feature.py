@@ -55,6 +55,7 @@ class Params:
 
         self.n_proc = 1
         self.n_gpu = -1
+        self.gpus = ()
         self.win_id = 'x99'
         self.pane_id = 6
 

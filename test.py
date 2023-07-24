@@ -39,18 +39,30 @@ def get_dataset(args):
     :param DenseCapTest args:
     :return:
     """
+
+    assert args.sample_list_path, "sample_list_path must be provided"
     # process text
-    text_proc, raw_data = get_vocab_and_sentences(args.dataset_file, args.max_sentence_len)
+    test_split = [args.test_split, ]
+    text_proc, raw_data = get_vocab_and_sentences(
+        args.dataset_file,
+        test_split,
+        sample_list_path=args.sample_list_path)
 
     # Create the dataset and data loader instance
     test_dataset = ANetTestDataset(args.feature_root,
                                    args.slide_window_size,
-                                   text_proc, raw_data, args.val_data_folder,
-                                   learn_mask=args.learn_mask)
+                                   args.dur_file,
+                                   args.dataset,
+                                   args.sampling_sec,
+                                   text_proc,
+                                   raw_data,
+                                   args.test_split,
+                                   args.learn_mask)
 
     test_loader = DataLoader(test_dataset,
                              batch_size=args.batch_size,
-                             shuffle=False, num_workers=args.num_workers,
+                             shuffle=False,
+                             num_workers=args.num_workers,
                              collate_fn=anet_test_collate_fn)
 
     return test_loader, test_dataset, text_proc
@@ -117,10 +129,10 @@ def validate(model, loader, dataset, args):
 
             dtype = image_feat.data.type()
             if video_name not in dataset.frame_to_second:
-                frame_to_second[video_name] = args.sampling_sec
+                dataset.frame_to_second[video_name] = args.sampling_sec
                 print(f"cannot find frame_to_second for video {video_name}")
 
-            sampling_sec = frame_to_second[video_name]  # batch_size has to be 1
+            sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
             all_proposal_results = model.inference(image_feat,
                                                    original_num_frame,
                                                    sampling_sec,

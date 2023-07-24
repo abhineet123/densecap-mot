@@ -139,5 +139,6 @@ class DenseCapTest:
         self.slide_window_stride = 20
         self.start_from = ''
         self.stride_factor = 50
-        self.val_data_folder = 'validation'
+        self.sample_list_path = ''
+        self.test_split = 'validation'
         self.vis_emb_dropout = 0.1

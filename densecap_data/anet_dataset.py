@@ -27,106 +27,6 @@ from torch.utils.data import Dataset
 from densecap_data.utils import segment_iou
 
 
-def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
-    # train_sentences = []
-    train_val_sentences = []
-
-    print(f'loading dataset_file: {dataset_file}')
-    with open(dataset_file, 'r', encoding='utf-8') as data_file:
-        data_all = json.load(data_file)
-    raw_data = data_all['database']
-
-    sample_list_dir = os.path.dirname(sample_list_path)
-
-    sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
-    n_train_videos = n_val_videos = 0
-    # n_train_sentences = n_val_sentences = 0
-
-    nsentence = dict(
-        training=0,
-        validation=0,
-    )
-    sentence_lengths = []
-    max_sentence_length = 0
-
-    for vid, val in tqdm(raw_data.items(), desc='getting train_val_sentences', ncols=100):
-        anns = val['annotations']
-        split = val['subset']
-        if split == 'training':
-            n_train_videos += 1
-        else:
-            n_val_videos += 1
-
-        if split in ['training', 'validation']:
-            for ind, ann in enumerate(anns):
-                ann['sentence'] = ann['sentence'].strip()
-                sentence_length = len(ann['sentence'].split(' '))
-                sentence_lengths.append(sentence_length)
-
-                if sentence_length > max_sentence_length:
-                    max_sentence_length = sentence_length
-                # if split == "training":
-                #     train_sentences.append(ann['sentence'])
-                train_val_sentences.append(ann['sentence'])
-                nsentence[split] += 1
-
-    print(f'max_sentence_length: {max_sentence_length}')
-
-    sentence_lengths_path = os.path.join(sample_list_dir, f"sentence_lengths.txt")
-    os.makedirs(sample_list_dir, exist_ok=1)
-
-    print(f'sentence_lengths_path: {sentence_lengths_path}')
-
-    sentence_lengths = list(map(str, sentence_lengths))
-    with open(sentence_lengths_path, 'w') as fid:
-        fid.write('\n'.join(sentence_lengths))
-
-    print(f'# of training videos: {n_train_videos}')
-    print('# of training sentences {}'.format(nsentence['training']))
-
-    print(f'# of validation videos: {n_val_videos}')
-    print('# of validation sentences {}'.format(nsentence['validation']))
-
-    # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
-    #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
-    #     # with open(sentences_dict_path, 'rb') as f:
-    #     #     sentences_dict = pickle.load(f)
-    #     # train_sentences = sentences_dict['train_sentences']
-    #     # sentence_idx = sentences_dict['sentence_idx']
-    #     text_proc = None
-    # else:
-    # build vocab and tokenized sentences
-    try:
-        Field = torchtext.data.Field
-    except AttributeError:
-        Field = torchtext.legacy.data.Field
-
-    text_proc = Field(
-        sequential=True, init_token='<init>',
-        eos_token='<eos>', tokenize='spacy',
-        lower=True, batch_first=True,
-        fix_length=max_sentence_length)
-
-    # sentences_proc = list(map(text_proc.preprocess, train_sentences)) # build vocab on train only
-    """divide sentences into words to have a list of list of words or tokens as they're called"""
-    sentences_proc_path = os.path.join(sample_list_dir, f"sentences_proc.pkl")
-    if os.path.isfile(sentences_proc_path):
-        print(f'loading sentences_proc from {sentences_proc_path}')
-        with open(sentences_proc_path, 'rb') as f:
-            sentences_proc = pickle.load(f)
-    else:
-        print('text_proc.preprocess')
-        sentences_proc = list(map(text_proc.preprocess, train_val_sentences))
-        print(f'saving sentences_proc to {sentences_proc_path}')
-        with open(sentences_proc_path, 'wb') as f:
-            pickle.dump(sentences_proc, f)
-
-    print('building vocab')
-    text_proc.build_vocab(sentences_proc, min_freq=5)
-    print(f'# of words in the vocab: {len(text_proc.vocab)}')
-
-    return text_proc, raw_data, n_train_videos, n_val_videos
-
 # dataloader for training
 class ANetDataset(Dataset):
     def __init__(self, image_path,
@@ -482,6 +382,106 @@ class ANetDataset(Dataset):
         return pos_seg, sentence, neg_seg, img_feat, load_t
 
 
+def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
+    # train_sentences = []
+    train_val_sentences = []
+
+    print(f'loading dataset_file: {dataset_file}')
+    with open(dataset_file, 'r', encoding='utf-8') as data_file:
+        data_all = json.load(data_file)
+    raw_data = data_all['database']
+
+    sample_list_dir = os.path.dirname(sample_list_path)
+
+    sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
+    n_train_videos = n_val_videos = 0
+    # n_train_sentences = n_val_sentences = 0
+
+    nsentence = dict(
+        training=0,
+        validation=0,
+    )
+    sentence_lengths = []
+    max_sentence_length = 0
+
+    for vid, val in tqdm(raw_data.items(), desc='getting train_val_sentences', ncols=100):
+        anns = val['annotations']
+        split = val['subset']
+        if split == 'training':
+            n_train_videos += 1
+        else:
+            n_val_videos += 1
+
+        if split in ['training', 'validation']:
+            for ind, ann in enumerate(anns):
+                ann['sentence'] = ann['sentence'].strip()
+                sentence_length = len(ann['sentence'].split(' '))
+                sentence_lengths.append(sentence_length)
+
+                if sentence_length > max_sentence_length:
+                    max_sentence_length = sentence_length
+                # if split == "training":
+                #     train_sentences.append(ann['sentence'])
+                train_val_sentences.append(ann['sentence'])
+                nsentence[split] += 1
+
+    print(f'max_sentence_length: {max_sentence_length}')
+
+    sentence_lengths_path = os.path.join(sample_list_dir, f"sentence_lengths.txt")
+    os.makedirs(sample_list_dir, exist_ok=1)
+
+    print(f'sentence_lengths_path: {sentence_lengths_path}')
+
+    sentence_lengths = list(map(str, sentence_lengths))
+    with open(sentence_lengths_path, 'w') as fid:
+        fid.write('\n'.join(sentence_lengths))
+
+    print(f'# of training videos: {n_train_videos}')
+    print('# of training sentences {}'.format(nsentence['training']))
+
+    print(f'# of validation videos: {n_val_videos}')
+    print('# of validation sentences {}'.format(nsentence['validation']))
+
+    # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
+    #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
+    #     # with open(sentences_dict_path, 'rb') as f:
+    #     #     sentences_dict = pickle.load(f)
+    #     # train_sentences = sentences_dict['train_sentences']
+    #     # sentence_idx = sentences_dict['sentence_idx']
+    #     text_proc = None
+    # else:
+    # build vocab and tokenized sentences
+    try:
+        Field = torchtext.data.Field
+    except AttributeError:
+        Field = torchtext.legacy.data.Field
+
+    text_proc = Field(
+        sequential=True, init_token='<init>',
+        eos_token='<eos>', tokenize='spacy',
+        lower=True, batch_first=True,
+        fix_length=max_sentence_length)
+
+    # sentences_proc = list(map(text_proc.preprocess, train_sentences)) # build vocab on train only
+    """divide sentences into words to have a list of list of words or tokens as they're called"""
+    sentences_proc_path = os.path.join(sample_list_dir, f"sentences_proc.pkl")
+    if os.path.isfile(sentences_proc_path):
+        print(f'loading sentences_proc from {sentences_proc_path}')
+        with open(sentences_proc_path, 'rb') as f:
+            sentences_proc = pickle.load(f)
+    else:
+        print('text_proc.preprocess')
+        sentences_proc = list(map(text_proc.preprocess, train_val_sentences))
+        print(f'saving sentences_proc to {sentences_proc_path}')
+        with open(sentences_proc_path, 'wb') as f:
+            pickle.dump(sentences_proc, f)
+
+    print('building vocab')
+    text_proc.build_vocab(sentences_proc, min_freq=5)
+    print(f'# of words in the vocab: {len(text_proc.vocab)}')
+
+    return text_proc, raw_data, n_train_videos, n_val_videos
+
 def _get_pos_neg(vid_info,
                  n_vids, slide_window_size, anc_len_all,
                  anc_cen_all, pos_thresh, neg_thresh,
@@ -549,9 +549,11 @@ def _get_pos_neg(vid_info,
             seg_id = ann['id']
 
             """
-            Something weird going on here since to anchor centres and lengths are in units of frames but the raw
+            Something weird going on here since anchor centres and lengths are in units of frames but the raw
             GT segments are definitely in units of seconds and dividing these by sampling_sec cannot convert these 
-            into frames as far as one can see 
+            into frames as far as one can see
+            turns out that it can be done as long as the frames are sampled frames rather than the original as is 
+            indeed the case here
             """
             gt_start_raw, gt_end_raw = seg
 

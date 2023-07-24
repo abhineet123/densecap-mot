@@ -12,15 +12,54 @@ from torch.utils.data import Dataset
 
 
 class ANetTestDataset(Dataset):
-    def __init__(self, image_path, slide_window_size,
-                 dur_file, dataset, sampling_sec,
-                 text_proc, raw_data, split, learn_mask):
+    def __init__(self, image_path,
+                 slide_window_size,
+                 dur_file,
+                 dataset,
+                 sampling_sec,
+                 text_proc,
+                 raw_data,
+                 split,
+                 learn_mask):
         super(ANetTestDataset, self).__init__()
 
         self.split = split
         split_path = os.path.join(image_path, self.split)
         self.slide_window_size = slide_window_size
         self.learn_mask = learn_mask
+
+
+        self.frame_to_second = {}
+        self.sampled_frames = {}
+        self.fps = {}
+        self.vid_dur = {}
+        self.vid_frame = {}
+
+        with open(dur_file) as f:
+            if dataset == 'anet':
+                for line in f:
+                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    self.frame_to_second[vid_name] = float(vid_dur) * int(
+                        float(vid_frame) * 1. / int(float(vid_dur)) * sampling_sec) * 1. / float(vid_frame)
+                self.frame_to_second['_0CqozZun3U'] = sampling_sec  # a missing video in anet
+            elif dataset == 'yc2':
+                import math
+                for line in f:
+                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
+                        float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)  # for yc2
+            elif dataset.startswith('MNIST_MOT_RGB'):
+                for line in f:
+                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    self.frame_to_second[vid_name] = float(vid_dur) * int(
+                        float(vid_frame) * 1. / int(float(vid_dur)) * sampling_sec) * 1. / float(vid_frame)
+
+                    self.vid_dur[vid_name] = float(vid_dur)
+                    self.vid_frame[vid_name] = float(vid_frame)
+                    self.fps[vid_name] = float(vid_frame) / float(vid_dur)
+                    self.sampled_frames[vid_name] = int(self.fps[vid_name]*sampling_sec)
+            else:
+                raise NotImplementedError(f"Unsupported dataset: {dataset}")
 
         self.sample_list = []  # list of list for data samples
 
@@ -55,38 +94,6 @@ class ANetTestDataset(Dataset):
         print('total number of samples (unique videos): {}'.format(
             len(self.sample_list)))
         print('total number of sentences: {}'.format(len(test_sentences)))
-
-        self.frame_to_second = {}
-        self.sampled_frames = {}
-        self.fps = {}
-        self.vid_dur = {}
-        self.vid_frame = {}
-
-        with open(dur_file) as f:
-            if dataset == 'anet':
-                for line in f:
-                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
-                    self.frame_to_second[vid_name] = float(vid_dur) * int(
-                        float(vid_frame) * 1. / int(float(vid_dur)) * sampling_sec) * 1. / float(vid_frame)
-                self.frame_to_second['_0CqozZun3U'] = sampling_sec  # a missing video in anet
-            elif dataset == 'yc2':
-                import math
-                for line in f:
-                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
-                    self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
-                        float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)  # for yc2
-            elif dataset.startswith('MNIST_MOT_RGB'):
-                for line in f:
-                    vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
-                    self.frame_to_second[vid_name] = float(vid_dur) * int(
-                        float(vid_frame) * 1. / int(float(vid_dur)) * sampling_sec) * 1. / float(vid_frame)
-
-                    self.vid_dur[vid_name] = float(vid_dur)
-                    self.vid_frame[vid_name] = float(vid_frame)
-                    self.fps[vid_name] = float(vid_frame) / float(vid_dur)
-                    self.sampled_frames[vid_name] = int(self.fps[vid_name]*sampling_sec)
-            else:
-                raise NotImplementedError(f"Unsupported dataset: {dataset}")
 
     def __len__(self):
         return len(self.sample_list)

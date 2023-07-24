@@ -35,12 +35,17 @@ def main():
 
     n_proc = params.n_proc
     n_gpu = params.n_gpu
+    gpus = params.gpus
 
-    if n_gpu <= 0:
-        import torch
-        n_gpu = torch.cuda.device_count()
+    if not gpus:
+        if n_gpu <= 0:
+            import torch
+            n_gpu = torch.cuda.device_count()
+        gpus = tuple(range(n_gpu))
 
-    print(f'n_gpu: {n_gpu}')
+    n_gpu = len(gpus)
+
+    print(f'gpus: {gpus}')
 
     try:
         params.set = int(params.set)
@@ -77,7 +82,7 @@ def main():
     cmd_list = []
 
     for proc_id in range(n_proc):
-        gpu_id = (proc_id + 1) % n_gpu
+        gpu_id = gpus[int((proc_id + 1) % n_gpu)]
         end_seq_id = min(start_seq_id + n_seq_per_proc - 1, n_seq - 1)
 
         # seqs = list(map(str, params.seq[start_seq_id:end_seq_id + 1]))
