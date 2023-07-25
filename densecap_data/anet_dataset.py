@@ -200,7 +200,7 @@ class ANetDataset(Dataset):
                     self.vid_dur[vid_name] = float(vid_dur)
                     self.vid_frame[vid_name] = float(vid_frame)
                     self.fps[vid_name] = float(vid_frame) / float(vid_dur)
-                    self.sampled_frames[vid_name] = int(self.fps[vid_name]*sampling_sec)
+                    self.sampled_frames[vid_name] = int(self.fps[vid_name] * sampling_sec)
 
                     self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
                         float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)
@@ -353,7 +353,7 @@ class ANetDataset(Dataset):
         return len(self.sample_list)
 
     def __getitem__(self, index):
-        if len( self.sample_list[index]) == 6:
+        if len(self.sample_list[index]) == 6:
             video_prefix, feat_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
         else:
             video_prefix, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
@@ -370,11 +370,11 @@ class ANetDataset(Dataset):
         resnet_feat = np.array(resnet_feat)
         bn_feat = np.array(bn_feat)
 
-        resnet_feat = torch.from_numpy(resnet_feat).float()
-        bn_feat = torch.from_numpy(bn_feat).float()
-
         end = time.time()
         load_t = (end - start) * 1000
+
+        resnet_feat = torch.from_numpy(resnet_feat).float()
+        bn_feat = torch.from_numpy(bn_feat).float()
 
         img_feat = torch.from_numpy(np.zeros(
             (self.slide_window_size, resnet_feat.size(1) + bn_feat.size(1)),
@@ -384,7 +384,10 @@ class ANetDataset(Dataset):
         torch.cat((resnet_feat, bn_feat), dim=1,
                   out=img_feat[:min(total_frame, self.slide_window_size)])
 
-        return pos_seg, sentence, neg_seg, img_feat, load_t
+        end2 = time.time()
+        torch_t = (end2 - end) * 1000
+
+        return pos_seg, sentence, neg_seg, img_feat, load_t, torch_t
 
 
 def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
@@ -486,6 +489,7 @@ def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
     print(f'# of words in the vocab: {len(text_proc.vocab)}')
 
     return text_proc, raw_data, n_train_videos, n_val_videos
+
 
 def _get_pos_neg(vid_info,
                  n_vids, slide_window_size, anc_len_all,
@@ -773,8 +777,10 @@ def _get_pos_neg(vid_info,
 
 
 def anet_collate_fn(batch_lst):
+    start = time.time()
+
     sample_each = 10  # TODO, hard coded
-    pos_seg, sentence, neg_seg, img_feat, load_t = batch_lst[0]
+    pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[0]
 
     batch_size = len(batch_lst)
 
@@ -786,11 +792,13 @@ def anet_collate_fn(batch_lst):
     tempo_seg_neg = torch.from_numpy(np.zeros((batch_size, sample_each, 2))).float()
 
     batch_load_t = 0
+    batch_torch_t = 0
 
     for batch_idx in range(batch_size):
-        pos_seg, sentence, neg_seg, img_feat, load_t = batch_lst[batch_idx]
+        pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[batch_idx]
 
         batch_load_t += load_t
+        batch_torch_t += torch_t
 
         img_batch[batch_idx, :] = img_feat
 
@@ -819,4 +827,9 @@ def anet_collate_fn(batch_lst):
                                     sample_each - len(neg_seg), True)
             tempo_seg_neg[batch_idx, len(neg_seg):, :] = neg_seg_tensor[idx]
 
-    return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, batch_load_t
+    end = time.time()
+    collate_t = (end - start) * 1000
+
+    times = (batch_load_t, batch_torch_t, collate_t)
+
+    return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
