@@ -132,6 +132,19 @@ class ActionClassifier(object):
 
         _input, out_path = io_info
 
+        resnet_out_fname = _input.seq_name + "_resnet.npy"
+        bn_out_fname = _input.seq_name + "_bn.npy"
+
+        resnet_out_path = os.path.join(out_path, resnet_out_fname)
+        bn_out_path = os.path.join(out_path, bn_out_fname)
+
+        print(f'resnet_out_path: {resnet_out_path}')
+        print(f'bn_out_path: {bn_out_path}')
+
+        if os.path.exists(resnet_out_path) and os.path.exists(bn_out_path):
+            print('feature files already exist so skipping this sequence')
+            return
+
         frm_it = _input.read_iter(
             length=length,
             new_size=new_size,
@@ -236,12 +249,6 @@ class ActionClassifier(object):
             # end = time.time()
             # elapsed = end - start
             # print("frame sample {}: {} second".format(cnt, elapsed))
-
-        resnet_out_fname = _input.seq_name + "_resnet.npy"
-        bn_out_fname = _input.seq_name + "_bn.npy"
-
-        resnet_out_path = os.path.join(out_path, resnet_out_fname)
-        bn_out_path = os.path.join(out_path, bn_out_fname)
 
         resnet_out_shape = all_features['resnet'].shape
         bn_out_shape = all_features['bn'].shape
