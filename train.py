@@ -96,10 +96,8 @@ def get_dataset(args):
     if not valid_dataset.samples_loaded:
         valid_dataset.get_samples(args.n_proc)
 
-    # dist parallel, optional
+
     from datetime import timedelta
-    args.distributed = args.world_size > 1
-    # args.distributed = 1
 
     if args.distributed and args.cuda:
         from urllib.parse import urlparse
@@ -211,6 +209,10 @@ def main():
     args = get_args()  # type: TrainParams
 
     print(f'args.resume: {args.resume}')
+
+    # dist parallel, optional
+    args.distributed = args.world_size > 1
+    # args.distributed = 1
 
     # args = TrainParams()
     # paramparse.process(args)
@@ -338,7 +340,7 @@ def main():
             train_sampler.set_epoch(train_epoch)
 
         train_loss_dict = train(train_epoch, model, optimizer, train_loader,
-                                vis, vis_window, writer, args)
+                                vis, vis_window, args)
 
         epoch_loss = np.mean(train_loss_dict['loss'])
         cls_loss = np.mean(train_loss_dict['cls_loss'])
@@ -371,7 +373,7 @@ def main():
                 torch.save(model.state_dict(), checkpoint_path)
 
         (valid_loss, val_cls_loss,
-         val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, writer, args)
+         val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, args)
 
         writer.add_scalar('val/loss', valid_loss, train_epoch)
         writer.add_scalar('val/cls_loss', val_cls_loss, train_epoch)
@@ -489,7 +491,9 @@ def main():
         print('-' * 80)
 
 
-def train(epoch, model, optimizer, train_loader, vis, vis_window, writer, args):
+def train(epoch, model, optimizer, train_loader, vis, vis_window,
+          # writer,
+          args):
     model.train()  # training mode
     train_loss = []
     train_cls_loss = []
@@ -542,14 +546,14 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window, writer, args):
             total_loss += scst_loss
 
             train_scst_loss.append(scst_loss.data.item())
-            writer.add_scalar('train_iter/scst_loss', train_scst_loss[-1], global_iter)
+            # writer.add_scalar('train_iter/scst_loss', train_scst_loss[-1], global_iter)
 
         if mask_loss is not None:
             mask_loss = args.mask_weight * mask_loss
             total_loss += mask_loss
 
             train_mask_loss.append(mask_loss.data.item())
-            writer.add_scalar('train_iter/mask_loss', train_mask_loss[-1], global_iter)
+            # writer.add_scalar('train_iter/mask_loss', train_mask_loss[-1], global_iter)
 
         else:
             mask_loss = cls_loss.new(1).fill_(0)
@@ -560,21 +564,21 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window, writer, args):
         # enable the clipping for zero mask loss training
         total_grad_norm = clip_grad_norm_(filter(lambda p: p.requires_grad, model.parameters()),
                                           args.grad_norm)
-        writer.add_scalar('train_iter/grad_norm', float(total_grad_norm), global_iter)
+        # writer.add_scalar('train_iter/grad_norm', float(total_grad_norm), global_iter)
 
         optimizer.step()
 
         train_cls_loss.append(cls_loss.data.item())
-        writer.add_scalar('train_iter/cls_loss', train_cls_loss[-1], global_iter)
+        # writer.add_scalar('train_iter/cls_loss', train_cls_loss[-1], global_iter)
 
         train_reg_loss.append(reg_loss.data.item())
-        writer.add_scalar('train_iter/reg_loss', train_reg_loss[-1], global_iter)
+        # writer.add_scalar('train_iter/reg_loss', train_reg_loss[-1], global_iter)
 
         train_sent_loss.append(sent_loss.data.item())
-        writer.add_scalar('train_iter/sent_loss', train_sent_loss[-1], global_iter)
+        # writer.add_scalar('train_iter/sent_loss', train_sent_loss[-1], global_iter)
 
         train_loss.append(total_loss.data.item())
-        writer.add_scalar('train_iter/oss', train_loss[-1], global_iter)
+        # writer.add_scalar('train_iter/oss', train_loss[-1], global_iter)
 
         if args.enable_visdom:
             if vis_window['iter'] is None:
@@ -626,7 +630,9 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window, writer, args):
     return loss_dict
 
 
-def valid(epoch, model, loader, writer, args):
+def valid(epoch, model, loader,
+          # writer,
+          args):
     model.eval()
     valid_loss = []
     val_cls_loss = []
@@ -676,19 +682,19 @@ def valid(epoch, model, loader, writer, args):
                 mask_loss = cls_loss.new(1).fill_(0)
 
             val_cls_loss.append(cls_loss.data.item())
-            writer.add_scalar('val_iter/cls_loss', val_cls_loss[-1], global_iter)
+            # writer.add_scalar('val_iter/cls_loss', val_cls_loss[-1], global_iter)
 
             val_reg_loss.append(reg_loss.data.item())
-            writer.add_scalar('val_iter/reg_loss', val_reg_loss[-1], global_iter)
+            # writer.add_scalar('val_iter/reg_loss', val_reg_loss[-1], global_iter)
 
             val_sent_loss.append(sent_loss.data.item())
-            writer.add_scalar('val_iter/sent_loss', val_sent_loss[-1], global_iter)
+            # writer.add_scalar('val_iter/sent_loss', val_sent_loss[-1], global_iter)
 
             val_mask_loss.append(mask_loss.data.item())
-            writer.add_scalar('val_iter/mask_loss', val_sent_loss[-1], global_iter)
+            # writer.add_scalar('val_iter/mask_loss', val_sent_loss[-1], global_iter)
 
             valid_loss.append(total_loss.data.item())
-            writer.add_scalar('val_iter/loss', valid_loss[-1], global_iter)
+            # writer.add_scalar('val_iter/loss', valid_loss[-1], global_iter)
 
     return (np.mean(valid_loss), np.mean(val_cls_loss),
             np.mean(val_reg_loss), np.mean(val_sent_loss), np.mean(val_mask_loss))
