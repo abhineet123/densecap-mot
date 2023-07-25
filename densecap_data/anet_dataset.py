@@ -353,7 +353,12 @@ class ANetDataset(Dataset):
         return len(self.sample_list)
 
     def __getitem__(self, index):
-        video_prefix, feat_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
+        if len( self.sample_list[index]) == 6:
+            video_prefix, feat_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
+        else:
+            video_prefix, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
+            feat_frame_ids = (0, total_frame)
+
         sentence = torch.from_numpy(np.asarray(sentence))
 
         feat_start_id, feat_end_id = feat_frame_ids
