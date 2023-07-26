@@ -48,10 +48,10 @@ def get_dataset(args):
     :return:
     """
     # process text
-    train_val_splits = [args.train_splits[0], args.val_splits[0]]
+    # train_val_splits = [args.train_splits[0], args.val_splits[0]]
     text_proc, raw_data, n_train_videos, n_val_videos = get_vocab_and_sentences(
         args.dataset_file,
-        train_val_splits,
+        # train_val_splits,
         # args.max_sentence_len,
         sample_list_path=args.train_samplelist_path)
 
@@ -203,13 +203,13 @@ def main():
     # assert (args.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
 
     if not args.train_samplelist_path:
-        args.train_samplelist_path = linux_path(args.ckpt, "train_samples")
+        args.train_samplelist_path = linux_path(args.ckpt, f"{args.train_splits[0],}_samples")
 
     # if not args.train_sentence_dict_path:
     #     args.train_sentence_dict_path = linux_path(args.ckpt, "train_sentence_dict.pkl")
 
     if not args.valid_samplelist_path:
-        args.valid_samplelist_path = linux_path(args.ckpt, "valid_samples")
+        args.valid_samplelist_path = linux_path(args.ckpt, f"{args.val_splits[0],}_samples")
 
     # if not args.valid_sentence_dict_path:
     #     args.valid_sentence_dict_path = linux_path(args.ckpt, "valid_sentence_dict.pkl")

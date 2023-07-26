@@ -212,23 +212,15 @@ def validate(model, loader, dataset, args):
 def main():
     args = TestParams()
 
-    if args.cfgs_file:
-        with open(args.cfgs_file, 'r') as handle:
-            options_yaml = yaml.safe_load(handle)
-        update_values(options_yaml, vars(args))
-
-    """Commandline arguments override those in cfgs_file"""
     paramparse.process(args)
+
+    with open(args.cfgs_file, 'r') as handle:
+        options_yaml = yaml.safe_load(handle)
+    update_values(options_yaml, vars(args))
 
     if args.gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    # with open(args.cfgs_file, 'r') as handle:
-    #     options_yaml = yaml.safe_load(handle)
-    # update_values(options_yaml, vars(args))
-    print(args)
-
-    # arguments inspection
     assert args.batch_size == 1, "Batch size has to be 1!"
 
     assert args.slide_window_size > args.slide_window_stride, \

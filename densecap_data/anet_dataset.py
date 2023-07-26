@@ -449,7 +449,7 @@ def anet_collate_fn(batch_lst):
     return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
 
 
-def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
+def get_vocab_and_sentences(dataset_file, sample_list_path):
     # train_sentences = []
     train_val_sentences = []
 
@@ -460,7 +460,8 @@ def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
 
     sample_list_dir = os.path.dirname(sample_list_path)
 
-    sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
+    # sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
+
     n_train_videos = n_val_videos = 0
     # n_train_sentences = n_val_sentences = 0
 

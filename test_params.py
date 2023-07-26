@@ -116,7 +116,7 @@ class TestParams(CFG):
 
         self.kernel_list = []
 
-        self.gpu = '0'
+        self.gpu = ''
         self.attn_dropout = 0.2
         self.batch_size = 1
         self.cap_dropout = 0.2
