@@ -241,6 +241,8 @@ def main():
     else:
         raise AssertionError(f'invalid ckpt: {args.ckpt}')
 
+    print(f'ckpt: {args.ckpt}')
+
     ckpt_dir = os.path.dirname(args.ckpt)
     ckpt_name = os.path.splitext(os.path.basename(args.ckpt))[0]
 
