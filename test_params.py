@@ -112,7 +112,6 @@ class TestParams(CFG):
         self.cfgs_file = ''
         self.db_root = ''
         self.feature_root = ''
-        self.sample_list_dir = ''
 
         self.kernel_list = []
 

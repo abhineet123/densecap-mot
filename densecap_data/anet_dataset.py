@@ -449,9 +449,9 @@ def anet_collate_fn(batch_lst):
     return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
 
 
-def get_vocab_and_sentences(dataset_file, sample_list_path):
+def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
     # train_sentences = []
-    train_val_sentences = []
+    all_sentences = []
 
     print(f'loading dataset_file: {dataset_file}')
     with open(dataset_file, 'r', encoding='utf-8') as data_file:
@@ -462,36 +462,30 @@ def get_vocab_and_sentences(dataset_file, sample_list_path):
 
     # sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
 
-    n_train_videos = n_val_videos = 0
-    # n_train_sentences = n_val_sentences = 0
+    n_sentences = {aplit: 0 for aplit in splits}
+    n_videos = {aplit: 0 for aplit in splits}
 
-    nsentence = dict(
-        training=0,
-        validation=0,
-    )
     sentence_lengths = []
     max_sentence_length = 0
 
-    for vid, val in tqdm(raw_data.items(), desc='getting train_val_sentences', ncols=100):
-        anns = val['annotations']
+    for vid, val in tqdm(raw_data.items(), desc='getting all_sentences', ncols=100):
         split = val['subset']
-        if split == 'training':
-            n_train_videos += 1
-        else:
-            n_val_videos += 1
 
-        if split in ['training', 'validation']:
-            for ind, ann in enumerate(anns):
-                ann['sentence'] = ann['sentence'].strip()
-                sentence_length = len(ann['sentence'].split(' '))
-                sentence_lengths.append(sentence_length)
+        if split not in splits:
+            continue
 
-                if sentence_length > max_sentence_length:
-                    max_sentence_length = sentence_length
-                # if split == "training":
-                #     train_sentences.append(ann['sentence'])
-                train_val_sentences.append(ann['sentence'])
-                nsentence[split] += 1
+        anns = val['annotations']
+        n_videos[split] += 1
+
+        for ind, ann in enumerate(anns):
+            ann['sentence'] = ann['sentence'].strip()
+            sentence_length = len(ann['sentence'].split(' '))
+            sentence_lengths.append(sentence_length)
+
+            if sentence_length > max_sentence_length:
+                max_sentence_length = sentence_length
+            all_sentences.append(ann['sentence'])
+            n_sentences[split] += 1
 
     print(f'max_sentence_length: {max_sentence_length}')
 
@@ -504,11 +498,9 @@ def get_vocab_and_sentences(dataset_file, sample_list_path):
     with open(sentence_lengths_path, 'w') as fid:
         fid.write('\n'.join(sentence_lengths))
 
-    print(f'# of training videos: {n_train_videos}')
-    print('# of training sentences {}'.format(nsentence['training']))
-
-    print(f'# of validation videos: {n_val_videos}')
-    print('# of validation sentences {}'.format(nsentence['validation']))
+    for split in splits:
+        print(f'# of {split} videos: {n_videos[split]}')
+        print(f'# of {split} sentences {n_sentences[split]}')
 
     # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
     #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
@@ -518,6 +510,7 @@ def get_vocab_and_sentences(dataset_file, sample_list_path):
     #     # sentence_idx = sentences_dict['sentence_idx']
     #     text_proc = None
     # else:
+
     # build vocab and tokenized sentences
     try:
         Field = torchtext.data.Field
@@ -539,7 +532,7 @@ def get_vocab_and_sentences(dataset_file, sample_list_path):
             sentences_proc = pickle.load(f)
     else:
         print('text_proc.preprocess')
-        sentences_proc = list(map(text_proc.preprocess, train_val_sentences))
+        sentences_proc = list(map(text_proc.preprocess, all_sentences))
         print(f'saving sentences_proc to {sentences_proc_path}')
         with open(sentences_proc_path, 'wb') as f:
             pickle.dump(sentences_proc, f)
@@ -548,7 +541,7 @@ def get_vocab_and_sentences(dataset_file, sample_list_path):
     text_proc.build_vocab(sentences_proc, min_freq=5)
     print(f'# of words in the vocab: {len(text_proc.vocab)}')
 
-    return text_proc, raw_data, n_train_videos, n_val_videos
+    return text_proc, raw_data, n_videos
 
 
 def _get_pos_neg(vid_info,

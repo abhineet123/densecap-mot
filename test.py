@@ -44,7 +44,7 @@ def get_dataset(args):
     assert args.sample_list_path, "sample_list_path must be provided"
     # process text
     test_split = [args.test_split, ]
-    text_proc, raw_data = get_vocab_and_sentences(
+    text_proc, raw_data, n_videos = get_vocab_and_sentences(
         args.dataset_file,
         test_split,
         sample_list_path=args.sample_list_path)
@@ -59,7 +59,7 @@ def get_dataset(args):
                                    raw_data,
                                    args.test_split,
                                    args.learn_mask,
-                                   args.sample_list_dir)
+                                   args.sample_list_path)
 
     test_loader = DataLoader(test_dataset,
                              batch_size=args.batch_size,
@@ -116,7 +116,6 @@ def validate(model, loader, dataset, args):
     prop_result = defaultdict(list)
 
     avg_prop_num = 0
-
 
     for data in loader:
         image_feat, original_num_frame, video_prefix = data
@@ -249,8 +248,8 @@ def main():
 
     os.makedirs(out_dir, exist_ok=1)
 
-    if not args.sample_list_dir:
-        args.sample_list_dir = linux_path(ckpt_dir, f"{args.test_split}_samples")
+    if not args.sample_list_path:
+        args.sample_list_path = linux_path(ckpt_dir, f"{args.test_split}_samples")
 
     print('loading dataset')
     test_loader, test_dataset, text_proc = get_dataset(args)
