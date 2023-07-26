@@ -487,8 +487,8 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
 
     print(f'max_sentence_length: {max_sentence_length}')
 
-    sentence_lengths_path = os.path.join(sample_list_dir, f"sentence_lengths.txt")
-    os.makedirs(sample_list_dir, exist_ok=1)
+    sentence_lengths_path = os.path.join(save_path, f"sentence_lengths.txt")
+    os.makedirs(save_path, exist_ok=1)
 
     print(f'sentence_lengths_path: {sentence_lengths_path}')
 
