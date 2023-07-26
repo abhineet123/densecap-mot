@@ -92,6 +92,11 @@ def get_model(text_proc, args):
                                stride_factor=args.stride_factor,
                                learn_mask=args.learn_mask)
 
+    print(f"loading weights from {args.ckpt}")
+    state_dict = torch.load(args.ckpt)
+    model.load_state_dict(state_dict)
+
+
     # if len(args.ckpt) > 0:
     #     print("Initializing weights from {}".format(args.ckpt))
     #     model.load_state_dict(torch.load(args.ckpt,
