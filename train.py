@@ -370,6 +370,8 @@ def main():
                     os.remove(del_checkpoint_path)
 
                 checkpoint_path = os.path.join(args.checkpoint_path, f'epoch_{train_epoch}.pth')
+                print(f'saving regular checkpoint: {checkpoint_path}')
+
                 torch.save(model.state_dict(), checkpoint_path)
 
         (valid_loss, val_cls_loss,
@@ -651,7 +653,7 @@ def valid(epoch, model, loader,
 
         load_t, torch_t, collate_t = times
         pbar.set_description(f'validation epoch {epoch} times: {load_t:.3f},{torch_t:.3f},{collate_t:.3f}')
-        
+
         with torch.no_grad():
             # img_batch = Variable(img_batch)
             # tempo_seg_pos = Variable(tempo_seg_pos)
