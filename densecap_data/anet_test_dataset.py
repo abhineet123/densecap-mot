@@ -6,6 +6,8 @@
 """
 
 import os
+import pickle
+
 import torch
 import numpy as np
 from torch.utils.data import Dataset
@@ -20,13 +22,17 @@ class ANetTestDataset(Dataset):
                  text_proc,
                  raw_data,
                  split,
-                 learn_mask):
+                 learn_mask,
+                 sample_list_dir):
         super(ANetTestDataset, self).__init__()
 
         self.split = split
         split_path = os.path.join(image_path, self.split)
         self.slide_window_size = slide_window_size
         self.learn_mask = learn_mask
+
+        self.sample_list_dir = sample_list_dir
+        self.sample_list_parent_dir = os.path.dirname(self.sample_list_dir)
 
         self.frame_to_second = {}
         self.sampled_frames = {}
@@ -60,35 +66,75 @@ class ANetTestDataset(Dataset):
             else:
                 raise NotImplementedError(f"Unsupported dataset: {dataset}")
 
-        self.sample_list = []  # list of list for data samples
+        sentences_dict_path = os.path.join(self.sample_list_parent_dir, f"{self.split}_sentences_dict.pkl")
+        if os.path.isfile(sentences_dict_path):
+            print(f'loading sentences_dict from: {sentences_dict_path}')
+            with open(sentences_dict_path, 'rb') as f:
+                sentences_dict = pickle.load(f)
+            test_sentences = sentences_dict['test_sentences']
+            sentence_idx = sentences_dict['sentence_idx']
+            self.sample_list = sentences_dict['sample_list']
+        else:
+            self.sample_list = []  # list of list for data samples
+            test_sentences = []
+            for vid, val in raw_data.items():
+                annotations = val['annotations']
+                if val['subset'] != self.split:
+                    continue
 
-        test_sentences = []
-        for vid, val in raw_data.items():
-            annotations = val['annotations']
-            if val['subset'] == self.split:
-                file_path = os.path.join(split_path, vid + '_bn.npy')
-                if not os.path.isfile(file_path):
-                    print("file does not exist: {}".format(file_path))
-                video_prefix = os.path.join(split_path, vid)
-                self.sample_list.append(video_prefix)
+                # file_path = os.path.join(split_path, vid + '_bn.npy')
+                # assert os.path.isfile(file_path), "file does not exist: {}".format(file_path)
+
+                if '--' in vid:
+                    feat_name, vid_frame_ids = vid.split('--')
+                    vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+
+                    start_id, end_id = vid_frame_ids
+
+                    n_subseq_frames = end_id - start_id
+                    assert n_subseq_frames == self.vid_frame[vid], \
+                        f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
+
+                    feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
+                        end_id / self.sampled_frames[vid])
+
+                    feat_frame_ids = (feat_start_id, feat_end_id)
+                else:
+                    feat_name = vid
+                    feat_frame_ids = None
+
+                video_prefix = os.path.join(split_path, feat_name)
+
+                self.sample_list.append((video_prefix, feat_frame_ids))
+
                 for ind, ann in enumerate(annotations):
                     ann['sentence'] = ann['sentence'].strip()
                     test_sentences.append(ann['sentence'])
 
-        test_sentences = list(map(text_proc.preprocess, test_sentences))
-        sentence_idx = text_proc.numericalize(text_proc.pad(test_sentences),
-                                              device=None)  # put in memory
+            test_sentences = list(map(text_proc.preprocess, test_sentences))
+            sentence_idx = text_proc.numericalize(text_proc.pad(test_sentences),
+                                                  device=None)
+            sentences_dict = dict(
+                test_sentences=test_sentences,
+                sentence_idx=sentence_idx,
+                sample_list=self.sample_list,
+            )
+            print(f'saving sentences_dict to: {sentences_dict_path}')
+            os.makedirs(self.sample_list_parent_dir, exist_ok=1)
+            with open(sentences_dict_path, 'wb') as f:
+                pickle.dump(sentences_dict, f)
 
-        if sentence_idx.nelement() != 0 and len(test_sentences) != 0:
-            if sentence_idx.size(0) != len(test_sentences):
-                raise Exception("Error in numericalizing sentences")
+            if sentence_idx.nelement() != 0 and len(test_sentences) != 0:
+                if sentence_idx.size(0) != len(test_sentences):
+                    raise Exception("Error in numericalizing sentences")
 
         idx = 0
         for vid, val in raw_data.items():
-            if val['subset'] == self.split and os.path.isfile(os.path.join(split_path, vid + '_bn.npy')):
-                for ann in val['annotations']:
-                    ann['sentence_idx'] = sentence_idx[idx]
-                    idx += 1
+            if val['subset'] != self.split:
+                continue
+            for ann in val['annotations']:
+                ann['sentence_idx'] = sentence_idx[idx]
+                idx += 1
 
         print('total number of samples (unique videos): {}'.format(
             len(self.sample_list)))
@@ -98,7 +144,8 @@ class ANetTestDataset(Dataset):
         return len(self.sample_list)
 
     def __getitem__(self, index):
-        video_prefix = self.sample_list[index]
+        video_prefix, feat_frame_ids = self.sample_list[index]
+        feat_start_id, feat_end_id = feat_frame_ids
 
         resnet_feat = torch.from_numpy(np.load(video_prefix + '_resnet.npy')).float()
         bn_feat = torch.from_numpy(np.load(video_prefix + '_bn.npy')).float()

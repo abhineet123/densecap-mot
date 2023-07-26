@@ -145,7 +145,7 @@ class ANetDataset(Dataset):
 
         # print(f'size of the sentence block variable ({splits}): {sentence_idx.size()}')
 
-        # all the anchors
+        """generate anchors"""
         anc_len_lst = []
         anc_cen_lst = []
         for i in range(0, len(kernel_list)):
