@@ -1,4 +1,7 @@
-class DenseCapTest:
+from paramparse import CFG
+
+
+class TestParams(CFG):
     """
     :ivar attn_dropout:
     :type attn_dropout: float
@@ -90,8 +93,8 @@ class DenseCapTest:
     :ivar slide_window_stride: the step size of the sliding window
     :type slide_window_stride: int
 
-    :ivar start_from: path to a model checkpoint to initialize model weights from. Empty = dont
-    :type start_from: str
+    :ivar ckpt: path to a model checkpoint to initialize model weights from. Empty = dont
+    :type ckpt: str
 
     :ivar stride_factor: the proposal temporal conv kernel stride is determined by math.ceil(kernel_len/stride_factor)
     :type stride_factor: int
@@ -104,27 +107,31 @@ class DenseCapTest:
     """
 
     def __init__(self):
-        self.cfg = ('cfg/anet.cfg',)
+        CFG.__init__(self)
+
+        self.cfgs_file = ''
+        self.db_root = ''
+        self.feature_root = ''
+        self.kernel_list = []
+
         self.gpu = '0'
         self.attn_dropout = 0.2
         self.batch_size = 1
         self.cap_dropout = 0.2
-        # self.cfgs_file = 'cfg/anet.cfg'
         self.cuda = True
         self.fps = 30
         self.d_hidden = 2048
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''
-        self.densecap_eval_file = '/z/subsystem/densevid_eval/evaluate.py'
+        self.densecap_eval_file = ''
         self.densecap_references = ''
         self.dur_file = ''
-        self.feature_root = '/data/'
+        self.feature_root = ''
         self.gated_mask = False
         self.id = ''
         self.image_feat_size = 3072
         self.in_emb_dropout = 0.1
-        self.kernel_list = [[1, 2, 3, 4, 5, 7, 9, 11, 15, 21, 29, 41, 57, 71, 111, 161, 211, 251], ]
         self.learn_mask = False
         self.max_prop_num = 500
         self.max_sentence_len = 20
@@ -137,7 +144,7 @@ class DenseCapTest:
         self.sampling_sec = 0.5
         self.slide_window_size = 480
         self.slide_window_stride = 20
-        self.start_from = ''
+        self.ckpt = ''
         self.stride_factor = 50
         self.sample_list_path = ''
         self.test_split = 'validation'

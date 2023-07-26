@@ -7,6 +7,7 @@
 
 import os
 import pickle
+import time
 
 import torch
 import numpy as np
@@ -62,7 +63,7 @@ class ANetTestDataset(Dataset):
                     self.vid_dur[vid_name] = float(vid_dur)
                     self.vid_frame[vid_name] = float(vid_frame)
                     self.fps[vid_name] = float(vid_frame) / float(vid_dur)
-                    self.sampled_frames[vid_name] = int(self.fps[vid_name]*sampling_sec)
+                    self.sampled_frames[vid_name] = int(self.fps[vid_name] * sampling_sec)
             else:
                 raise NotImplementedError(f"Unsupported dataset: {dataset}")
 
@@ -147,8 +148,18 @@ class ANetTestDataset(Dataset):
         video_prefix, feat_frame_ids = self.sample_list[index]
         feat_start_id, feat_end_id = feat_frame_ids
 
-        resnet_feat = torch.from_numpy(np.load(video_prefix + '_resnet.npy')).float()
-        bn_feat = torch.from_numpy(np.load(video_prefix + '_bn.npy')).float()
+        start = time.time()
+        resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+        bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+
+        resnet_feat = np.array(resnet_feat)
+        bn_feat = np.array(bn_feat)
+
+        end = time.time()
+        load_t = (end - start) * 1000
+
+        resnet_feat = torch.from_numpy(resnet_feat).float()
+        bn_feat = torch.from_numpy(bn_feat).float()
 
         if self.learn_mask:
             img_feat = torch.from_numpy(np.zeros((self.slide_window_size,
@@ -158,27 +169,40 @@ class ANetTestDataset(Dataset):
         else:
             img_feat = torch.cat((resnet_feat, bn_feat), 1)
 
-        return img_feat, bn_feat.size(0), video_prefix
+        end2 = time.time()
+        torch_t = (end2 - end) * 1000
+
+        return img_feat, bn_feat.size(0), video_prefix, load_t, torch_t
 
 
 def anet_test_collate_fn(batch_lst):
+    start = time.time()
+
     img_feat, _, _ = batch_lst[0]
 
     batch_size = len(batch_lst)
 
-    img_batch = torch.FloatTensor(batch_size,
-                                  img_feat.size(0),
-                                  img_feat.size(1)).zero_()
+    img_batch = torch.zeros(batch_size, img_feat.size(0), img_feat.size(1))
 
-    frame_length = torch.IntTensor(batch_size).zero_()
+    frame_length = torch.zeros(batch_size, dtype=torch.int)
 
     video_prefix = []
 
+    batch_load_t = 0
+    batch_torch_t = 0
+
     for batch_idx in range(batch_size):
-        img_feat, T, vid = batch_lst[batch_idx]
+        img_feat, T, vid, load_t, torch_t = batch_lst[batch_idx]
+
+        batch_load_t += load_t
+        batch_torch_t += torch_t
 
         img_batch[batch_idx, :] = img_feat
         frame_length[batch_idx] = T
         video_prefix.append(vid)
 
-    return img_batch, frame_length, video_prefix
+    end = time.time()
+    collate_t = (end - start) * 1000
+    times = (batch_load_t, batch_torch_t, collate_t)
+
+    return img_batch, frame_length, video_prefix, times

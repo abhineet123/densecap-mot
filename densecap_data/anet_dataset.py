@@ -390,6 +390,65 @@ class ANetDataset(Dataset):
         return pos_seg, sentence, neg_seg, img_feat, load_t, torch_t
 
 
+def anet_collate_fn(batch_lst):
+    start = time.time()
+
+    sample_each = 10  # TODO, hard coded
+    pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[0]
+
+    batch_size = len(batch_lst)
+
+    sentence_batch = torch.from_numpy(np.ones((batch_size, sentence.size(0)), dtype='int64')).long()
+    img_batch = torch.from_numpy(np.zeros((batch_size,
+                                           img_feat.size(0),
+                                           img_feat.size(1)))).float()
+    tempo_seg_pos = torch.from_numpy(np.zeros((batch_size, sample_each, 4))).float()
+    tempo_seg_neg = torch.from_numpy(np.zeros((batch_size, sample_each, 2))).float()
+
+    batch_load_t = 0
+    batch_torch_t = 0
+
+    for batch_idx in range(batch_size):
+        pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[batch_idx]
+
+        batch_load_t += load_t
+        batch_torch_t += torch_t
+
+        img_batch[batch_idx, :] = img_feat
+
+        pos_seg_tensor = torch.from_numpy(np.asarray(pos_seg)).float()
+
+        sentence_batch[batch_idx] = sentence.data
+
+        # sample positive anchors
+        perm_idx = torch.randperm(len(pos_seg))
+        if len(pos_seg) >= sample_each:
+            tempo_seg_pos[batch_idx, :, :] = pos_seg_tensor[perm_idx[:sample_each]]
+        else:
+            tempo_seg_pos[batch_idx, :len(pos_seg), :] = pos_seg_tensor
+            """Uniformly sample anchors to fill in the excess needed for the defined number of samples"""
+            idx = torch.multinomial(torch.ones(len(pos_seg)), sample_each - len(pos_seg), True)
+            tempo_seg_pos[batch_idx, len(pos_seg):, :] = pos_seg_tensor[idx]
+
+        # sample negative anchors
+        neg_seg_tensor = torch.from_numpy(np.asarray(neg_seg)).float()
+        perm_idx = torch.randperm(len(neg_seg))
+        if len(neg_seg) >= sample_each:
+            tempo_seg_neg[batch_idx, :, :] = neg_seg_tensor[perm_idx[:sample_each]]
+        else:
+            tempo_seg_neg[batch_idx, :len(neg_seg), :] = neg_seg_tensor
+            idx = torch.multinomial(torch.ones(len(neg_seg)),
+                                    sample_each - len(neg_seg), True)
+            tempo_seg_neg[batch_idx, len(neg_seg):, :] = neg_seg_tensor[idx]
+
+    end = time.time()
+    collate_t = (end - start) * 1000
+
+    times = (batch_load_t, batch_torch_t, collate_t)
+
+    return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
+
+
 def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
     # train_sentences = []
     train_val_sentences = []
@@ -774,62 +833,3 @@ def _get_pos_neg(vid_info,
     print(f'\n{vid} : done')
 
     return sample_list, video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
-
-
-def anet_collate_fn(batch_lst):
-    start = time.time()
-
-    sample_each = 10  # TODO, hard coded
-    pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[0]
-
-    batch_size = len(batch_lst)
-
-    sentence_batch = torch.from_numpy(np.ones((batch_size, sentence.size(0)), dtype='int64')).long()
-    img_batch = torch.from_numpy(np.zeros((batch_size,
-                                           img_feat.size(0),
-                                           img_feat.size(1)))).float()
-    tempo_seg_pos = torch.from_numpy(np.zeros((batch_size, sample_each, 4))).float()
-    tempo_seg_neg = torch.from_numpy(np.zeros((batch_size, sample_each, 2))).float()
-
-    batch_load_t = 0
-    batch_torch_t = 0
-
-    for batch_idx in range(batch_size):
-        pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[batch_idx]
-
-        batch_load_t += load_t
-        batch_torch_t += torch_t
-
-        img_batch[batch_idx, :] = img_feat
-
-        pos_seg_tensor = torch.from_numpy(np.asarray(pos_seg)).float()
-
-        sentence_batch[batch_idx] = sentence.data
-
-        # sample positive anchors
-        perm_idx = torch.randperm(len(pos_seg))
-        if len(pos_seg) >= sample_each:
-            tempo_seg_pos[batch_idx, :, :] = pos_seg_tensor[perm_idx[:sample_each]]
-        else:
-            tempo_seg_pos[batch_idx, :len(pos_seg), :] = pos_seg_tensor
-            """Uniformly sample anchors to fill in the excess needed for the defined number of samples"""
-            idx = torch.multinomial(torch.ones(len(pos_seg)), sample_each - len(pos_seg), True)
-            tempo_seg_pos[batch_idx, len(pos_seg):, :] = pos_seg_tensor[idx]
-
-        # sample negative anchors
-        neg_seg_tensor = torch.from_numpy(np.asarray(neg_seg)).float()
-        perm_idx = torch.randperm(len(neg_seg))
-        if len(neg_seg) >= sample_each:
-            tempo_seg_neg[batch_idx, :, :] = neg_seg_tensor[perm_idx[:sample_each]]
-        else:
-            tempo_seg_neg[batch_idx, :len(neg_seg), :] = neg_seg_tensor
-            idx = torch.multinomial(torch.ones(len(neg_seg)),
-                                    sample_each - len(neg_seg), True)
-            tempo_seg_neg[batch_idx, len(neg_seg):, :] = neg_seg_tensor[idx]
-
-    end = time.time()
-    collate_t = (end - start) * 1000
-
-    times = (batch_load_t, batch_torch_t, collate_t)
-
-    return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times

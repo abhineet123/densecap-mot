@@ -6,7 +6,7 @@ class TrainParams:
     :ivar beta: beta used for adam
     :ivar cap_dropout: None
     :ivar cfgs_file: dataset specific settings. anet | yc2
-    :ivar checkpoint_path: folder to save checkpoints into (empty = this folder)
+    :ivar ckpt: folder to save checkpoints into (empty = this folder)
     :ivar cls_weight: None
     :ivar cuda: use gpu
     :ivar d_hidden: None
@@ -71,7 +71,7 @@ class TrainParams:
         self.batch_size = 32
         self.beta = 0.999
         self.cap_dropout = 0.2
-        self.checkpoint_path = ''
+        self.ckpt = ''
         self.cls_weight = 1.0
         self.cuda = 1
         self.d_hidden = 2048
@@ -243,7 +243,7 @@ def get_args():
                         help='how many epochs to save a model checkpoint?')
     parser.add_argument('--keep_checkpoints', default=3, type=int,
                         help='how many previous checkpoints to keep')
-    parser.add_argument('--checkpoint_path', default='./checkpoint',
+    parser.add_argument('--ckpt', default='',
                         help='folder to save checkpoints into (empty = this folder)')
     parser.add_argument('--losses_log_every', default=1, type=int,
                         help='How often do we snapshot losses, for inclusion in the progress dump? (0 = disable)')

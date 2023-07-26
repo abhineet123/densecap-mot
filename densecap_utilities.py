@@ -3,11 +3,39 @@ import os
 import cv2
 from datetime import datetime
 from tqdm import tqdm
+import glob
 
 from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_to_rgb2, draw_traj2, resize_ar, \
     linux_path, CVText
 
 from objects import Annotations
+
+
+def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
+    ckpt_names = glob.glob(f'{dir_name}/{prefix}*.pth')
+
+    if len(ckpt_names) == 0:
+        msg = f'No checkpoints found in {dir_name}'
+        if ignore_missing:
+            print(msg)
+            return None, None
+        raise AssertionError(msg)
+
+    ckpt_names.sort(key=lambda x: os.path.getmtime(x))
+    checkpoint = ckpt_names[-1]
+
+    checkpoint_name = os.path.splitext(os.path.basename(checkpoint))[0]
+
+    epoch_str = checkpoint_name.replace(prefix, '')
+
+    try:
+        epoch = int(epoch_str)
+    except ValueError:
+        raise AssertionError(f'invalid checkpoint_name: {checkpoint_name} for prefix: {prefix}')
+
+    print(f'latest checkpoint found from epoch {epoch}:  {checkpoint}')
+
+    return checkpoint, epoch
 
 
 def build_targets_densecap(n_frames, frame_size, frames, annotations,

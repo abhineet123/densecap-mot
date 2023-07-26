@@ -18,11 +18,12 @@ import yaml
 # torch
 import torch
 from torch.utils.data import DataLoader
+from densecap_utilities import get_latest_checkpoint
 
 import paramparse
 
 # misc
-from dense_cap_test import DenseCapTest
+from test_params import TestParams
 from densecap_data.anet_test_dataset import ANetTestDataset, anet_test_collate_fn
 from densecap_data.anet_dataset import get_vocab_and_sentences
 from densecap_data.utils import update_values
@@ -36,7 +37,7 @@ from utilities import linux_path
 def get_dataset(args):
     """
 
-    :param DenseCapTest args:
+    :param TestParams args:
     :return:
     """
 
@@ -57,7 +58,8 @@ def get_dataset(args):
                                    text_proc,
                                    raw_data,
                                    args.test_split,
-                                   args.learn_mask)
+                                   args.learn_mask,
+                                   args.sample_list_dir)
 
     test_loader = DataLoader(test_dataset,
                              batch_size=args.batch_size,
@@ -69,6 +71,12 @@ def get_dataset(args):
 
 
 def get_model(text_proc, args):
+    """
+
+    :param text_proc:
+    :param TestParams args:
+    :return:
+    """
     sent_vocab = text_proc.vocab
     model = ActionPropDenseCap(dim_model=args.d_model,
                                dim_hidden=args.d_hidden,
@@ -85,9 +93,9 @@ def get_model(text_proc, args):
                                learn_mask=args.learn_mask)
 
     # Initialize the networks and the criterion
-    if len(args.start_from) > 0:
-        print("Initializing weights from {}".format(args.start_from))
-        model.load_state_dict(torch.load(args.start_from,
+    if len(args.ckpt) > 0:
+        print("Initializing weights from {}".format(args.ckpt))
+        model.load_state_dict(torch.load(args.ckpt,
                                          map_location=lambda storage, location: storage))
 
     # Ship the model to GPU, maybe
@@ -102,7 +110,7 @@ def validate(model, loader, dataset, args):
 
     :param model:
     :param loader:
-    :param DenseCapTest args:
+    :param TestParams args:
     :return:
     """
     model.eval()
@@ -111,9 +119,18 @@ def validate(model, loader, dataset, args):
 
     avg_prop_num = 0
 
-    ckpt_dir = os.path.dirname(args.start_from)
-    ckpt_name = os.path.splitext(os.path.basename(args.start_from))[0]
-    out_dir = linux_path(ckpt_dir, f'{ckpt_name}_on_{args.val_data_folder}_{args.id}')
+    if os.path.isfile(args.ckpt):
+        pass
+    elif os.path.isdir(args.ckpt):
+        ckpt_path, _ = get_latest_checkpoint(args.ckpt)
+        args.ckpt = ckpt_path
+    else:
+        raise AssertionError('')
+
+    ckpt_dir = os.path.dirname(args.ckpt)
+    ckpt_name = os.path.splitext(os.path.basename(args.ckpt))[0]
+
+    out_dir = linux_path(ckpt_dir, f'{ckpt_name}_on_{args.test_split}_{args.id}')
 
     os.makedirs(out_dir, exist_ok=1)
 
@@ -209,7 +226,14 @@ def eval_results(args):
 
 
 def main():
-    params = DenseCapTest()
+    params = TestParams()
+
+    if params.cfgs_file:
+        with open(params.cfgs_file, 'r') as handle:
+            options_yaml = yaml.safe_load(handle)
+        update_values(options_yaml, vars(params))
+
+    """Commandline arguments override those in cfgs_file"""
     paramparse.process(params)
 
     if params.gpu:
@@ -225,6 +249,9 @@ def main():
 
     assert params.slide_window_size > params.slide_window_stride, \
         "slide_window_size must be > slide_window_stride!"
+
+    if not params.sample_list_dir:
+        params.sample_list_dir = linux_path(params.checkpoint_path, f"{params.test_split}_samples")
 
     print('loading dataset')
     test_loader, test_dataset, text_proc = get_dataset(params)

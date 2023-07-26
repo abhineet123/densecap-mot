@@ -10,7 +10,6 @@ import os
 import sys
 import numpy as np
 import random
-import glob
 import time
 
 from tqdm import tqdm
@@ -34,6 +33,7 @@ import torch.utils.data.distributed
 # misc
 from densecap_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap
+from densecap_utilities import get_latest_checkpoint
 
 sys.path.append('../isl_labeling_tool/deep_mdp')
 
@@ -178,33 +178,6 @@ def get_model(text_proc, args):
     return model
 
 
-def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
-    ckpt_names = glob.glob(f'{dir_name}/{prefix}*.pth')
-
-    if len(ckpt_names) == 0:
-        msg = f'No checkpoints found in {dir_name}'
-        if ignore_missing:
-            print(msg)
-            return None, None
-        raise AssertionError(msg)
-
-    ckpt_names.sort(key=lambda x: os.path.getmtime(x))
-    checkpoint = ckpt_names[-1]
-
-    checkpoint_name = os.path.splitext(os.path.basename(checkpoint))[0]
-
-    epoch_str = checkpoint_name.replace(prefix, '')
-
-    try:
-        epoch = int(epoch_str)
-    except ValueError:
-        raise AssertionError(f'invalid checkpoint_name: {checkpoint_name} for prefix: {prefix}')
-
-    print(f'latest checkpoint found from epoch {epoch}:  {checkpoint}')
-
-    return checkpoint, epoch
-
-
 def main():
     args = get_args()  # type: TrainParams
 
@@ -230,16 +203,16 @@ def main():
     # assert (args.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
 
     if not args.train_samplelist_path:
-        args.train_samplelist_path = linux_path(args.checkpoint_path, "train_samples")
+        args.train_samplelist_path = linux_path(args.ckpt, "train_samples")
 
     # if not args.train_sentence_dict_path:
-    #     args.train_sentence_dict_path = linux_path(args.checkpoint_path, "train_sentence_dict.pkl")
+    #     args.train_sentence_dict_path = linux_path(args.ckpt, "train_sentence_dict.pkl")
 
     if not args.valid_samplelist_path:
-        args.valid_samplelist_path = linux_path(args.checkpoint_path, "valid_samples")
+        args.valid_samplelist_path = linux_path(args.ckpt, "valid_samples")
 
     # if not args.valid_sentence_dict_path:
-    #     args.valid_sentence_dict_path = linux_path(args.checkpoint_path, "valid_sentence_dict.pkl")
+    #     args.valid_sentence_dict_path = linux_path(args.ckpt, "valid_sentence_dict.pkl")
 
     print(f'save_valid_samplelist: {args.save_valid_samplelist}')
     print(f'save_train_samplelist: {args.save_train_samplelist}')
@@ -261,7 +234,7 @@ def main():
     if args.cuda:
         torch.cuda.manual_seed_all(args.seed)
 
-    os.makedirs(args.checkpoint_path, exist_ok=True)
+    os.makedirs(args.ckpt, exist_ok=True)
 
     print('building model')
     model = get_model(text_proc, args)
@@ -313,7 +286,7 @@ def main():
     all_mask_losses = []
     all_training_losses = []
 
-    tb_path = linux_path(args.checkpoint_path, 'tb')
+    tb_path = linux_path(args.ckpt, 'tb')
     os.makedirs(tb_path, exist_ok=1)
 
     print(f'saving tensorboard log to: {tb_path}')
@@ -325,7 +298,7 @@ def main():
     start_epoch = 0
 
     if args.resume:
-        checkpoint, ckpt_epoch = get_latest_checkpoint(args.checkpoint_path, ignore_missing=True)
+        checkpoint, ckpt_epoch = get_latest_checkpoint(args.ckpt, ignore_missing=True)
         if checkpoint is not None:
             print(f"loading weights from {checkpoint}")
             state_dict = torch.load(checkpoint)
@@ -365,14 +338,14 @@ def main():
         if train_epoch % args.save_checkpoint_every == 0 or train_epoch == args.max_epochs:
             if (args.distributed and dist.get_rank() == 0) or not args.distributed:
                 del_epoch = train_epoch - args.keep_checkpoints
-                del_checkpoint_path = os.path.join(args.checkpoint_path, f'epoch_{del_epoch}.pth')
-                if del_epoch >= 0 and os.path.exists(del_checkpoint_path):
-                    os.remove(del_checkpoint_path)
+                del_ckpt = os.path.join(args.ckpt, f'epoch_{del_epoch}.pth')
+                if del_epoch >= 0 and os.path.exists(del_ckpt):
+                    os.remove(del_ckpt)
 
-                checkpoint_path = os.path.join(args.checkpoint_path, f'epoch_{train_epoch}.pth')
-                print(f'saving regular checkpoint: {checkpoint_path}')
+                ckpt = os.path.join(args.ckpt, f'epoch_{train_epoch}.pth')
+                print(f'saving regular checkpoint: {ckpt}')
 
-                torch.save(model.state_dict(), checkpoint_path)
+                torch.save(model.state_dict(), ckpt)
 
         (valid_loss, val_cls_loss,
          val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, args)
@@ -437,10 +410,10 @@ def main():
             best_train_loss = epoch_loss
             best_train_loss_epoch = train_epoch
             if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-                checkpoint, epoch = get_latest_checkpoint(args.checkpoint_path, 'best_train_model_', True)
+                checkpoint, epoch = get_latest_checkpoint(args.ckpt, 'best_train_model_', True)
                 if checkpoint is not None:
                     os.remove(checkpoint)
-                ckpt_path = os.path.join(args.checkpoint_path, f'best_train_model_{train_epoch}.pth')
+                ckpt_path = os.path.join(args.ckpt, f'best_train_model_{train_epoch}.pth')
                 torch.save(model.state_dict(), ckpt_path)
             print('*' * 5)
             print(f'Better training loss {epoch_loss:.4f} found, save model')
@@ -449,10 +422,10 @@ def main():
             best_valid_loss = valid_loss
             best_valid_loss_epoch = train_epoch
             if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-                checkpoint, epoch = get_latest_checkpoint(args.checkpoint_path, 'best_val_model_', True)
+                checkpoint, epoch = get_latest_checkpoint(args.ckpt, 'best_val_model_', True)
                 if checkpoint is not None:
                     os.remove(checkpoint)
-                ckpt_path = os.path.join(args.checkpoint_path, f'best_val_model_{train_epoch}.pth')
+                ckpt_path = os.path.join(args.ckpt, f'best_val_model_{train_epoch}.pth')
                 torch.save(model.state_dict(), ckpt_path)
             print('*' * 5)
             print('Better validation loss {:.4f} found, save model'.format(valid_loss))
@@ -465,7 +438,7 @@ def main():
                         'eval_reg_loss': all_reg_losses,
                         'eval_sent_loss': all_sent_losses,
                         'eval_mask_loss': all_mask_losses,
-                        }, os.path.join(args.checkpoint_path, 'model_losses.pth'))
+                        }, os.path.join(args.ckpt, 'model_losses.pth'))
 
         # learning rate decay
         scheduler.step(valid_loss)
