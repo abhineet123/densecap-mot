@@ -49,11 +49,12 @@ def get_dataset(args):
     """
     # process text
     train_val_splits = [args.train_splits[0], args.val_splits[0]]
+    sample_list_dir = os.path.dirname(args.train_samplelist_path)
     text_proc, raw_data, n_train_videos, n_val_videos = get_vocab_and_sentences(
         args.dataset_file,
         train_val_splits,
         # args.max_sentence_len,
-        sample_list_path=args.train_samplelist_path)
+        save_path=sample_list_dir)
 
     # Create the dataset and data loader instance
     train_dataset = ANetDataset(args.feature_root,

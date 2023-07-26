@@ -449,7 +449,7 @@ def anet_collate_fn(batch_lst):
     return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
 
 
-def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
+def get_vocab_and_sentences(dataset_file, splits, save_path):
     # train_sentences = []
     all_sentences = []
 
@@ -457,8 +457,6 @@ def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
     with open(dataset_file, 'r', encoding='utf-8') as data_file:
         data_all = json.load(data_file)
     raw_data = data_all['database']
-
-    sample_list_dir = os.path.dirname(sample_list_path)
 
     # sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
 
@@ -525,7 +523,7 @@ def get_vocab_and_sentences(dataset_file, splits, sample_list_path):
 
     # sentences_proc = list(map(text_proc.preprocess, train_sentences)) # build vocab on train only
     """divide sentences into words to have a list of list of words or tokens as they're called"""
-    sentences_proc_path = os.path.join(sample_list_dir, f"sentences_proc.pkl")
+    sentences_proc_path = os.path.join(save_path, f"sentences_proc.pkl")
     if os.path.isfile(sentences_proc_path):
         print(f'loading sentences_proc from {sentences_proc_path}')
         with open(sentences_proc_path, 'rb') as f:

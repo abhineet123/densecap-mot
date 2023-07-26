@@ -47,7 +47,7 @@ def get_dataset(args):
     text_proc, raw_data, n_videos = get_vocab_and_sentences(
         args.dataset_file,
         test_split,
-        sample_list_path=args.sample_list_path)
+        save_path=args.sample_list_path)
 
     # Create the dataset and data loader instance
     test_dataset = ANetTestDataset(args.feature_root,
