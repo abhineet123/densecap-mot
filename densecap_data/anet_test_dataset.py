@@ -28,7 +28,6 @@ class ANetTestDataset(Dataset):
         self.slide_window_size = slide_window_size
         self.learn_mask = learn_mask
 
-
         self.frame_to_second = {}
         self.sampled_frames = {}
         self.fps = {}

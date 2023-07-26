@@ -647,9 +647,11 @@ def valid(epoch, model, loader,
     for val_iter, data in enumerate(pbar):
         global_iter = epoch * nbatches + val_iter
 
-        (img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, load_t) = data
+        (img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times) = data
 
-        pbar.set_description(f'validation epoch {epoch} load_t: {load_t:.3f}')
+        load_t, torch_t, collate_t = times
+        pbar.set_description(f'validation epoch {epoch} times: {load_t:.3f},{torch_t:.3f},{collate_t:.3f}')
+        
         with torch.no_grad():
             # img_batch = Variable(img_batch)
             # tempo_seg_pos = Variable(tempo_seg_pos)
