@@ -33,7 +33,6 @@ class ANetTestDataset(Dataset):
         self.learn_mask = learn_mask
 
         self.sample_list_dir = sample_list_dir
-        self.sample_list_parent_dir = os.path.dirname(self.sample_list_dir)
 
         self.frame_to_second = {}
         self.sampled_frames = {}
@@ -67,7 +66,7 @@ class ANetTestDataset(Dataset):
             else:
                 raise NotImplementedError(f"Unsupported dataset: {dataset}")
 
-        sentences_dict_path = os.path.join(self.sample_list_parent_dir, f"{self.split}_sentences_dict.pkl")
+        sentences_dict_path = os.path.join(self.sample_list_dir, f"{self.split}_sentences_dict.pkl")
         if os.path.isfile(sentences_dict_path):
             print(f'loading sentences_dict from: {sentences_dict_path}')
             with open(sentences_dict_path, 'rb') as f:
@@ -121,7 +120,7 @@ class ANetTestDataset(Dataset):
                 sample_list=self.sample_list,
             )
             print(f'saving sentences_dict to: {sentences_dict_path}')
-            os.makedirs(self.sample_list_parent_dir, exist_ok=1)
+            os.makedirs(self.sample_list_dir, exist_ok=1)
             with open(sentences_dict_path, 'wb') as f:
                 pickle.dump(sentences_dict, f)
 

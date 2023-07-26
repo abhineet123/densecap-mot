@@ -92,13 +92,11 @@ def get_model(text_proc, args):
                                stride_factor=args.stride_factor,
                                learn_mask=args.learn_mask)
 
-    # Initialize the networks and the criterion
-    if len(args.ckpt) > 0:
-        print("Initializing weights from {}".format(args.ckpt))
-        model.load_state_dict(torch.load(args.ckpt,
-                                         map_location=lambda storage, location: storage))
+    # if len(args.ckpt) > 0:
+    #     print("Initializing weights from {}".format(args.ckpt))
+    #     model.load_state_dict(torch.load(args.ckpt,
+    #                                      map_location=lambda storage, location: storage))
 
-    # Ship the model to GPU, maybe
     if args.cuda:
         model.cuda()
 
@@ -119,20 +117,6 @@ def validate(model, loader, dataset, args):
 
     avg_prop_num = 0
 
-    if os.path.isfile(args.ckpt):
-        pass
-    elif os.path.isdir(args.ckpt):
-        ckpt_path, _ = get_latest_checkpoint(args.ckpt)
-        args.ckpt = ckpt_path
-    else:
-        raise AssertionError('')
-
-    ckpt_dir = os.path.dirname(args.ckpt)
-    ckpt_name = os.path.splitext(os.path.basename(args.ckpt))[0]
-
-    out_dir = linux_path(ckpt_dir, f'{ckpt_name}_on_{args.test_split}_{args.id}')
-
-    os.makedirs(out_dir, exist_ok=1)
 
     for data in loader:
         image_feat, original_num_frame, video_prefix = data
@@ -207,59 +191,82 @@ def validate(model, loader, dataset, args):
     # return eval_results(prop_result, args)
 
 
-def eval_results(args):
-    subprocess.Popen(["python2", args.densecap_eval_file, "-s", \
-                      os.path.join('./results/', 'densecap_' + args.val_data_folder + '_' + args.id + '.json'), \
-                      "-v", "-r"] + \
-                     args.densecap_references \
-                     )
-
-    anet_proposal = ANETproposal(args.dataset_file,
-                                 os.path.join('./results/', 'prop_' + args.val_data_folder + '_' + args.id + '.json'),
-                                 tiou_thresholds=np.linspace(0.5, 0.95, 10),
-                                 max_avg_nr_proposals=100,
-                                 subset=args.val_data_folder, verbose=True, check_status=True)
-
-    anet_proposal.evaluate()
-
-    return anet_proposal.area
+# def eval_results(args):
+#     subprocess.Popen(["python2", args.densecap_eval_file, "-s", \
+#                       os.path.join('./results/', 'densecap_' + args.val_data_folder + '_' + args.id + '.json'), \
+#                       "-v", "-r"] + \
+#                      args.densecap_references \
+#                      )
+#
+#     anet_proposal = ANETproposal(args.dataset_file,
+#                                  os.path.join('./results/', 'prop_' + args.val_data_folder + '_' + args.id + '.json'),
+#                                  tiou_thresholds=np.linspace(0.5, 0.95, 10),
+#                                  max_avg_nr_proposals=100,
+#                                  subset=args.val_data_folder, verbose=True, check_status=True)
+#
+#     anet_proposal.evaluate()
+#
+#     return anet_proposal.area
 
 
 def main():
-    params = TestParams()
+    args = TestParams()
 
-    if params.cfgs_file:
-        with open(params.cfgs_file, 'r') as handle:
+    if args.cfgs_file:
+        with open(args.cfgs_file, 'r') as handle:
             options_yaml = yaml.safe_load(handle)
-        update_values(options_yaml, vars(params))
+        update_values(options_yaml, vars(args))
 
     """Commandline arguments override those in cfgs_file"""
-    paramparse.process(params)
+    paramparse.process(args)
 
-    if params.gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = params.gpu
+    if args.gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    # with open(params.cfgs_file, 'r') as handle:
+    # with open(args.cfgs_file, 'r') as handle:
     #     options_yaml = yaml.safe_load(handle)
-    # update_values(options_yaml, vars(params))
-    print(params)
+    # update_values(options_yaml, vars(args))
+    print(args)
 
     # arguments inspection
-    assert params.batch_size == 1, "Batch size has to be 1!"
+    assert args.batch_size == 1, "Batch size has to be 1!"
 
-    assert params.slide_window_size > params.slide_window_stride, \
+    assert args.slide_window_size > args.slide_window_stride, \
         "slide_window_size must be > slide_window_stride!"
 
-    if not params.sample_list_dir:
-        params.sample_list_dir = linux_path(params.checkpoint_path, f"{params.test_split}_samples")
+    if args.db_root:
+        args.feature_root = linux_path(args.db_root, args.feature_root)
+        args.dataset_file = linux_path(args.db_root, args.dataset_file)
+        args.dur_file = linux_path(args.db_root, args.dur_file)
+
+    if os.path.isfile(args.ckpt):
+        pass
+    elif os.path.isdir(args.ckpt):
+        if args.ckpt_name:
+            ckpt_path = linux_path(args.ckpt, args.ckpt_name)
+        else:
+            ckpt_path, _ = get_latest_checkpoint(args.ckpt)
+        args.ckpt = ckpt_path
+    else:
+        raise AssertionError(f'invalid ckpt: {args.ckpt}')
+
+    ckpt_dir = os.path.dirname(args.ckpt)
+    ckpt_name = os.path.splitext(os.path.basename(args.ckpt))[0]
+
+    out_dir = linux_path(ckpt_dir, f'{ckpt_name}_on_{args.test_split}_{args.id}')
+
+    os.makedirs(out_dir, exist_ok=1)
+
+    if not args.sample_list_dir:
+        args.sample_list_dir = linux_path(ckpt_dir, f"{args.test_split}_samples")
 
     print('loading dataset')
-    test_loader, test_dataset, text_proc = get_dataset(params)
+    test_loader, test_dataset, text_proc = get_dataset(args)
 
     print('building model')
-    model = get_model(text_proc, params)
+    model = get_model(text_proc, args)
 
-    recall_area = validate(model, test_loader, test_dataset, params)
+    recall_area = validate(model, test_loader, test_dataset, args)
 
     print('proposal recall area: {:.6f}'.format(recall_area))
 

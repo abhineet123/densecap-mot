@@ -112,6 +112,8 @@ class TestParams(CFG):
         self.cfgs_file = ''
         self.db_root = ''
         self.feature_root = ''
+        self.sample_list_dir = ''
+
         self.kernel_list = []
 
         self.gpu = '0'
@@ -127,7 +129,6 @@ class TestParams(CFG):
         self.densecap_eval_file = ''
         self.densecap_references = ''
         self.dur_file = ''
-        self.feature_root = ''
         self.gated_mask = False
         self.id = ''
         self.image_feat_size = 3072
@@ -145,6 +146,7 @@ class TestParams(CFG):
         self.slide_window_size = 480
         self.slide_window_stride = 20
         self.ckpt = ''
+        self.ckpt_name = ''
         self.stride_factor = 50
         self.sample_list_path = ''
         self.test_split = 'validation'
