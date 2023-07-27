@@ -14,6 +14,7 @@ import math
 from densecap_data.utils import segment_iou, round_up_to
 import time
 
+
 def positional_encodings(x, D):
     # input x a vector of positions
     encodings = torch.zeros(x.size(0), D)
@@ -253,7 +254,7 @@ class ActionPropDenseCap(nn.Module):
             pos_anchor = s_pos[b]
             neg_anchor = s_neg[b]
 
-            assert pos_anchor.size(0) == sample_each and neg_anchor.size(0) == sample_each,\
+            assert pos_anchor.size(0) == sample_each and neg_anchor.size(0) == sample_each, \
                 "# of positive or negative samples does not match"
 
             # randomly choose one of the positive samples to caption
@@ -340,8 +341,10 @@ class ActionPropDenseCap(nn.Module):
 
                     pos_enc_locs[b] = pred_start_w
                     pos_enc_locs[batch_size + b] = pred_end_w
-                    pos_enc_locs[batch_size * 2 + b] = torch.Tensor([max(0, math.floor(anc_cen - anc_len / 2.))]).type(dtype)
-                    pos_enc_locs[batch_size * 3 + b] = torch.Tensor([min(temporal_size, math.ceil(anc_cen + anc_len / 2.))]).type(dtype)
+                    pos_enc_locs[batch_size * 2 + b] = torch.Tensor([max(0, math.floor(anc_cen - anc_len / 2.))]).type(
+                        dtype)
+                    pos_enc_locs[batch_size * 3 + b] = torch.Tensor(
+                        [min(temporal_size, math.ceil(anc_cen + anc_len / 2.))]).type(dtype)
 
                     # gate_scores[b] = pred_score[b*sample_each+sample_idx, 0].detach()
                     gate_scores[b] = pred_score[b * sample_each + sample_idx, 0]
@@ -361,7 +364,8 @@ class ActionPropDenseCap(nn.Module):
             else:
                 window_mask = pred_mask
 
-            mask_loss = F.binary_cross_entropy_with_logits(pred_mask, pred_bin_window_mask.view(batch_size, temporal_size, 1))
+            mask_loss = F.binary_cross_entropy_with_logits(pred_mask,
+                                                           pred_bin_window_mask.view(batch_size, temporal_size, 1))
             # mask_loss = F.binary_cross_entropy_with_logits(window_mask, batch_mask)
         else:
             window_mask = pred_bin_window_mask.view(batch_size, temporal_size, 1)
@@ -466,7 +470,8 @@ class ActionPropDenseCap(nn.Module):
             for nms_thresh in nms_thresh_set:
                 for prop_idx in range(nproposal):
                     original_frame_len = actual_frame_length[
-                                             b].item() + sampling_sec * 2  # might be truncated at the end, hence + frame_to_second*2
+                                             b].item() + sampling_sec * 2  # might be truncated at the end,
+                    # hence + frame_to_second*2
                     pred_start_w = crt_pred_cen[sel_idx[prop_idx]] - crt_pred_len[sel_idx[prop_idx]] / 2.0
                     pred_end_w = crt_pred_cen[sel_idx[prop_idx]] + crt_pred_len[sel_idx[prop_idx]] / 2.0
                     pred_start = pred_start_w
