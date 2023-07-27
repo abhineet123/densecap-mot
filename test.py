@@ -104,7 +104,7 @@ def get_model(text_proc, args):
     return model
 
 
-def validate(model, loader, dataset, args):
+def validate(model, loader, dataset, out_dir, args):
     """
 
     :param model:
@@ -174,26 +174,28 @@ def validate(model, loader, dataset, args):
     print("average proposal number: {}".format(avg_prop_num / len(loader.dataset)))
 
     # write captions to json file for evaluation (densecap)
-    dense_cap_all = {'version': 'VERSION 1.0',
-                     'results': densecap_result,
-                     # 'external_data': {'used': 'true',
-                     #                   'details': 'global_pool layer from BN-Inception pretrained from ActivityNet \
-                     #             and ImageNet (https://github.com/yjxiong/anet2016-cuhk)'}
-                     }
+    # dense_cap_all = {
+    #     'version': 'VERSION 1.0',
+    #     'results': densecap_result,
+    #     'external_data': {'used': 'true',
+    #                       'details': 'global_pool layer from BN-Inception pretrained from ActivityNet \
+    #             and ImageNet (https://github.com/yjxiong/anet2016-cuhk)'}
+    # }
     dnc_out_path = linux_path(out_dir, f'densecap.json')
     with open(dnc_out_path, 'w') as f:
-        json.dump(dense_cap_all, f)
+        json.dump(densecap_result, f)
 
     # write proposals to json file for evaluation (proposal)
     prop_out_path = linux_path(out_dir, f'prop.json')
-    prop_all = {'version': 'VERSION 1.0',
-                'results': prop_result,
-                # 'external_data': {'used': 'true',
-                #                   'details': 'global_pool layer from BN-Inception pretrained from ActivityNet \
-                #            and ImageNet (https://github.com/yjxiong/anet2016-cuhk)'}
-                }
+    # prop_all = {
+    #     'version': 'VERSION 1.0',
+    #     'results': prop_result,
+    #     'external_data': {'used': 'true',
+    #                       'details': 'global_pool layer from BN-Inception pretrained from ActivityNet \
+    #            and ImageNet (https://github.com/yjxiong/anet2016-cuhk)'}
+    # }
     with open(prop_out_path, 'w') as f:
-        json.dump(prop_all, f)
+        json.dump(prop_result, f)
 
     # return eval_results(prop_result, args)
 
@@ -267,9 +269,9 @@ def main():
     print('building model')
     model = get_model(text_proc, args)
 
-    recall_area = validate(model, test_loader, test_dataset, args)
+    validate(model, test_loader, test_dataset, out_dir, args)
 
-    print('proposal recall area: {:.6f}'.format(recall_area))
+    # print('proposal recall area: {:.6f}'.format(recall_area))
 
 
 if __name__ == "__main__":
