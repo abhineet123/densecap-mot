@@ -92,6 +92,9 @@ def get_model(text_proc, args):
                                stride_factor=args.stride_factor,
                                learn_mask=args.learn_mask)
 
+    if args.cuda:
+        model.cuda()
+
     print(f"loading weights from {args.ckpt}")
     state_dict = torch.load(args.ckpt)
     model.load_state_dict(state_dict)
@@ -102,8 +105,7 @@ def get_model(text_proc, args):
     #     model.load_state_dict(torch.load(args.ckpt,
     #                                      map_location=lambda storage, location: storage))
 
-    if args.cuda:
-        model.cuda()
+
 
     return model
 
