@@ -142,11 +142,13 @@ class TestParams(CFG):
         self.num_workers = 2
         self.pos_thresh = 0.7
         self.sampling_sec = 0.5
+
         self.slide_window_size = 480
         self.slide_window_stride = 20
+        self.stride_factor = 100
+
         self.ckpt = ''
         self.ckpt_name = ''
-        self.stride_factor = 50
         self.sample_list_path = ''
         self.test_split = 'validation'
         self.vis_emb_dropout = 0.1
