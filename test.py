@@ -96,13 +96,10 @@ def get_model(text_proc, args):
     state_dict = torch.load(args.ckpt)
     model.load_state_dict(state_dict)
 
-
     # if len(args.ckpt) > 0:
     #     print("Initializing weights from {}".format(args.ckpt))
     #     model.load_state_dict(torch.load(args.ckpt,
     #                                      map_location=lambda storage, location: storage))
-
-
 
     return model
 
@@ -143,15 +140,16 @@ def validate(model, loader, dataset, args):
             #     print(f"cannot find frame_to_second for video {video_name}")
 
             sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
-            all_proposal_results = model.inference(image_feat,
-                                                   original_num_frame,
-                                                   sampling_sec,
-                                                   args.min_prop_num,
-                                                   args.max_prop_num,
-                                                   args.min_prop_before_nms,
-                                                   args.pos_thresh,
-                                                   args.stride_factor,
-                                                   gated_mask=args.gated_mask)
+            all_proposal_results = model.inference(
+                image_feat,
+                original_num_frame,
+                sampling_sec,
+                args.min_prop_num,
+                args.max_prop_num,
+                args.min_prop_before_nms,
+                args.pos_thresh,
+                args.stride_factor,
+                gated_mask=args.gated_mask)
 
             for b in range(len(video_prefix)):
                 vid = video_prefix[b].split('/')[-1]
