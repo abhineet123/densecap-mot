@@ -495,11 +495,14 @@ class ActionPropDenseCap(nn.Module):
                         pred_bin_window_mask[:, win_start:win_end] = 1
                         pred_masks.append(pred_bin_window_mask)
 
+                        score = crt_pred[0, sel_idx[prop_idx]].cpu().numpy().item()
+
                         if self.learn_mask:
                             # 4, 5 are the indices for anchor length and center
                             anc_len = crt_pred[4, sel_idx[prop_idx]]
                             anc_cen = crt_pred[5, sel_idx[prop_idx]]
-                            # only use the pos sample to train, could potentially use more sample for training mask, but this is easier to do
+                            # only use the pos sample to train,
+                            # could potentially use more sample for training mask, but this is easier to do
                             amask = torch.zeros(1, T).type(dtype)
                             amask[0,
                             max(0, math.floor(anc_cen - anc_len / 2.)):
@@ -517,11 +520,11 @@ class ActionPropDenseCap(nn.Module):
                                                                         anc_cen + anc_len / 2.))]).type(
                                 dtype))
 
-                            gate_scores.append(torch.Tensor([crt_pred[0, sel_idx[prop_idx]]]).type(dtype))
+                            gate_scores.append(torch.Tensor([score]).type(dtype))
 
                         pred_results[crt_nproposal] = np.array([win_start,
                                                                 win_end,
-                                                                crt_pred[0, sel_idx[prop_idx]]])
+                                                                score])
                         crt_nproposal += 1
 
                     if crt_nproposal >= max_prop_num:
