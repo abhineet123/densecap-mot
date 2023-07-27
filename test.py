@@ -7,22 +7,17 @@
 
 # general packages
 import os
-import argparse
-import numpy as np
 from collections import defaultdict
+from tqdm import tqdm
 import json
-import subprocess
-import csv
 import yaml
 
-# torch
 import torch
 from torch.utils.data import DataLoader
 from densecap_utilities import get_latest_checkpoint
 
 import paramparse
 
-# misc
 from test_params import TestParams
 from densecap_data.anet_test_dataset import ANetTestDataset, anet_test_collate_fn
 from densecap_data.anet_dataset import get_vocab_and_sentences
@@ -125,10 +120,16 @@ def validate(model, loader, dataset, args):
     prop_result = defaultdict(list)
 
     avg_prop_num = 0
+    nbatches = len(loader)
+    pbar = tqdm(loader, total=nbatches, ncols=120)
 
-    for data in loader:
-        image_feat, original_num_frame, video_prefix = data
-        video_name = video_prefix[0].split('/')[-1]
+    for _iter, data in enumerate(pbar):
+        image_feat, original_num_frame, video_prefix, times = data
+        load_t, torch_t, collate_t = times
+
+        pbar.set_description(f'batch {_iter} times: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}')
+
+        video_name = os.path.basename(video_prefix[0])
 
         with torch.no_grad():
             # image_feat = Variable(image_feat)
@@ -136,10 +137,10 @@ def validate(model, loader, dataset, args):
             if args.cuda:
                 image_feat = image_feat.cuda()
 
-            dtype = image_feat.data.type()
-            if video_name not in dataset.frame_to_second:
-                dataset.frame_to_second[video_name] = args.sampling_sec
-                print(f"cannot find frame_to_second for video {video_name}")
+            # dtype = image_feat.data.type()
+            # if video_name not in dataset.frame_to_second:
+            #     dataset.frame_to_second[video_name] = args.sampling_sec
+            #     print(f"cannot find frame_to_second for video {video_name}")
 
             sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
             all_proposal_results = model.inference(image_feat,
