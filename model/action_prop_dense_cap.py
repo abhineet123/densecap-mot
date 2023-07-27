@@ -482,8 +482,12 @@ class ActionPropDenseCap(nn.Module):
                         continue
 
                     hasoverlap = False
+
                     if crt_nproposal > 0:
-                        if np.max(segment_iou(np.array([pred_start, pred_end]),
+                        pred_start_ = pred_start.cpu().numpy().item()
+                        pred_end_ = pred_end.cpu().numpy().item()
+
+                        if np.max(segment_iou(np.array([pred_start_, pred_end_]),
                                               pred_results[:crt_nproposal])) > nms_thresh:
                             hasoverlap = True
 
@@ -598,8 +602,9 @@ class ActionPropDenseCap(nn.Module):
             all_proposal_results.append(tuple(batch_result))
 
             end_t = time.time()
-            print('Processing time for tIoU: {:.2f}, mask: {:.2f}, caption: {:.2f}'.format(mid1_t - start_t,
-                                                                                           mid2_t - mid1_t,
-                                                                                           end_t - mid2_t))
+            print('Processing time for tIoU: {:.2f}, mask: {:.2f}, caption: {:.2f}'.format(
+                mid1_t - start_t,
+                mid2_t - mid1_t,
+                end_t - mid2_t))
 
         return all_proposal_results
