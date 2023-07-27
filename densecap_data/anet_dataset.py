@@ -357,18 +357,21 @@ class ANetDataset(Dataset):
             video_prefix, feat_frame_ids, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
         else:
             video_prefix, pos_seg, sentence, neg_seg, total_frame = self.sample_list[index]
-            feat_frame_ids = (0, total_frame)
+            feat_frame_ids = None
 
         sentence = torch.from_numpy(np.asarray(sentence))
-
-        feat_start_id, feat_end_id = feat_frame_ids
-
         start = time.time()
-        resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
-        bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+        if feat_frame_ids is not None:
+            feat_start_id, feat_end_id = feat_frame_ids
 
-        resnet_feat = np.array(resnet_feat)
-        bn_feat = np.array(bn_feat)
+            resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+            bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+
+            resnet_feat = np.array(resnet_feat)
+            bn_feat = np.array(bn_feat)
+        else:
+            resnet_feat = np.load(video_prefix + '_resnet.npy')
+            bn_feat = np.load(video_prefix + '_bn.npy')
 
         end = time.time()
         load_t = (end - start) * 1000

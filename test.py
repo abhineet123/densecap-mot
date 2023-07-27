@@ -93,7 +93,7 @@ def get_model(text_proc, args):
                                learn_mask=args.learn_mask)
 
     model = torch.nn.DataParallel(model)
-    
+
     if args.cuda:
         model.cuda()
 

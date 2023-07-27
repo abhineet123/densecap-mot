@@ -75,7 +75,7 @@ class ANetTestDataset(Dataset):
             sentence_idx = sentences_dict['sentence_idx']
             self.sample_list = sentences_dict['sample_list']
         else:
-            self.sample_list = []  # list of list for data samples
+            self.sample_list = []
             test_sentences = []
             for vid, val in raw_data.items():
                 annotations = val['annotations']
@@ -145,14 +145,20 @@ class ANetTestDataset(Dataset):
 
     def __getitem__(self, index):
         video_prefix, feat_frame_ids = self.sample_list[index]
-        feat_start_id, feat_end_id = feat_frame_ids
-
         start = time.time()
-        resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
-        bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
 
-        resnet_feat = np.array(resnet_feat)
-        bn_feat = np.array(bn_feat)
+        if feat_frame_ids is not None:
+            feat_start_id, feat_end_id = feat_frame_ids
+
+            resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+            bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+
+            resnet_feat = np.array(resnet_feat)
+            bn_feat = np.array(bn_feat)
+
+        else:
+            resnet_feat = np.load(video_prefix + '_resnet.npy')
+            bn_feat = np.load(video_prefix + '_bn.npy')
 
         end = time.time()
         load_t = (end - start) * 1000
