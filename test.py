@@ -92,6 +92,8 @@ def get_model(text_proc, args):
                                stride_factor=args.stride_factor,
                                learn_mask=args.learn_mask)
 
+    model = torch.nn.DataParallel(model)
+    
     if args.cuda:
         model.cuda()
 
