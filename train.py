@@ -489,7 +489,7 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
 
         (img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times) = data
         load_t, torch_t, collate_t = times
-        pbar.set_description(f'training epoch {epoch} times: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}')
+        pbar.set_description(f'training epoch {epoch} times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
 
         # img_batch = Variable(img_batch)
         # tempo_seg_pos = Variable(tempo_seg_pos)

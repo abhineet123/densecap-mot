@@ -124,7 +124,7 @@ def validate(model, loader, dataset, args):
         image_feat, original_num_frame, video_prefix, times = data
         load_t, torch_t, collate_t = times
 
-        pbar.set_description(f'batch {_iter} times: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}')
+        pbar.set_description(f'times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
 
         video_name = os.path.basename(video_prefix[0])
 
@@ -140,7 +140,7 @@ def validate(model, loader, dataset, args):
             #     print(f"cannot find frame_to_second for video {video_name}")
 
             sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
-            all_proposal_results = model.inference(
+            all_proposal_results = model.module.inference(
                 image_feat,
                 original_num_frame,
                 sampling_sec,
