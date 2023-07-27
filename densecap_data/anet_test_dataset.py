@@ -183,7 +183,7 @@ class ANetTestDataset(Dataset):
 def anet_test_collate_fn(batch_lst):
     start = time.time()
 
-    img_feat, _, _ = batch_lst[0]
+    img_feat = batch_lst[0][0]
 
     batch_size = len(batch_lst)
 
@@ -197,13 +197,13 @@ def anet_test_collate_fn(batch_lst):
     batch_torch_t = 0
 
     for batch_idx in range(batch_size):
-        img_feat, T, vid, load_t, torch_t = batch_lst[batch_idx]
+        img_feat, total_frames, vid, load_t, torch_t = batch_lst[batch_idx]
 
         batch_load_t += load_t
         batch_torch_t += torch_t
 
         img_batch[batch_idx, :] = img_feat
-        frame_length[batch_idx] = T
+        frame_length[batch_idx] = total_frames
         video_prefix.append(vid)
 
     end = time.time()
