@@ -263,16 +263,14 @@ def main():
     ckpt_name = os.path.splitext(os.path.basename(args.ckpt))[0]
 
     out_dir = linux_path(ckpt_dir, f'{ckpt_name}_on_{args.test_split}_{args.id}')
-
     os.makedirs(out_dir, exist_ok=1)
+    print(f'out_dir: {out_dir}')
 
     if not args.sample_list_path:
         args.sample_list_path = linux_path(ckpt_dir, f"{args.test_split}_samples")
 
-    print('loading dataset')
     test_loader, test_dataset, text_proc = get_dataset(args)
 
-    print('building model')
     model = get_model(text_proc, args)
 
     validate(model, test_loader, test_dataset, out_dir, args)
