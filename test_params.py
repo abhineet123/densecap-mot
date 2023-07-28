@@ -147,6 +147,8 @@ class TestParams(CFG):
         self.slide_window_stride = 20
         self.stride_factor = 100
 
+        self.max_batches = 0
+
         self.ckpt = ''
         self.ckpt_name = ''
         self.sample_list_path = ''

@@ -152,8 +152,7 @@ def validate(model, loader, dataset, out_dir, args):
                 gated_mask=args.gated_mask)
 
             for b in range(len(video_prefix)):
-                vid = video_prefix[b].split('/')[-1]
-                print(f'Write results for video: {vid}')
+                vid = os.path.basename(video_prefix[b])
                 for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
                     pred_start_t = pred_start * sampling_sec
                     pred_end_t = pred_end * sampling_sec
@@ -170,6 +169,9 @@ def validate(model, loader, dataset, out_dir, args):
                          'score': pred_s})
 
                 avg_prop_num += len(all_proposal_results[b])
+
+        if _iter >= args.max_batches > 0:
+            break
 
     print("average proposal number: {}".format(avg_prop_num / len(loader.dataset)))
 
