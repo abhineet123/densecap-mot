@@ -95,9 +95,11 @@ class ActionPropDenseCap(nn.Module):
 
         self.vis_dropout = DropoutTime1D(vis_emb_dropout)
 
-        # kernel_list specifies the kernel size so we have as large as 251 sized kernels
-        # used for temporal convolutions by transposing its input so that
-        # temporal dim replaces spatial dim and more crucially using 1D convolutions
+        """
+        kernel_list specifies the kernel size so we have as large as 251 sized kernels
+        used for temporal convolutions by transposing its input so that
+        temporal dim replaces spatial dim and more crucially using 1D convolutions
+        """
         self.proposal_out = nn.ModuleList(
             [nn.Sequential(
                 nn.BatchNorm1d(dim_model),
@@ -405,30 +407,32 @@ class ActionPropDenseCap(nn.Module):
         # for 1d conv
         vis_feat = vis_feat.transpose(1, 2).contiguous()
 
+        """collect proposals for all the kernels"""
         prop_lst = []
         for i, kernel in enumerate(self.proposal_out):
 
             kernel_size = self.kernel_list[i]
-            if kernel_size <= actual_frame_length[0]:
+            if kernel_size > actual_frame_length[0]:
                 # no need to use larger kernel size in this case, batch size is only 1
-                pred_o = kernel(vis_feat)
-                anchor_c = torch.from_numpy(np.arange(
-                    float(kernel_size) / 2.0,
-                    float(T + 1 - kernel_size / 2.0),
-                    math.ceil(kernel_size / stride_factor)
-                )).type(dtype)
-                if anchor_c.size(0) != pred_o.size(-1):
-                    raise Exception("size mismatch!")
 
-                anchor_c = anchor_c.expand(B, 1, anchor_c.size(0))
-                anchor_l = torch.FloatTensor(anchor_c.size()).fill_(kernel_size).type(dtype)
-
-                pred_final = torch.cat((pred_o, anchor_l, anchor_c), 1)
-                prop_lst.append(pred_final)
-            else:
                 print('skipping kernel sizes greater than {}'.format(
                     self.kernel_list[i]))
                 break
+
+            pred_o = kernel(vis_feat)
+            anchor_c = torch.from_numpy(np.arange(
+                float(kernel_size) / 2.0,
+                float(T + 1 - kernel_size / 2.0),
+                math.ceil(kernel_size / stride_factor)
+            )).type(dtype)
+            if anchor_c.size(0) != pred_o.size(-1):
+                raise Exception("size mismatch!")
+
+            anchor_c = anchor_c.expand(B, 1, anchor_c.size(0))
+            anchor_l = torch.FloatTensor(anchor_c.size()).fill_(kernel_size).type(dtype)
+
+            pred_final = torch.cat((pred_o, anchor_l, anchor_c), 1)
+            prop_lst.append(pred_final)
 
         prop_all = torch.cat(prop_lst, 2)
 
@@ -441,11 +445,13 @@ class ActionPropDenseCap(nn.Module):
         nms_thresh_set = np.arange(0.9, 0.95, 0.05).tolist()
         all_proposal_results = []
 
-        # store positional encodings, size of B x 4,
-        # the first B values are predicted starts,
-        # second B values are predicted ends,
-        # third B values are anchor starts,
-        # last B values are anchor ends
+        """
+        store positional encodings, size of B x 4,
+        the first B values are predicted starts,
+        second B values are predicted ends,
+        third B values are anchor starts,
+        last B values are anchor ends
+        """
         pred_start_lst = []  # torch.zeros(B * 4).type(dtype)
         pred_end_lst = []
         anchor_start_lst = []
@@ -453,6 +459,9 @@ class ActionPropDenseCap(nn.Module):
         anchor_window_mask = []  # Variable(torch.zeros(B, T).type(dtype))
         gate_scores = []  # Variable(torch.zeros(B, 1).type(dtype))
 
+        """
+        the usual plethora of annoying handcrafted heuristics including NMS
+        """
         for b in range(B):
             crt_pred = prop_all.data[b]
             crt_pred_cen = pred_cen.data[b]
@@ -466,6 +475,7 @@ class ActionPropDenseCap(nn.Module):
             pred_results = np.empty((nproposal, 3))
             _, sel_idx = torch.topk(crt_pred[0], nproposal)
 
+            """NMS"""
             start_t = time.time()
             for nms_thresh in nms_thresh_set:
                 for prop_idx in range(nproposal):
