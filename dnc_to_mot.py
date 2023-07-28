@@ -5,6 +5,7 @@ import os
 
 
 import sys
+import math
 
 # sys.path.append(script_parent_dir)
 sys.path.append('../isl_labeling_tool/deep_mdp')
@@ -29,7 +30,7 @@ from data import Data
 
 from utilities import CustomLogger, SIIF, linux_path
 
-from dnc_utilities import build_targets_densecap, build_targets_seq
+from dnc_utilities import excel_ids_to_grid, build_targets_seq
 
 
 class Params:
@@ -48,6 +49,8 @@ class Params:
     def __init__(self):
         self.gpu = ''
         self.cfg = ('',)
+
+        self.json = ''
 
         self.set = ''
         self.seq = ()
@@ -71,8 +74,27 @@ class Params:
         self.data = Data.Params()
         self.ann = Annotations.Params()
 
+def compress_traj(grid_ids, start_frame, end_frame, n_grid_ids, n_frames):
+    n_frames = end_frame - start_frame + 1
+    n_grid_ids = len(grid_ids)
 
-def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
+    assert n_grid_ids > n_frames, "n_frames must exceed n_frames for compression"
+
+    frame_to_traj_dict = {
+        start_frame: grid_ids[0],
+        end_frame: grid_ids[-1],
+    }
+    skip_ratio = float(n_grid_ids - 2) / float(n_frames - 2)
+    assigned_indices = [0, n_grid_ids-1]
+    for frame_id in range(n_frames):
+        grid_ids_index = int(math.floor(skip_ratio*frame_id))
+        assert grid_ids_index not in assigned_indices, f"already assigned grid_ids_index: {grid_ids_index}"
+        assigned_indices.append(grid_ids_index)
+        frame_to_traj_dict[start_frame + frame_id] = grid_ids[grid_ids_index]
+        
+    return frame_to_traj_dict
+
+def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir, params):
     """
 
     :param seq_info:
@@ -121,6 +143,8 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
     #     _logger.error('Detections could not be read')
     #     return False
 
+    dnc_data = json_data[seq_name]
+
     _frame_size = _input.frame_size
     _n_frames = _input.n_frames
 
@@ -132,50 +156,24 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
     if params.vis:
         _input._read_all_frames()
 
-    if params.mode == 0:
-        n_frames = _input.n_frames
-        frame_size = _input.frame_size
+    for traj_datum in dnc_data:
+        sentence = traj_datum["sentence"]
+        timestamp = traj_datum["timestamp"]
 
-        vocab_annotations, traj_lengths = build_targets_densecap(
-            n_frames,
-            frame_size,
-            _input.all_frames,
-            _annotations,
-            seq_name=seq_name,
-            grid_res=params.grid_res,
-            frame_gap=params.frame_gap,
-            win_size=params.win_size,
-            fps=params.fps,
-            out_dir=out_dir,
-            vis=params.vis,
-        )
-        mean_traj_length = np.mean(traj_lengths)
-        std_traj_length = np.std(traj_lengths)
-        median_traj_length = np.median(traj_lengths)
-        min_traj_length = np.amin(traj_lengths)
-        max_traj_length = np.amax(traj_lengths)
+        start_t, end_t = timestamp
 
-        print(f'\nseq traj_length: '
-              f'mean: {mean_traj_length} '
-              f'median: {median_traj_length} '
-              f'min: {min_traj_length} '
-              f'max: {max_traj_length} '
-              f'std: {std_traj_length} '
-              )
+        start_frame, end_frame = int(start_t*params.fps), int(end_t*params.fps)
+        traj_n_frames = end_frame - start_frame + 1
 
-        traj_lengths_out_path = linux_path(traj_lengths_out_dir, f'{seq_name}.txt')
-        np.savetxt(traj_lengths_out_path, np.asarray(traj_lengths, dtype=np.uint32), fmt='%d')
+        excel_ids = sentence.split(' ')
 
-        duration_frame_csv_row = {
-            'name': seq_name,
-            'duration': duration,
-            'n_frames': _n_frames,
-        }
+        n_excel_ids = len(excel_ids)
 
-        return seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset
-    else:
-        _input._read_all_frames()
-        build_targets_seq(_input.all_frames, _annotations)
+        grid_cells = [excel_id_dict[excel_id] for excel_id in excel_ids]
+
+        if n_excel_ids != traj_n_frames:
+
+
 
 
 def main():
@@ -207,6 +205,14 @@ def main():
     interval = params.slide.interval
     if interval <= 0:
         interval = 1
+
+    assert params.json, "json file must be provided"
+    assert os.path.isfile(params.json), f"invalid json file: {params.json}"
+
+    with open(params.json, 'r') as fid:
+        json_data = json.load(fid)
+
+    excel_id_dict = excel_ids_to_grid(params.grid_res)
 
     seq_info_list = []
     pbar = tqdm(seq_ids)
@@ -276,6 +282,8 @@ def main():
     func = functools.partial(
         run,
         n_seq=n_seq,
+        json_data=json_data,
+        excel_id_dict=excel_id_dict,
         out_dir=out_dir,
         traj_lengths_out_dir=traj_lengths_out_dir,
         params=params,

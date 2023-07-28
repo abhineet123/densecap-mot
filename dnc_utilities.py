@@ -38,9 +38,9 @@ def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
     return checkpoint, epoch
 
 
-def build_targets_densecap(n_frames, frame_size, frames, annotations,
-                           seq_name,
-                           grid_res, frame_gap, win_size, fps, out_dir, vis):
+def build_targets_densecapbuild_targets_densecap(
+        n_frames, frame_size, frames, annotations, seq_name,
+        grid_res, frame_gap, win_size, fps, out_dir, vis):
     """
 
     :param Annotations annotations:
@@ -266,6 +266,19 @@ def build_targets_densecap(n_frames, frame_size, frames, annotations,
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
 
     return vocab_annotations, traj_lengths
+
+
+def excel_ids_to_grid(grid_res):
+    excel_id_dict = {}
+    grid_res_x, grid_res_y = grid_res
+
+    for grid_idy in range(grid_res_y):
+        for grid_idx in range(grid_res_x):
+            excel_id = grid_to_excel_ids(grid_idy, grid_idx)
+
+            excel_id_dict[excel_id] = (grid_idy, grid_idx)
+
+    return excel_id_dict
 
 
 def grid_to_excel_ids(grid_idy, grid_idx):

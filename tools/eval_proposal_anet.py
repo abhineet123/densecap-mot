@@ -11,8 +11,8 @@ import json
 import numpy as np
 import pandas as pd
 
-from densecap_data.utils import get_blocked_videos
-from densecap_data.utils import wrapper_segment_iou
+from dnc_data.utils import get_blocked_videos
+from dnc_data.utils import wrapper_segment_iou
 
 
 class ANETproposal(object):

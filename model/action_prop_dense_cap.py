@@ -11,7 +11,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 import math
-from densecap_data.utils import segment_iou, round_up_to
+from dnc_data.utils import segment_iou, round_up_to
 import time
 
 

@@ -16,14 +16,15 @@ import yaml
 
 import torch
 from torch.utils.data import DataLoader
-from densecap_utilities import get_latest_checkpoint
 
 import paramparse
 
 from test_params import TestParams
-from densecap_data.anet_test_dataset import ANetTestDataset, anet_test_collate_fn
-from densecap_data.anet_dataset import get_vocab_and_sentences
-from densecap_data.utils import update_values
+from dnc_data.anet_test_dataset import ANetTestDataset, anet_test_collate_fn
+from dnc_data.anet_dataset import get_vocab_and_sentences
+from dnc_data.utils import update_values
+from dnc_utilities import get_latest_checkpoint
+
 
 from model.action_prop_dense_cap import ActionPropDenseCap
 from tools.eval_proposal_anet import ANETproposal

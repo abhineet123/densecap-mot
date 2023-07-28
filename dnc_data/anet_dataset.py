@@ -24,7 +24,7 @@ import torch
 import torchtext
 from torch.utils.data import Dataset
 
-from densecap_data.utils import segment_iou
+from dnc_data.utils import segment_iou
 
 
 # dataloader for training

@@ -8,6 +8,7 @@
 - [n-3](#n_3_)
   - [1k-9600       @ n-3](#1k_9600___n_3_)
     - [all_seq__6_15       @ 1k-9600/n-3](#all_seq_6_15___1k_9600_n_3_)
+      - [best_val_model_42       @ all_seq__6_15/1k-9600/n-3](#best_val_model_42___all_seq_6_15_1k_9600_n_3_)
     - [all_seq__6_6       @ 1k-9600/n-3](#all_seq_6_6___1k_9600_n_3_)
   - [25-2400       @ n-3](#25_2400___n_3_)
     - [all_seq__6_15       @ 25-2400/n-3](#all_seq_6_15___25_2400_n_3_)
@@ -45,10 +46,9 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_25_2400_var/seq_0_25__
 <a id="all_seq_6_15___1k_9600_n_3_"></a>
 ### all_seq__6_15       @ 1k-9600/n-3-->dnc
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg --batch_size 32 --num_workers 4
-
-CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg max_batches=2
-
-ckpt_name=best_val_model_42.pth
+<a id="best_val_model_42___all_seq_6_15_1k_9600_n_3_"></a>
+#### best_val_model_42       @ all_seq__6_15/1k-9600/n-3-->dnc
+CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg ckpt_name=best_val_model_42.pth max_batches=100
 
 <a id="all_seq_6_6___1k_9600_n_3_"></a>
 ### all_seq__6_6       @ 1k-9600/n-3-->dnc

@@ -31,9 +31,9 @@ import torch.distributed as dist
 import torch.utils.data.distributed
 
 # misc
-from densecap_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
+from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap
-from densecap_utilities import get_latest_checkpoint
+from dnc_utilities import get_latest_checkpoint
 
 sys.path.append('../isl_labeling_tool/deep_mdp')
 

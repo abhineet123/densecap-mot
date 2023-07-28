@@ -146,7 +146,7 @@ def get_args():
     import argparse
     import yaml
 
-    from densecap_data.utils import update_values
+    from dnc_data.utils import update_values
 
     parser = argparse.ArgumentParser()
 
