@@ -145,6 +145,7 @@ def get_model(text_proc, args):
     :return:
     """
     sent_vocab = text_proc.vocab
+    max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(dim_model=args.d_model,
                                dim_hidden=args.d_hidden,
                                n_layers=args.n_layers,
@@ -157,7 +158,10 @@ def get_model(text_proc, args):
                                nsamples=args.train_sample,
                                kernel_list=args.kernel_list,
                                stride_factor=args.stride_factor,
-                               learn_mask=args.mask_weight > 0)
+                               learn_mask=args.mask_weight > 0,
+                               max_sentence_len=max_sentence_len,
+                               window_length=args.slide_window_size,
+                               )
 
     # Initialize the networks and the criterion
     if len(args.start_from) > 0:

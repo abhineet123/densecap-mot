@@ -63,13 +63,14 @@ class ActionPropDenseCap(nn.Module):
     def __init__(self, dim_model, dim_hidden, n_layers, n_heads, vocab,
                  in_emb_dropout, attn_dropout, vis_emb_dropout,
                  cap_dropout, nsamples, kernel_list, stride_factor,
-                 learn_mask=False, window_length=480):
+                 learn_mask, window_length, max_sentence_len):
         super(ActionPropDenseCap, self).__init__()
 
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
         self.dim_model = dim_model
+        self.max_sentence_len = max_sentence_len
 
         self.mask_model = nn.Sequential(
             nn.Linear(dim_model + window_length, dim_model, bias=False),
@@ -127,6 +128,7 @@ class ActionPropDenseCap(nn.Module):
         self.captioning_model = RealTransformer(dim_model,
                                                 self.vis_emb.encoder,  # share the encoder
                                                 vocab,
+                                                max_sentence_len=max_sentence_len,
                                                 d_hidden=dim_hidden,
                                                 n_layers=n_layers,
                                                 n_heads=n_heads,
@@ -597,7 +599,8 @@ class ActionPropDenseCap(nn.Module):
                 batch_start = sent_i * cap_batch
                 batch_end = min((sent_i + 1) * cap_batch, window_mask.size(0))
                 pred_sentence += self.captioning_model.greedy(batch_x[batch_start:batch_end],
-                                                              window_mask[batch_start:batch_end], 20)
+                                                              window_mask[batch_start:batch_end],
+                                                              self.self.max_sentence_len)
 
             pred_results = pred_results[:crt_nproposal]
             assert len(pred_sentence) == crt_nproposal, (

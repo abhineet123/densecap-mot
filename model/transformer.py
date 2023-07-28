@@ -224,9 +224,7 @@ class Decoder(nn.Module):
 
     def greedy(self, encoding, T):
         B, _, H = encoding[0].size()
-        # change T to 20, max # of words in a sentence
-        # T = 40
-        # T *= 2
+
         prediction = Variable(encoding[0].data.new(B, T).long().fill_(
             self.vocab.stoi['<pad>']))
         hiddens = [Variable(encoding[0].data.new(B, T, H).zero_())
@@ -253,9 +251,6 @@ class Decoder(nn.Module):
 
     def sampling(self, encoding, gt_token, T, sample_prob, is_argmax=True):
         B, _, H = encoding[0].size()
-        # change T to 20, max # of words in a sentence
-        # T = 40
-        # T *= 2
         prediction = Variable(encoding[0].data.new(B, T).long().fill_(
             self.vocab.stoi['<pad>']))
         hiddens = [Variable(encoding[0].data.new(B, T, H).zero_())
@@ -327,11 +322,13 @@ class Transformer(nn.Module):
 
 class RealTransformer(nn.Module):
 
-    def __init__(self, d_model, encoder, vocab_trg, d_hidden=2048,
-                 n_layers=6, n_heads=8, drop_ratio=0.1):
+    def __init__(self, d_model, encoder, vocab_trg, max_sentence_len,
+                 d_hidden,
+                 n_layers, n_heads, drop_ratio):
         super().__init__()
         # self.encoder = Encoder(d_model, d_hidden, n_vocab_src, n_layers,
         #                        n_heads, drop_ratio)
+        self.max_sentence_len = max_sentence_len
         self.encoder = encoder
         self.decoder = Decoder(d_model, d_hidden, vocab_trg, n_layers,
                                n_heads, drop_ratio)
@@ -345,10 +342,9 @@ class RealTransformer(nn.Module):
     def forward(self, x, s, x_mask=None, sample_prob=0):
         encoding = self.encoder(x, x_mask)
 
-        max_sent_len = 20
         if not self.training:
             if isinstance(s, list):
-                hiddens, _ = self.decoder.greedy(encoding, max_sent_len)
+                hiddens, _ = self.decoder.greedy(encoding, self.max_sentence_len)
                 h = hiddens[-1]
                 targets = None
             else:

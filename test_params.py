@@ -134,7 +134,7 @@ class TestParams(CFG):
         self.in_emb_dropout = 0.1
         self.learn_mask = False
         self.max_prop_num = 500
-        self.max_sentence_len = 20
+        # self.max_sentence_len = 20
         self.min_prop_before_nms = 200
         self.min_prop_num = 50
         self.n_heads = 8
