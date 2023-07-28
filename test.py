@@ -4,8 +4,10 @@
  SPDX-License-Identifier: BSD-3-Clause
  For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
 """
+import sys
 
-# general packages
+sys.path.append('../isl_labeling_tool/deep_mdp')
+
 import os
 from collections import defaultdict
 from tqdm import tqdm
