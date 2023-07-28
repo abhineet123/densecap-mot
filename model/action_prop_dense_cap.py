@@ -600,7 +600,7 @@ class ActionPropDenseCap(nn.Module):
                 batch_end = min((sent_i + 1) * cap_batch, window_mask.size(0))
                 pred_sentence += self.captioning_model.greedy(batch_x[batch_start:batch_end],
                                                               window_mask[batch_start:batch_end],
-                                                              self.self.max_sentence_len)
+                                                              self.max_sentence_len)
 
             pred_results = pred_results[:crt_nproposal]
             assert len(pred_sentence) == crt_nproposal, (
