@@ -186,11 +186,13 @@ def validate(model, loader, dataset, out_dir, args):
     #             and ImageNet (https://github.com/yjxiong/anet2016-cuhk)'}
     # }
     dnc_out_path = linux_path(out_dir, f'densecap.json')
+    print(f'dnc_out_path: {dnc_out_path}')
     with open(dnc_out_path, 'w') as f:
         json.dump(densecap_result, f)
 
     # write proposals to json file for evaluation (proposal)
     prop_out_path = linux_path(out_dir, f'prop.json')
+    print(f'prop_out_path: {prop_out_path}')
     # prop_all = {
     #     'version': 'VERSION 1.0',
     #     'results': prop_result,
