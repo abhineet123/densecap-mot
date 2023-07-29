@@ -334,7 +334,7 @@ def main():
     print(f'vocab_out_path: {vocab_out_path}')
     with open(vocab_out_path, 'w') as fid:
         fid.write('\n'.join(all_vocab))
-        
+
     mean_traj_length = np.mean(all_traj_lengths)
     std_traj_length = np.std(all_traj_lengths)
     median_traj_length = np.median(all_traj_lengths)

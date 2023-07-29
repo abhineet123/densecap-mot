@@ -107,41 +107,41 @@ def build_targets_densecap(
             max_traj_length = traj_length
             vis_traj = 1
 
-        if vis_traj:
-            obj_id = annotations.traj_to_obj[traj_id]
-            if vis:
-                codec = 'mp4v'
-                fourcc = cv2.VideoWriter_fourcc(*codec)
-                vis_out_dir = linux_path(out_dir, 'vis')
-                os.makedirs(vis_out_dir, exist_ok=1)
-                vis_out_path = linux_path(vis_out_dir, f'{seq_name}_{traj_id}_{traj_length}.mp4')
-
-                print(f'vis_out_path: {vis_out_path}')
-
-                img_h, img_w = frames[min_frame_id].shape[:2]
-
-                video_out = cv2.VideoWriter(vis_out_path, fourcc, fps, (img_w, img_h))
-
-                for _frame_id in range(min_frame_id, max_frame_id + 1):
-                    frame = frames[_frame_id]
-                    frame_disp = np.copy(frame)
-                    ann_idx = annotations.idx[_frame_id]
-                    frame_ann_data = annotations.data[ann_idx]
-                    curr_obj_data = [_data for _data in frame_ann_data if _data[1] == obj_id]
-
-                    assert len(curr_obj_data) == 1, "something annoying going on"
-
-                    curr_obj_data = curr_obj_data[0]
-
-                    draw_box(frame_disp, curr_obj_data[2:6], color='green',
-                             header=f'frame {_frame_id}', header_fmt=CVText(color='red'))
-
-                    video_out.write(frame_disp)
-
-                    cv2.imshow('frame_disp', frame_disp)
-                    cv2.waitKey(1)
-
-                video_out.release()
+        # if vis_traj:
+        #     obj_id = annotations.traj_to_obj[traj_id]
+        #     if vis:
+        #         codec = 'mp4v'
+        #         fourcc = cv2.VideoWriter_fourcc(*codec)
+        #         vis_out_dir = linux_path(out_dir, 'vis')
+        #         os.makedirs(vis_out_dir, exist_ok=1)
+        #         vis_out_path = linux_path(vis_out_dir, f'{seq_name}_{traj_id}_{traj_length}.mp4')
+        #
+        #         print(f'vis_out_path: {vis_out_path}')
+        #
+        #         img_h, img_w = frames[min_frame_id].shape[:2]
+        #
+        #         video_out = cv2.VideoWriter(vis_out_path, fourcc, fps, (img_w, img_h))
+        #
+        #         for _frame_id in range(min_frame_id, max_frame_id + 1):
+        #             frame = frames[_frame_id]
+        #             frame_disp = np.copy(frame)
+        #             ann_idx = annotations.idx[_frame_id]
+        #             frame_ann_data = annotations.data[ann_idx]
+        #             curr_obj_data = [_data for _data in frame_ann_data if _data[1] == obj_id]
+        #
+        #             assert len(curr_obj_data) == 1, "something annoying going on"
+        #
+        #             curr_obj_data = curr_obj_data[0]
+        #
+        #             draw_box(frame_disp, curr_obj_data[2:6], color='green',
+        #                      header=f'frame {_frame_id}', header_fmt=CVText(color='red'))
+        #
+        #             video_out.write(frame_disp)
+        #
+        #             cv2.imshow('frame_disp', frame_disp)
+        #             cv2.waitKey(1)
+        #
+        #         video_out.release()
 
         # if traj_length > 200:
         #     print(f'excessive trajectory length: {traj_length}')

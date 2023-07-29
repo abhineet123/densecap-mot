@@ -232,9 +232,9 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_25_2400_var seq=0,25
 <a id="1k_9600___n_3_mot_to_dnc_"></a>
 ### 1k-9600       @ n-3/mot_to_dnc-->dnc_gen
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var n_proc=12
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var vocab_fmt=1 seq=782 vis=1
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var vocab_fmt=1
 
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var n_proc=1 seq=782 vis=1
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var n_proc=1 seq=782 vis=1 vocab_fmt=1
 
 <a id="slide_6_480___1k_9600_n_3_mot_to_dnc_"></a>
 #### slide-6-480       @ 1k-9600/n-3/mot_to_dnc-->dnc_gen
