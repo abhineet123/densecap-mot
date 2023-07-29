@@ -308,7 +308,7 @@ def main():
 
     for seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset, vocab in tqdm(
             results, desc='postprocessing results'):
-        all_vocab += list(set(vocab))
+        all_vocab += vocab
 
         seq_name = duration_frame_csv_row['name']
         duration = duration_frame_csv_row['duration']

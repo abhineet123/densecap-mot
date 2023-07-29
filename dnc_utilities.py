@@ -286,6 +286,8 @@ def build_targets_densecap(
 
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
 
+    vocab = sorted(list(set(vocab)))
+
     return vocab_annotations, traj_lengths, vocab
 
 
