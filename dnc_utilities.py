@@ -266,8 +266,8 @@ def build_targets_densecap(
                 prev_grid_ids[traj_id] = (grid_idy, grid_idx)
 
                 if vis:
-                    _id = f'{target_id}-{traj_id}-{win_id}'
-                    # _id = word
+                    # _id = f'{target_id}-{traj_id}-{win_id}'
+                    _id = word
                     draw_box(frame_disp, obj_data[2:6], _id=_id, color='black', thickness=1, text_col='black')
 
                     draw_box(frame_disp, grid_box, color='red',
