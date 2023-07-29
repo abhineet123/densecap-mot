@@ -237,7 +237,7 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=782
 
 <a id="diff___1k_9600_n_3_mot_to_dnc_"></a>
 #### diff       @ 1k-9600/n-3/mot_to_dnc-->dnc_gen
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var vis=0 vocab_fmt=1 max_diff=1 n_proc=12 seq=782 sample_traj=1 @slide sample=6
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var vis=1 vocab_fmt=1 max_diff=9 n_proc=12 seq=782 sample_traj=1 @slide sample=6
 
 <a id="slide_6_480___1k_9600_n_3_mot_to_dnc_"></a>
 #### slide-6-480       @ 1k-9600/n-3/mot_to_dnc-->dnc_gen

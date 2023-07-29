@@ -80,11 +80,10 @@ class Params:
         self.ann = Annotations.Params()
 
 
-def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
+def run(seq_info, sample_traj, out_dir, traj_lengths_out_dir, params):
     """
 
     :param seq_info:
-    :param n_seq:
     :param out_dir:
     :param traj_lengths_out_dir:
     :param Params params:
@@ -114,7 +113,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
     if seq_suffix:
         seq_name = f'{seq_name}--{seq_suffix}'
 
-    print(f'\nseq {seq_id + 1} / {n_seq}: {seq_name}\n')
+    print(f'\nseq {seq_id + 1}: {seq_name}\n')
 
     if not _input.initialize(_data):
         _logger.error('Input pipeline could not be initialized')
@@ -144,15 +143,10 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
         n_frames = _input.n_frames
         frame_size = _input.frame_size
 
-        if params.sample_traj:
-            sample = params.slide.sample
-        else:
-            sample = 1
-
         vocab_annotations, traj_lengths, vocab = build_targets_densecap(
             params.vocab_fmt,
             params.max_diff,
-            sample,
+            sample_traj,
             n_frames,
             frame_size,
             _input.all_frames,
@@ -224,6 +218,11 @@ def main():
     if sample <= 0:
         sample = 1
 
+    if params.sample_traj:
+        sample_traj = sample
+    else:
+        sample_traj = 1
+
     seq_info_list = []
     pbar = tqdm(seq_ids)
     for seq_id in pbar:
@@ -292,6 +291,7 @@ def main():
     import functools
     func = functools.partial(
         run,
+        sample_traj=sample_traj,
         n_seq=n_seq,
         out_dir=out_dir,
         traj_lengths_out_dir=traj_lengths_out_dir,
