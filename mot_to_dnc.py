@@ -67,6 +67,7 @@ class Params:
         2: differential grid cell addresses with combined row and column for the starting location        
         """
         self.vocab_fmt = 0
+        self.max_diff = 1
 
         self.win_size = 0
 
@@ -144,6 +145,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
 
         vocab_annotations, traj_lengths, vocab = build_targets_densecap(
             params.vocab_fmt,
+            params.max_diff,
             n_frames,
             frame_size,
             _input.all_frames,

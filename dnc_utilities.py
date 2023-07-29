@@ -39,7 +39,7 @@ def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
 
 
 def build_targets_densecap(
-        vocab_fmt,
+        vocab_fmt, max_diff,
         n_frames, frame_size, frames, annotations, seq_name,
         grid_res, frame_gap, win_size, fps, out_dir, vis):
     """
@@ -250,7 +250,11 @@ def build_targets_densecap(
                 else:
                     if traj_vocab['sentence']:
                         _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
-                        word = grid_to_direction((_prev_grid_idy, _prev_grid_idx), (grid_idy, grid_idx))
+                        word = grid_to_direction(
+                            (_prev_grid_idy, _prev_grid_idx),
+                            (grid_idy, grid_idx),
+                            max_diff=max_diff
+                        )
 
                         traj_vocab['sentence'] += ' ' + word
                     else:
