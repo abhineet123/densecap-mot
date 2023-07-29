@@ -54,6 +54,7 @@
             - [all       @ 25-2400/n-3/mot_to_dnc](#all___25_2400_n_3_mot_to_dnc_)
             - [seq_0_25       @ 25-2400/n-3/mot_to_dnc](#seq_0_25___25_2400_n_3_mot_to_dnc_)
         - [1k-9600       @ n-3/mot_to_dnc](#1k_9600___n_3_mot_to_dnc_)
+            - [diff       @ 1k-9600/n-3/mot_to_dnc](#diff___1k_9600_n_3_mot_to_dnc_)
             - [slide-6-480       @ 1k-9600/n-3/mot_to_dnc](#slide_6_480___1k_9600_n_3_mot_to_dnc_)
     - [n-5       @ mot_to_dnc](#n_5___mot_to_dnc_)
         - [25-2000-f       @ n-5/mot_to_dnc](#25_2000_f___n_5_mot_to_dnc_)
@@ -232,9 +233,11 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_25_2400_var seq=0,25
 <a id="1k_9600___n_3_mot_to_dnc_"></a>
 ### 1k-9600       @ n-3/mot_to_dnc-->dnc_gen
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var n_proc=12
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var vocab_fmt=1
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=782
 
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var n_proc=1 seq=782 vis=1 vocab_fmt=1
+<a id="diff___1k_9600_n_3_mot_to_dnc_"></a>
+#### diff       @ 1k-9600/n-3/mot_to_dnc-->dnc_gen
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var vis=0 vocab_fmt=1 max_diff=1 n_proc=12 seq=782 sample_traj=1 @slide sample=6
 
 <a id="slide_6_480___1k_9600_n_3_mot_to_dnc_"></a>
 #### slide-6-480       @ 1k-9600/n-3/mot_to_dnc-->dnc_gen

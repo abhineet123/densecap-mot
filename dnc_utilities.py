@@ -39,7 +39,7 @@ def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
 
 
 def build_targets_densecap(
-        vocab_fmt, max_diff,
+        vocab_fmt, max_diff, sample,
         n_frames, frame_size, frames, annotations, seq_name,
         grid_res, frame_gap, win_size, fps, out_dir, vis):
     """
@@ -171,9 +171,11 @@ def build_targets_densecap(
     """
     for win_id, start_frame_id in enumerate(win_iter):
         end_frame_id = min(start_frame_id + win_size, n_frames) - 1
-        # Iterate over all the frames in this temporal window
+        """
+        Iterate over all the frames in this temporal window
+        """
+        frame_iter = range(start_frame_id, end_frame_id, sample)
 
-        frame_iter = range(start_frame_id, end_frame_id)
         if len(win_iter) > 1:
             win_iter.set_description(f'win {win_id}: frame {start_frame_id} --> {end_frame_id}')
         else:

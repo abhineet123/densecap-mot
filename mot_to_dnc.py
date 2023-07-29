@@ -41,7 +41,7 @@ class Params:
     """
 
     class SlidingWindow:
-        interval = 0
+        sample = 0
         size = 0
         stride = 0
 
@@ -68,6 +68,7 @@ class Params:
         """
         self.vocab_fmt = 0
         self.max_diff = 1
+        self.sample_traj = 0
 
         self.win_size = 0
 
@@ -143,9 +144,15 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
         n_frames = _input.n_frames
         frame_size = _input.frame_size
 
+        if params.sample_traj:
+            sample = params.slide.sample
+        else:
+            sample = 1
+
         vocab_annotations, traj_lengths, vocab = build_targets_densecap(
             params.vocab_fmt,
             params.max_diff,
+            sample,
             n_frames,
             frame_size,
             _input.all_frames,
@@ -213,9 +220,9 @@ def main():
     if not seq_ids:
         seq_ids = tuple(range(n_sequences))
 
-    interval = params.slide.interval
-    if interval <= 0:
-        interval = 1
+    sample = params.slide.sample
+    if sample <= 0:
+        sample = 1
 
     seq_info_list = []
     pbar = tqdm(seq_ids)
@@ -229,29 +236,29 @@ def main():
         seq_name = _data.seq_name
         seq_n_frames = _data.seq_n_frames
 
-        assert seq_n_frames % interval == 0, f"interval {interval} does not divide seq_n_frames {seq_n_frames} evenly"
+        assert seq_n_frames % sample == 0, f"sample size {sample} does not divide seq_n_frames {seq_n_frames} evenly"
 
         win_size = params.slide.size
         if win_size <= 0:
-            win_size = int(_data.seq_n_frames / interval)
+            win_size = int(_data.seq_n_frames / sample)
 
         win_stride = params.slide.stride
         if win_stride <= 0:
             win_stride = win_size
 
         while True:
-            abs_start_id = int(start_id * interval)
+            abs_start_id = int(start_id * sample)
 
             if abs_start_id >= seq_n_frames:
                 break
 
             end_id = start_id + win_size
 
-            abs_end_id = int(end_id * interval)
+            abs_end_id = int(end_id * sample)
 
             if abs_end_id >= seq_n_frames:
                 abs_end_id = seq_n_frames
-                end_id = int(abs_end_id / interval)
+                end_id = int(abs_end_id / sample)
 
             suffix = f'{abs_start_id}_{abs_end_id}'
 
