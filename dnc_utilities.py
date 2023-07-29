@@ -249,7 +249,7 @@ def build_targets_densecap(
                 elif vocab_fmt == 1:
                     if traj_vocab['sentence']:
                         _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
-                        grid_cell_diff((_prev_grid_idy, _prev_grid_idx), (grid_idy, grid_idx))
+                        word = grid_to_direction((_prev_grid_idy, _prev_grid_idx), (grid_idy, grid_idx))
 
                         traj_vocab['sentence'] += ' ' + word
                     else:
@@ -281,49 +281,56 @@ def build_targets_densecap(
     return vocab_annotations, traj_lengths
 
 
-def grid_cell_diff(prev_grid_ids, curr_grid_ids, max_diff=1):
+def grid_to_direction(prev_grid_ids, curr_grid_ids, max_diff=1):
     prev_grid_idy, prev_grid_idx = prev_grid_ids
     grid_idy, grid_idx = curr_grid_ids
 
     unit_diff = max_diff == 1
 
-    diff_y, diff_x = abs(grid_idy-prev_grid_idy), abs(grid_idx-prev_grid_idx)
+    diff_y, diff_x = abs(grid_idy - prev_grid_idy), abs(grid_idx - prev_grid_idx)
 
     assert diff_y <= max_diff, \
-        f'grid_idy {grid_idy} exceeds diff {max_diff} from prev_grid_idx: {prev_grid_idy}'
+        f'grid_idy {grid_idy} exceeds diff {max_diff} from prev_grid_idy: {prev_grid_idy}'
 
     assert diff_x <= max_diff, \
         f'grid_idx {grid_idx} exceeds diff {max_diff} from prev_grid_idx: {prev_grid_idx}'
 
+    n_dig = len(str(max_diff))
+
+    fmt = f'%0{n_dig}d'
+
+    fmt_diff_y = fmt % diff_y
+    fmt_diff_x = fmt % diff_x
+
     if grid_idy == prev_grid_idy:
         if grid_idx == prev_grid_idx:
-            return 'same'
+            return 'I'
 
         if grid_idx > prev_grid_idx:
-            return 'right' if unit_diff else f'right-{diff_x}'
+            return 'E' if unit_diff else f'E{fmt_diff_x}'
 
         if grid_idx < prev_grid_idx:
-            return 'left' if unit_diff else f'left-{diff_x}'
+            return 'W' if unit_diff else f'W{fmt_diff_x}'
 
     if grid_idy > prev_grid_idy:
         if grid_idx == prev_grid_idx:
-            return 'down' if unit_diff else f'down-{diff_y}'
+            return 'S' if unit_diff else f'S{fmt_diff_y}'
 
         if grid_idx > prev_grid_idx:
-            return 'down-right' if unit_diff else f'down-{diff_y}-right-{diff_x}'
+            return 'SE' if unit_diff else f'S{fmt_diff_x}E{fmt_diff_x}'
 
         if grid_idx < prev_grid_idx:
-            return 'down-left' if unit_diff else f'down-{diff_y}-left-{diff_x}'
+            return 'SW' if unit_diff else f'S{fmt_diff_y}W{fmt_diff_x}'
 
     if grid_idy < prev_grid_idy:
         if grid_idx == prev_grid_idx:
-            return 'up' if unit_diff else f'up-{diff_y}'
+            return 'N' if unit_diff else f'N{fmt_diff_y}'
 
         if grid_idx > prev_grid_idx:
-            return 'up-right' if unit_diff else f'up-{diff_y}-right-{diff_x}'
+            return 'NE' if unit_diff else f'N{fmt_diff_y}E{fmt_diff_x}'
 
         if grid_idx < prev_grid_idx:
-            return 'up-left' if unit_diff else f'up-{diff_y}-left-{diff_x}'
+            return 'NW' if unit_diff else f'N{fmt_diff_y}W{fmt_diff_x}'
 
 
 def excel_ids_to_grid(grid_res):
