@@ -292,7 +292,6 @@ def main():
     func = functools.partial(
         run,
         sample_traj=sample_traj,
-        n_seq=n_seq,
         out_dir=out_dir,
         traj_lengths_out_dir=traj_lengths_out_dir,
         params=params,
