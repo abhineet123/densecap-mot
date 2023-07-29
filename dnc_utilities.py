@@ -82,6 +82,7 @@ def build_targets_densecap(
 
     n_obj_cols = len(obj_cols)
     vocab_annotations = [None] * annotations.n_traj
+    vocab = []
     prev_grid_ids = [None] * annotations.n_traj
     traj_lengths = []
 
@@ -246,14 +247,21 @@ def build_targets_densecap(
                     else:
                         traj_vocab['sentence'] = word
 
-                elif vocab_fmt == 1:
+                else:
                     if traj_vocab['sentence']:
                         _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
                         word = grid_to_direction((_prev_grid_idy, _prev_grid_idx), (grid_idy, grid_idx))
 
                         traj_vocab['sentence'] += ' ' + word
                     else:
-                        traj_vocab['sentence'] = f'R{grid_idy} C{grid_idx}'
+                        if vocab_fmt == 1:
+                            word = f'R{grid_idy} C{grid_idx}'
+                        elif vocab_fmt == 2:
+                            word = f'R{grid_idy}C{grid_idx}'
+
+                        traj_vocab['sentence'] = word
+
+                vocab += word.split(' ')
 
                 prev_grid_ids[traj_id] = (grid_idy, grid_idx)
 
@@ -270,15 +278,15 @@ def build_targets_densecap(
             if vis:
                 frame_disp = resize_ar(frame_disp, height=1080)
 
-                out_img_id += 1
-                out_fname = 'image{:06d}.jpg'.format(out_img_id)
-
-                out_path = linux_path(out_dir, out_fname)
-                cv2.imwrite(out_path, frame_disp)
+                if vis == 2:
+                    out_img_id += 1
+                    out_fname = 'image{:06d}.jpg'.format(out_img_id)
+                    out_path = linux_path(out_dir, out_fname)
+                    cv2.imwrite(out_path, frame_disp)
 
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
 
-    return vocab_annotations, traj_lengths
+    return vocab_annotations, traj_lengths, vocab
 
 
 def grid_to_direction(prev_grid_ids, curr_grid_ids, max_diff=1):

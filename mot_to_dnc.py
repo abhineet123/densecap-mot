@@ -142,7 +142,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
         n_frames = _input.n_frames
         frame_size = _input.frame_size
 
-        vocab_annotations, traj_lengths = build_targets_densecap(
+        vocab_annotations, traj_lengths, vocab = build_targets_densecap(
             params.vocab_fmt,
             n_frames,
             frame_size,
@@ -179,7 +179,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
             'n_frames': _n_frames,
         }
 
-        return seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset
+        return seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset, vocab
     else:
         _input._read_all_frames()
         build_targets_seq(_input.all_frames, _annotations)
@@ -270,6 +270,7 @@ def main():
     traj_lengths_out_dir = linux_path(out_dir, 'traj_lengths')
     os.makedirs(traj_lengths_out_dir, exist_ok=1)
 
+
     database = {}
     duration_frame_csv_rows = []
     all_traj_lengths = []
@@ -303,8 +304,12 @@ def main():
 
             results.append(result)
 
-    for seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset in tqdm(
+    all_vocab = []
+
+    for seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset, vocab in tqdm(
             results, desc='postprocessing results'):
+        all_vocab += list(set(vocab))
+
         seq_name = duration_frame_csv_row['name']
         duration = duration_frame_csv_row['duration']
 
@@ -322,6 +327,14 @@ def main():
             "annotations": vocab_annotations,
         }
 
+    all_vocab = sorted(list(set(all_vocab)))
+    print(f'Vocabulary size: {len(all_vocab)}')
+
+    vocab_out_path = linux_path(out_dir, 'vocab.txt')
+    print(f'vocab_out_path: {vocab_out_path}')
+    with open(vocab_out_path, 'w') as fid:
+        fid.write('\n'.join(all_vocab))
+        
     mean_traj_length = np.mean(all_traj_lengths)
     std_traj_length = np.std(all_traj_lengths)
     median_traj_length = np.median(all_traj_lengths)
@@ -343,6 +356,8 @@ def main():
 
     with open(seq_to_traj_lengths_out_path, 'w') as fid:
         fid.write(seq_to_traj_lengths_str)
+
+
 
     traj_lengths_out_path = linux_path(traj_lengths_out_dir, f'all.txt')
     np.savetxt(traj_lengths_out_path, np.asarray(all_traj_lengths, dtype=np.uint32), fmt='%d')
