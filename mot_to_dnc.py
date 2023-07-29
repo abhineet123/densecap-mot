@@ -61,6 +61,12 @@ class Params:
         self.frame_gap = 1
         self.fps = 30
         self.vis = 0
+        """
+        0: absolute grid cell addresses
+        1: differential grid cell addresses with separate row and column for the starting location
+        2: differential grid cell addresses with combined row and column for the starting location        
+        """
+        self.vocab_fmt = 0
 
         self.win_size = 0
 
@@ -137,6 +143,7 @@ def run(seq_info, n_seq, out_dir, traj_lengths_out_dir, params):
         frame_size = _input.frame_size
 
         vocab_annotations, traj_lengths = build_targets_densecap(
+            params.vocab_fmt,
             n_frames,
             frame_size,
             _input.all_frames,

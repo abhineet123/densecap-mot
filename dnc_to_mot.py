@@ -74,7 +74,8 @@ class Params:
         self.data = Data.Params()
         self.ann = Annotations.Params()
 
-def compress_traj(grid_ids, start_frame, end_frame, n_grid_ids, n_frames):
+
+def compress_traj(grid_ids, start_frame, end_frame):
     n_frames = end_frame - start_frame + 1
     n_grid_ids = len(grid_ids)
 
@@ -85,14 +86,15 @@ def compress_traj(grid_ids, start_frame, end_frame, n_grid_ids, n_frames):
         end_frame: grid_ids[-1],
     }
     skip_ratio = float(n_grid_ids - 2) / float(n_frames - 2)
-    assigned_indices = [0, n_grid_ids-1]
+    assigned_indices = [0, n_grid_ids - 1]
     for frame_id in range(n_frames):
-        grid_ids_index = int(math.floor(skip_ratio*frame_id))
+        grid_ids_index = int(math.floor(skip_ratio * frame_id))
         assert grid_ids_index not in assigned_indices, f"already assigned grid_ids_index: {grid_ids_index}"
         assigned_indices.append(grid_ids_index)
         frame_to_traj_dict[start_frame + frame_id] = grid_ids[grid_ids_index]
-        
+
     return frame_to_traj_dict
+
 
 def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir, params):
     """
@@ -162,7 +164,7 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
 
         start_t, end_t = timestamp
 
-        start_frame, end_frame = int(start_t*params.fps), int(end_t*params.fps)
+        start_frame, end_frame = int(start_t * params.fps), int(end_t * params.fps)
         traj_n_frames = end_frame - start_frame + 1
 
         excel_ids = sentence.split(' ')
@@ -171,9 +173,12 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
 
         grid_cells = [excel_id_dict[excel_id] for excel_id in excel_ids]
 
-        if n_excel_ids != traj_n_frames:
-
-
+        if n_excel_ids > traj_n_frames:
+            pass
+        elif n_excel_ids < traj_n_frames:
+            pass
+        else:
+            pass
 
 
 def main():

@@ -38,7 +38,8 @@ def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
     return checkpoint, epoch
 
 
-def build_targets_densecapbuild_targets_densecap(
+def build_targets_densecap(
+        vocab_fmt,
         n_frames, frame_size, frames, annotations, seq_name,
         grid_res, frame_gap, win_size, fps, out_dir, vis):
     """
@@ -81,6 +82,7 @@ def build_targets_densecapbuild_targets_densecap(
 
     n_obj_cols = len(obj_cols)
     vocab_annotations = [None] * annotations.n_traj
+    prev_grid_ids = [None] * annotations.n_traj
     traj_lengths = []
 
     max_traj_length = 0
@@ -209,7 +211,7 @@ def build_targets_densecapbuild_targets_densecap(
                 if vis:
                     draw_box(frame_disp, grid_box, color='white', thickness=1)
 
-            """ahow active objects and associated grid cells 
+            """show active objects and associated grid cells 
             """
             for _id, obj_id in enumerate(ann_idx):
                 # traj_idx = annotations.traj_idx[obj_id]
@@ -236,13 +238,24 @@ def build_targets_densecapbuild_targets_densecap(
 
                 # show('frame_disp', frame_disp, _pause=0)
 
-                excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx)
-                word = excel_idx + excel_idy
+                if vocab_fmt == 0:
+                    excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx)
+                    word = excel_idx + excel_idy
+                    if traj_vocab['sentence']:
+                        traj_vocab['sentence'] += ' ' + word
+                    else:
+                        traj_vocab['sentence'] = word
 
-                if traj_vocab['sentence']:
-                    traj_vocab['sentence'] += ' ' + word
-                else:
-                    traj_vocab['sentence'] = word
+                elif vocab_fmt == 1:
+                    if traj_vocab['sentence']:
+                        _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
+                        grid_cell_diff((_prev_grid_idy, _prev_grid_idx), (grid_idy, grid_idx))
+
+                        traj_vocab['sentence'] += ' ' + word
+                    else:
+                        traj_vocab['sentence'] = f'R{grid_idy} C{grid_idx}'
+
+                prev_grid_ids[traj_id] = (grid_idy, grid_idx)
 
                 if vis:
                     _id = f'{target_id}-{traj_id}-{win_id}'
@@ -266,6 +279,51 @@ def build_targets_densecapbuild_targets_densecap(
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
 
     return vocab_annotations, traj_lengths
+
+
+def grid_cell_diff(prev_grid_ids, curr_grid_ids, max_diff=1):
+    prev_grid_idy, prev_grid_idx = prev_grid_ids
+    grid_idy, grid_idx = curr_grid_ids
+
+    unit_diff = max_diff == 1
+
+    diff_y, diff_x = abs(grid_idy-prev_grid_idy), abs(grid_idx-prev_grid_idx)
+
+    assert diff_y <= max_diff, \
+        f'grid_idy {grid_idy} exceeds diff {max_diff} from prev_grid_idx: {prev_grid_idy}'
+
+    assert diff_x <= max_diff, \
+        f'grid_idx {grid_idx} exceeds diff {max_diff} from prev_grid_idx: {prev_grid_idx}'
+
+    if grid_idy == prev_grid_idy:
+        if grid_idx == prev_grid_idx:
+            return 'same'
+
+        if grid_idx > prev_grid_idx:
+            return 'right' if unit_diff else f'right-{diff_x}'
+
+        if grid_idx < prev_grid_idx:
+            return 'left' if unit_diff else f'left-{diff_x}'
+
+    if grid_idy > prev_grid_idy:
+        if grid_idx == prev_grid_idx:
+            return 'down' if unit_diff else f'down-{diff_y}'
+
+        if grid_idx > prev_grid_idx:
+            return 'down-right' if unit_diff else f'down-{diff_y}-right-{diff_x}'
+
+        if grid_idx < prev_grid_idx:
+            return 'down-left' if unit_diff else f'down-{diff_y}-left-{diff_x}'
+
+    if grid_idy < prev_grid_idy:
+        if grid_idx == prev_grid_idx:
+            return 'up' if unit_diff else f'up-{diff_y}'
+
+        if grid_idx > prev_grid_idx:
+            return 'up-right' if unit_diff else f'up-{diff_y}-right-{diff_x}'
+
+        if grid_idx < prev_grid_idx:
+            return 'up-left' if unit_diff else f'up-{diff_y}-left-{diff_x}'
 
 
 def excel_ids_to_grid(grid_res):
