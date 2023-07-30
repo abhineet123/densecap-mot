@@ -199,8 +199,8 @@ def main():
     print(f'args.train_splits: {args.train_splits}')
     print(f'args.train_splits[0]: {args.train_splits[0]}')
 
-    print(f'args.val_splits: {args.val_splits}')
-    print(f'args.val_splits[0]: {args.val_splits[0]}')
+    # print(f'args.val_splits: {args.val_splits}')
+    # print(f'args.val_splits[0]: {args.val_splits[0]}')
 
 
     """
@@ -215,16 +215,16 @@ def main():
 
     if not args.train_samplelist_path:
         args.train_samplelist_path = linux_path(args.ckpt, f"{args.train_splits[0]}_samples")
-        print(f'args.train_samplelist_path: {args.train_samplelist_path}')
+        # print(f'args.train_samplelist_path: {args.train_samplelist_path}')
 
     # if not args.train_sentence_dict_path:
     #     args.train_sentence_dict_path = linux_path(args.ckpt, "train_sentence_dict.pkl")
 
     if not args.valid_samplelist_path:
         args.valid_samplelist_path = linux_path(args.ckpt, f"{args.val_splits[0]}_samples")
-        print(f'args.valid_samplelist_path: {args.valid_samplelist_path}')
+        # print(f'args.valid_samplelist_path: {args.valid_samplelist_path}')
 
-    exit()
+    # exit()
 
     # if not args.valid_sentence_dict_path:
     #     args.valid_sentence_dict_path = linux_path(args.ckpt, "valid_sentence_dict.pkl")
