@@ -50,7 +50,7 @@ def get_dataset(args):
     # process text
     train_val_splits = [args.train_splits[0], args.val_splits[0]]
     sample_list_dir = os.path.dirname(args.train_samplelist_path)
-    text_proc, raw_data, n_train_videos, n_val_videos = get_vocab_and_sentences(
+    text_proc, raw_data, n_videos = get_vocab_and_sentences(
         args.dataset_file,
         train_val_splits,
         # args.max_sentence_len,
@@ -58,7 +58,7 @@ def get_dataset(args):
 
     # Create the dataset and data loader instance
     train_dataset = ANetDataset(args.feature_root,
-                                n_train_videos,
+                                n_videos['training'],
                                 args.train_splits,
                                 args.slide_window_size,
                                 args.dur_file,
@@ -74,7 +74,7 @@ def get_dataset(args):
                                 )
 
     valid_dataset = ANetDataset(args.feature_root,
-                                n_val_videos,
+                                n_videos['validation'],
                                 args.val_splits,
                                 args.slide_window_size,
                                 args.dur_file,
@@ -96,7 +96,6 @@ def get_dataset(args):
         train_dataset.get_samples(args.n_proc)
     if not valid_dataset.samples_loaded:
         valid_dataset.get_samples(args.n_proc)
-
 
     from datetime import timedelta
 
