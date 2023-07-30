@@ -1,9 +1,12 @@
 import numpy as np
 import os
+import sys
 import cv2
 from datetime import datetime
 from tqdm import tqdm
 import glob
+
+sys.path.append('../isl_labeling_tool/deep_mdp')
 
 from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_to_rgb2, draw_traj2, resize_ar, \
     linux_path, CVText
