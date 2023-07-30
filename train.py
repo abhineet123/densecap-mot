@@ -196,6 +196,11 @@ def main():
 
     # arguments inspection
 
+    print(f'args.train_splits: {args.train_splits}')
+    print(f'args.val_splits: {args.val_splits}')
+
+    exit()
+
     """
     slide_window_size is in units of SAMPLED frames rather than original ones
     this is also a misnomer since there is an implicit and 
