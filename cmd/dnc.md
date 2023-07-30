@@ -9,7 +9,9 @@
   - [1k-9600       @ n-3](#1k_9600___n_3_)
     - [all_seq__6_15       @ 1k-9600/n-3](#all_seq_6_15___1k_9600_n_3_)
       - [best_val_model_42       @ all_seq__6_15/1k-9600/n-3](#best_val_model_42___all_seq_6_15_1k_9600_n_3_)
-    - [all_seq__6_6       @ 1k-9600/n-3](#all_seq_6_6___1k_9600_n_3_)
+    - [all_seq__6_15       @ 1k-9600/n-3](#all_seq_6_15___1k_9600_n_3__1)
+    - [all_seq_15_480_diff_sample       @ 1k-9600/n-3](#all_seq_15_480_diff_sample___1k_9600_n_3_)
+    - [all_seq_6_480_diff_sample       @ 1k-9600/n-3](#all_seq_6_480_diff_sample___1k_9600_n_3_)
   - [25-2400       @ n-3](#25_2400___n_3_)
     - [all_seq__6_15       @ 25-2400/n-3](#all_seq_6_15___25_2400_n_3_)
     - [seq_0_25__6_15       @ 25-2400/n-3](#seq_0_25_6_15___25_2400_n_3_)
@@ -50,9 +52,17 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_
 #### best_val_model_42       @ all_seq__6_15/1k-9600/n-3-->dnc
 CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg ckpt_name=best_val_model_42.pth max_batches=100
 
-<a id="all_seq_6_6___1k_9600_n_3_"></a>
-### all_seq__6_6       @ 1k-9600/n-3-->dnc
-CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_6.cfg --batch_size 28 --num_workers 4 --n_proc 12
+<a id="all_seq_6_15___1k_9600_n_3__1"></a>
+### all_seq__6_15       @ 1k-9600/n-3-->dnc
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg --batch_size 32 --num_workers 4
+
+<a id="all_seq_15_480_diff_sample___1k_9600_n_3_"></a>
+### all_seq_15_480_diff_sample       @ 1k-9600/n-3-->dnc
+CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.cfg --batch_size 28 --num_workers 4 --n_proc 12
+
+<a id="all_seq_6_480_diff_sample___1k_9600_n_3_"></a>
+### all_seq_6_480_diff_sample       @ 1k-9600/n-3-->dnc
+CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_6_480_diff_sample.cfg --batch_size 28 --num_workers 4 --n_proc 12
 
 ```
 ulimit -n 40960
