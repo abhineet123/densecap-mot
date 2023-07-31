@@ -63,7 +63,7 @@ class Params:
         self.grid_res = (32, 32)
         self.frame_gap = 1
         self.fps = 30
-        self.vis = 0
+        self.vis = 1
 
         self.win_size = 0
 
@@ -233,7 +233,6 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
 
         for frame_id in range(start_frame, end_frame + 1):
             grid_cell = frame_to_grid_cell[frame_id]
-            frame_disp = np.copy(_input.all_frames[frame_id])
 
             grid_idy, grid_idx = grid_cell
 
@@ -243,11 +242,15 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
                 [offset_cx - grid_cell_size[0] / 2, offset_cy - grid_cell_size[1] / 2, grid_cell_size[0],
                  grid_cell_size[1]])
 
-            draw_box(frame_disp, grid_box, color='white', thickness=1)
+            if params.vis:
+                frame_disp = np.copy(_input.all_frames[frame_id])
+                draw_box(frame_disp, grid_box, color='white', thickness=1)
 
-            frame_disp = resize_ar(frame_disp, height=960)
+                frame_disp = resize_ar(frame_disp, height=960)
 
-            _pause = show('frame_disp', frame_disp, _pause=_pause)
+                _pause = show('frame_disp', frame_disp, _pause=_pause)
+
+
 
 
 def main():
