@@ -228,7 +228,7 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
                 frame_id: grid_cells[frame_id - start_frame]
                 for frame_id in range(start_frame, end_frame + 1)
             }
-            
+
         _pause = 1
 
         for frame_id in range(start_frame, end_frame + 1):
@@ -281,6 +281,9 @@ def main():
         interval = 1
 
     assert params.json, "json file must be provided"
+    if os.path.isdir(params.json):
+        params.json = linux_path(params.json, 'densecap.json')
+
     assert os.path.isfile(params.json), f"invalid json file: {params.json}"
 
     with open(params.json, 'r') as fid:
