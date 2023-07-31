@@ -327,11 +327,12 @@ def main():
                 abs_end_id = seq_n_frames
                 end_id = int(abs_end_id / interval)
 
-            suffix = f'{abs_start_id}_{abs_end_id}'
+            # suffix = f'{abs_start_id}_{abs_end_id}'
 
+            suffix = ''
             seq_info_list.append((seq_id, suffix, abs_start_id, abs_end_id))
 
-            print(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
+            print(f'{seq_name}: {abs_start_id} to {abs_end_id}')
 
             start_id += win_stride
 
