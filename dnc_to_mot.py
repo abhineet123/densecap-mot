@@ -79,7 +79,7 @@ def compress_traj(grid_ids, start_frame, end_frame):
     n_frames = end_frame - start_frame + 1
     n_grid_ids = len(grid_ids)
 
-    assert n_grid_ids > n_frames, "n_frames must exceed n_frames for compression"
+    assert n_grid_ids > n_frames, "trajectory size must exceed n_frames for compression"
 
     frame_to_traj_dict = {
         start_frame: grid_ids[0],
@@ -87,11 +87,50 @@ def compress_traj(grid_ids, start_frame, end_frame):
     }
     skip_ratio = float(n_grid_ids - 2) / float(n_frames - 2)
     assigned_indices = [0, n_grid_ids - 1]
-    for frame_id in range(n_frames):
-        grid_ids_index = int(math.floor(skip_ratio * frame_id))
+    for frame_id in range(start_frame + 1, end_frame):
+        grid_ids_index = int(math.floor(skip_ratio * (frame_id - start_frame)))
         assert grid_ids_index not in assigned_indices, f"already assigned grid_ids_index: {grid_ids_index}"
         assigned_indices.append(grid_ids_index)
-        frame_to_traj_dict[start_frame + frame_id] = grid_ids[grid_ids_index]
+        frame_to_traj_dict[frame_id] = grid_ids[grid_ids_index]
+
+    return frame_to_traj_dict
+
+
+def expand_traj(grid_ids, start_frame, end_frame):
+    n_frames = end_frame - start_frame + 1
+    n_grid_ids = len(grid_ids)
+
+    assert n_grid_ids < n_frames, "trajectory size must not exceed n_frames for expansion"
+
+    frame_to_traj_dict = {
+        start_frame: grid_ids[0],
+        end_frame: grid_ids[-1],
+    }
+    skip_ratio = float(n_frames - 2) / float(n_grid_ids - 2)
+    assigned_frames = [start_frame, end_frame]
+
+    for grid_ids_index in range(1, n_grid_ids - 1):
+        frame_id = start_frame + int(math.floor(skip_ratio * grid_ids_index))
+
+        assert frame_id not in assigned_frames, f"already assigned frame_id: {frame_id}"
+
+        assigned_frames.append(grid_ids_index)
+        frame_to_traj_dict[frame_id] = grid_ids[grid_ids_index]
+
+    unassigned_frames = [k for k in range(start_frame, end_frame + 1) if k not in assigned_frames]
+
+    assert len(unassigned_frames) == n_frames - n_grid_ids, "something weird going on"
+
+    unassigned_frame_dists = [[abs(unassigned_frame - assigned_frame) for assigned_frame in assigned_frames]
+                              for unassigned_frame in unassigned_frames]
+
+    nn_frame_ids = [np.argsort(dists) for dists in unassigned_frame_dists]
+
+    for i, unassigned_frame in enumerate(unassigned_frames):
+        nn_assigned_frame = int(nn_frame_ids[i][0])
+        nn_assigned_frame = assigned_frames[nn_assigned_frame]
+
+        frame_to_traj_dict[unassigned_frame] = frame_to_traj_dict[nn_assigned_frame]
 
     return frame_to_traj_dict
 
@@ -174,11 +213,15 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
         grid_cells = [excel_id_dict[excel_id] for excel_id in excel_ids]
 
         if n_excel_ids > traj_n_frames:
-            pass
+            frame_to_traj_dict = compress_traj(grid_cells, start_frame, end_frame)
         elif n_excel_ids < traj_n_frames:
-            pass
+            frame_to_traj_dict = expand_traj(grid_cells, start_frame, end_frame)
         else:
-            pass
+            frame_to_traj_dict = {
+                frame_id: grid_cells[frame_id - start_frame]
+                for frame_id in range(start_frame, end_frame + 1)
+            }
+        
 
 
 def main():
