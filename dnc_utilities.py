@@ -360,7 +360,7 @@ def excel_ids_to_grid(grid_res):
         for grid_idx in range(grid_res_x):
             excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx)
 
-            excel_id = '{excel_idx}{excel_idy}'.lower()
+            excel_id = f'{excel_idx}{excel_idy}'.lower()
 
             excel_id_dict[excel_id] = (grid_idy, grid_idx)
 
