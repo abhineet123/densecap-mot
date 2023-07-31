@@ -58,11 +58,11 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_
 
 <a id="all_seq_15_480_diff_sample___1k_9600_n_3_"></a>
 ### all_seq_15_480_diff_sample       @ 1k-9600/n-3-->dnc
-CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.cfg --batch_size 28 --num_workers 4 --n_proc 12
+CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.cfg --batch_size 32 --num_workers 4 --n_proc 12
 
 <a id="all_seq_6_480_diff_sample___1k_9600_n_3_"></a>
 ### all_seq_6_480_diff_sample       @ 1k-9600/n-3-->dnc
-CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_6_480_diff_sample.cfg --batch_size 28 --num_workers 4 --n_proc 12
+CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_6_480_diff_sample.cfg --batch_size 32 --num_workers 4 --n_proc 12
 
 ```
 ulimit -n 40960

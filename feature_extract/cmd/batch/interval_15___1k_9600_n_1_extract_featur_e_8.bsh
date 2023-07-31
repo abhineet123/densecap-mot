@@ -1,0 +1,23 @@
+## @ x99:6.0
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=0 end_seq=249
+
+## @ x99:6.1
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=250 end_seq=499
+
+## @ x99:6.2
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=500 end_seq=749
+
+## @ x99:6.3
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=750 end_seq=999
+
+## @ x99:17.0
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=1000 end_seq=1249
+
+## @ x99:17.1
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=1250 end_seq=1499
+
+## @ x99:17.2
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=1500 end_seq=1749
+
+## @ x99:17.3
+CUDA_VISIBLE_DEVICES=2 python extract_feature.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 gpus=2 start_seq=1750 end_seq=1999

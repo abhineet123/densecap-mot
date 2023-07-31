@@ -134,10 +134,11 @@ python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=1000 img_h=256 n_objs=2 
 <a id="interval_15___1k_9600_n_1_extract_featur_e_"></a>
 #### interval-15       @ 1k-9600/n-1/extract_feature-->dnc_gen
 python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 n_proc=8 gpus=1,2
+python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 n_proc=8 gpus=2
 <a id="interval_6___1k_9600_n_1_extract_featur_e_"></a>
 #### interval-6       @ 1k-9600/n-1/extract_feature-->dnc_gen
 python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 n_proc=8 gpus=1,2
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 n_proc=4 gpus=1
+python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 n_proc=8 gpus=1
 
 <a id="25_2400___n_1_extract_featur_e_"></a>
 ### 25-2400       @ n-1/extract_feature-->dnc_gen
