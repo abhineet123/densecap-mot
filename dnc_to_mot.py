@@ -28,7 +28,7 @@ from input import Input
 from objects import Annotations
 from data import Data
 
-from utilities import CustomLogger, SIIF, linux_path
+from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show
 
 from dnc_utilities import excel_ids_to_grid, build_targets_seq
 
@@ -197,6 +197,13 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
     if params.vis:
         _input._read_all_frames()
 
+    frame_size = _input.frame_size
+    grid_res = params.grid_res
+    grid_cell_size = np.array([frame_size[i] / grid_res[i] for i in range(2)])
+
+    grid_x, grid_y = [np.arange(grid_cell_size[i] / 2.0, frame_size[i], grid_cell_size[i]) for i in range(2)]
+    grid_cx, grid_cy = np.meshgrid(grid_x, grid_y)
+
     for traj_datum in dnc_data:
         sentence = traj_datum["sentence"]
         timestamp = traj_datum["timestamp"]
@@ -213,15 +220,34 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
         grid_cells = [excel_id_dict[excel_id] for excel_id in excel_ids]
 
         if n_excel_ids > traj_n_frames:
-            frame_to_traj_dict = compress_traj(grid_cells, start_frame, end_frame)
+            frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
         elif n_excel_ids < traj_n_frames:
-            frame_to_traj_dict = expand_traj(grid_cells, start_frame, end_frame)
+            frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame)
         else:
-            frame_to_traj_dict = {
+            frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
                 for frame_id in range(start_frame, end_frame + 1)
             }
-        
+            
+        _pause = 1
+
+        for frame_id in range(start_frame, end_frame + 1):
+            grid_cell = frame_to_grid_cell[frame_id]
+            frame_disp = np.copy(_input.all_frames[frame_id])
+
+            grid_idy, grid_idx = grid_cell
+
+            offset_cx, offset_cy = grid_cx[grid_idy, grid_idx], grid_cy[grid_idy, grid_idx]
+
+            grid_box = np.array(
+                [offset_cx - grid_cell_size[0] / 2, offset_cy - grid_cell_size[1] / 2, grid_cell_size[0],
+                 grid_cell_size[1]])
+
+            draw_box(frame_disp, grid_box, color='white', thickness=1)
+
+            frame_disp = resize_ar(frame_disp, height=960)
+
+            _pause = show('frame_disp', frame_disp, _pause=_pause)
 
 
 def main():

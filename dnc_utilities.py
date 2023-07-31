@@ -285,7 +285,7 @@ def build_targets_densecap(
                              thickness=1)
 
             if vis:
-                frame_disp = resize_ar(frame_disp, height=1080)
+                frame_disp = resize_ar(frame_disp, height=960)
 
                 if vis == 2:
                     out_img_id += 1
