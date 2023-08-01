@@ -52,7 +52,12 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_
 #### best_val_model_42       @ all_seq__6_15/1k-9600/n-3-->dnc
 CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg ckpt_name=best_val_model_42.pth max_batches=100
 
-python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15/best_val_model_42_on_validation_ ckpt_name=best_val_model_42.pth max_batches=100 set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
+python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15/epoch_88_on_validation_ set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
+
+
+python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
+
+python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000 @slide sample=15 size=480
 
 <a id="all_seq_6_15___1k_9600_n_3__1"></a>
 ### all_seq__6_15       @ 1k-9600/n-3-->dnc

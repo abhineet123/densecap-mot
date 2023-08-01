@@ -42,7 +42,7 @@ class Params:
     """
 
     class SlidingWindow:
-        interval = 0
+        sample = 0
         size = 0
         stride = 0
 
@@ -67,6 +67,8 @@ class Params:
 
         self.win_size = 0
 
+        self.vocab_fmt = 0
+
         self.n_proc = 1
 
         self.slide = Params.SlidingWindow()
@@ -75,11 +77,26 @@ class Params:
         self.ann = Annotations.Params()
 
 
+def draw_grid_cell(frame_disp, grid_cell, grid_centers, grid_cell_size, color='white', thickness=1):
+    grid_idy, grid_idx = grid_cell
+    grid_cy, grid_cx = grid_centers
+
+    offset_cx, offset_cy = grid_cx[grid_idy, grid_idx], grid_cy[grid_idy, grid_idx]
+
+    grid_box = np.array(
+        [offset_cx - grid_cell_size[0] / 2, offset_cy - grid_cell_size[1] / 2, grid_cell_size[0],
+         grid_cell_size[1]])
+
+    draw_box(frame_disp, grid_box, color=color, thickness=thickness)
+
+
 def compress_traj(grid_ids, start_frame, end_frame):
     n_frames = end_frame - start_frame + 1
     n_grid_ids = len(grid_ids)
 
     assert n_grid_ids > n_frames, "trajectory size must exceed n_frames for compression"
+
+    print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_ids[0],
@@ -102,6 +119,8 @@ def expand_traj(grid_ids, start_frame, end_frame):
 
     assert n_grid_ids < n_frames, "trajectory size must not exceed n_frames for expansion"
 
+    print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
+
     frame_to_traj_dict = {
         start_frame: grid_ids[0],
         end_frame: grid_ids[-1],
@@ -114,7 +133,7 @@ def expand_traj(grid_ids, start_frame, end_frame):
 
         assert frame_id not in assigned_frames, f"already assigned frame_id: {frame_id}"
 
-        assigned_frames.append(grid_ids_index)
+        assigned_frames.append(frame_id)
         frame_to_traj_dict[frame_id] = grid_ids[grid_ids_index]
 
     unassigned_frames = [k for k in range(start_frame, end_frame + 1) if k not in assigned_frames]
@@ -135,7 +154,7 @@ def expand_traj(grid_ids, start_frame, end_frame):
     return frame_to_traj_dict
 
 
-def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir, params):
+def run(seq_info, json_data, word_to_grid, n_seq, out_dir, traj_lengths_out_dir, params):
     """
 
     :param seq_info:
@@ -186,6 +205,9 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
 
     dnc_data = json_data[seq_name]
 
+    if isinstance(dnc_data, dict):
+        dnc_data = dnc_data['annotations']
+
     _frame_size = _input.frame_size
     _n_frames = _input.n_frames
 
@@ -205,8 +227,8 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
     grid_cx, grid_cy = np.meshgrid(grid_x, grid_y)
 
     for traj_datum in dnc_data:
-        sentence = traj_datum["sentence"]
-        timestamp = traj_datum["timestamp"]
+        sentence = traj_datum["sentence"].lower()
+        timestamp = traj_datum["segment"]
 
         start_t, end_t = timestamp
 
@@ -217,7 +239,7 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
 
         n_excel_ids = len(excel_ids)
 
-        grid_cells = [excel_id_dict[excel_id] for excel_id in excel_ids]
+        grid_cells = [word_to_grid[excel_id] for excel_id in excel_ids]
 
         if n_excel_ids > traj_n_frames:
             frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
@@ -232,25 +254,20 @@ def run(seq_info, json_data, excel_id_dict, n_seq, out_dir, traj_lengths_out_dir
         _pause = 1
 
         for frame_id in range(start_frame, end_frame + 1):
-            grid_cell = frame_to_grid_cell[frame_id]
-
-            grid_idy, grid_idx = grid_cell
-
-            offset_cx, offset_cy = grid_cx[grid_idy, grid_idx], grid_cy[grid_idy, grid_idx]
-
-            grid_box = np.array(
-                [offset_cx - grid_cell_size[0] / 2, offset_cy - grid_cell_size[1] / 2, grid_cell_size[0],
-                 grid_cell_size[1]])
-
             if params.vis:
                 frame_disp = np.copy(_input.all_frames[frame_id])
-                draw_box(frame_disp, grid_box, color='white', thickness=1)
+
+                for excel_id in excel_ids:
+                    grid_cell = word_to_grid[excel_id]
+                    draw_grid_cell(frame_disp, grid_cell, (grid_cy, grid_cx), grid_cell_size, color='green')
+
+                grid_cell = frame_to_grid_cell[frame_id]
+
+                draw_grid_cell(frame_disp, grid_cell, (grid_cy, grid_cx), grid_cell_size, color='white', thickness=2)
 
                 frame_disp = resize_ar(frame_disp, height=960)
 
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
-
-
 
 
 def main():
@@ -279,7 +296,7 @@ def main():
     if not seq_ids:
         seq_ids = tuple(range(n_sequences))
 
-    interval = params.slide.interval
+    interval = params.slide.sample
     if interval <= 0:
         interval = 1
 
@@ -292,10 +309,19 @@ def main():
     with open(params.json, 'r') as fid:
         json_data = json.load(fid)
 
-    excel_id_dict = excel_ids_to_grid(params.grid_res)
+    if 'database' in json_data:
+        json_data = json_data['database']
+
+    word_to_grid = None
+    if params.vocab_fmt == 0:
+        word_to_grid = excel_ids_to_grid(params.grid_res)
+    elif params.vocab_fmt == 1:
+        raise AssertionError('Not supported yet')
 
     seq_info_list = []
     pbar = tqdm(seq_ids)
+
+    enable_slide = params.slide.size or params.slide.stride or params.slide.sample
     for seq_id in pbar:
 
         if not _data.initialize(params.set, seq_id, 0, _logger, silent=1):
@@ -330,9 +356,11 @@ def main():
                 abs_end_id = seq_n_frames
                 end_id = int(abs_end_id / interval)
 
-            # suffix = f'{abs_start_id}_{abs_end_id}'
+            if enable_slide:
+                suffix = f'{abs_start_id}_{abs_end_id}'
+            else:
+                suffix = ''
 
-            suffix = ''
             seq_info_list.append((seq_id, suffix, abs_start_id, abs_end_id))
 
             print(f'{seq_name}: {abs_start_id} to {abs_end_id}')
@@ -364,7 +392,7 @@ def main():
         run,
         n_seq=n_seq,
         json_data=json_data,
-        excel_id_dict=excel_id_dict,
+        word_to_grid=word_to_grid,
         out_dir=out_dir,
         traj_lengths_out_dir=traj_lengths_out_dir,
         params=params,
