@@ -300,6 +300,111 @@ def build_targets_densecap(
     return vocab_annotations, traj_lengths, vocab
 
 
+def diff_sentence_to_grid_cells(words, fmt_type, max_diff=1):
+    n_dig = len(str(max_diff))
+    unit_diff = max_diff == 1
+
+    if fmt_type == 1:
+        assert words[0][0] == 'R', f"Invalid first word {words[0]}"
+        assert words[1][0] == 'C', f"Invalid second word {words[1]}"
+
+        start_row_id = words[0][1:]
+        start_col_id = words[1][1:]
+
+        diff_words = words[2:]
+
+    elif fmt_type == 2:
+
+        assert words[0][0] == 'R' and words[0][n_dig] == 'C', f"Invalid first word {words[0]}"
+
+        start_row_id = words[0][1:n_dig + 1]
+        start_col_id = words[0][-n_dig:]
+
+        diff_words = words[1:]
+
+    else:
+        raise AssertionError(f'invalid format type: {fmt_type}')
+
+    grid_idy = int(start_row_id)
+    grid_idx = int(start_col_id)
+
+    grid_ids = [(grid_idy, grid_idx), ]
+
+    prev_grid_idy, prev_grid_idx = grid_idy, grid_idx
+
+    for word in diff_words:
+
+        if word == 'I':
+            grid_idy, grid_idx = prev_grid_idy, prev_grid_idx
+        elif unit_diff:
+            if word == 'S':
+                grid_idy, grid_idx = prev_grid_idy + 1, prev_grid_idx
+            elif word == 'N':
+                grid_idy, grid_idx = prev_grid_idy - 1, prev_grid_idx
+            elif word == 'E':
+                grid_idy, grid_idx = prev_grid_idy, prev_grid_idx + 1
+            elif word == 'W':
+                grid_idy, grid_idx = prev_grid_idy, prev_grid_idx - 1
+
+            elif word == 'SE':
+                grid_idy, grid_idx = prev_grid_idy + 1, prev_grid_idx + 1
+
+            elif word == 'SW':
+                grid_idy, grid_idx = prev_grid_idy + 1, prev_grid_idx - 1
+
+            elif word == 'NE':
+                grid_idy, grid_idx = prev_grid_idy - 1, prev_grid_idx + 1
+
+            elif word == 'NW':
+                grid_idy, grid_idx = prev_grid_idy - 1, prev_grid_idx - 1
+            else:
+                raise AssertionError(f'invalid word: {word}')
+        elif len(word) == n_dig + 1:
+            direction = word[0]
+            diff = int(word[1:])
+            assert diff > 0, f"invalid diff: {diff} in word: {word}"
+
+            if direction == 'S':
+                grid_idy, grid_idx = prev_grid_idy + diff, prev_grid_idx
+            elif direction == 'N':
+                grid_idy, grid_idx = prev_grid_idy - diff, prev_grid_idx
+            elif direction == 'E':
+                grid_idy, grid_idx = prev_grid_idy, prev_grid_idx + diff
+            elif direction == 'W':
+                grid_idy, grid_idx = prev_grid_idy, prev_grid_idx - diff
+            else:
+                raise AssertionError(f'invalid word: {word}')
+        elif len(word) == 2 * (n_dig + 1):
+            direction = word[0] + word[n_dig+1]
+            diff_y_, diff_x_= word[1:n_dig+1], word[n_dig + 2:]
+            diff_y, diff_x = int(diff_y_), int(diff_x_)
+
+            assert diff_y > 0, f"invalid diff_y: {diff_y} in word: {word}"
+            assert diff_x > 0, f"invalid diff_x: {diff_x} in word: {word}"
+
+            if direction == 'SE':
+                grid_idy, grid_idx = prev_grid_idy + diff_y, prev_grid_idx + diff_x
+
+            elif direction == 'SW':
+                grid_idy, grid_idx = prev_grid_idy + diff_y, prev_grid_idx - diff_x
+
+            elif direction == 'NE':
+                grid_idy, grid_idx = prev_grid_idy - diff_y, prev_grid_idx + diff_x
+
+            elif direction == 'NW':
+                grid_idy, grid_idx = prev_grid_idy - diff_y, prev_grid_idx - diff_x
+            else:
+                raise AssertionError(f'invalid word: {word}')
+        else:
+            raise AssertionError(f'invalid word: {word}')
+
+        grid_ids.append((grid_idy, grid_idx))
+        
+        prev_grid_idy, prev_grid_idx = grid_idy, grid_idx
+
+    return grid_ids
+
+
 def grid_to_direction(prev_grid_ids, curr_grid_ids, max_diff=1):
     prev_grid_idy, prev_grid_idx = prev_grid_ids
     grid_idy, grid_idx = curr_grid_ids

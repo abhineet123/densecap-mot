@@ -57,7 +57,7 @@ python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_
 
 python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
 
-python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000 @slide sample=15 size=480
+python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000 vocab_fmt=1 max_diff=99 @slide sample=15 size=480
 
 <a id="all_seq_6_15___1k_9600_n_3__1"></a>
 ### all_seq__6_15       @ 1k-9600/n-3-->dnc

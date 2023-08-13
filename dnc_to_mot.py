@@ -20,6 +20,8 @@ import json
 from tqdm import tqdm
 from datetime import datetime
 
+import functools
+
 import copy
 import paramparse
 
@@ -30,7 +32,7 @@ from data import Data
 
 from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show
 
-from dnc_utilities import excel_ids_to_grid, build_targets_seq
+from dnc_utilities import excel_ids_to_grid, diff_sentence_to_grid_cells
 
 
 class Params:
@@ -68,6 +70,7 @@ class Params:
         self.win_size = 0
 
         self.vocab_fmt = 0
+        self.max_diff = 1
 
         self.n_proc = 1
 
@@ -154,7 +157,7 @@ def expand_traj(grid_ids, start_frame, end_frame):
     return frame_to_traj_dict
 
 
-def run(seq_info, json_data, word_to_grid, n_seq, out_dir, traj_lengths_out_dir, params):
+def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_lengths_out_dir, params):
     """
 
     :param seq_info:
@@ -227,7 +230,7 @@ def run(seq_info, json_data, word_to_grid, n_seq, out_dir, traj_lengths_out_dir,
     grid_cx, grid_cy = np.meshgrid(grid_x, grid_y)
 
     for traj_datum in dnc_data:
-        sentence = traj_datum["sentence"].lower()
+        sentence = traj_datum["sentence"].upper()
         timestamp = traj_datum["segment"]
 
         start_t, end_t = timestamp
@@ -235,15 +238,15 @@ def run(seq_info, json_data, word_to_grid, n_seq, out_dir, traj_lengths_out_dir,
         start_frame, end_frame = int(start_t * params.fps), int(end_t * params.fps)
         traj_n_frames = end_frame - start_frame + 1
 
-        excel_ids = sentence.split(' ')
+        words = sentence.split(' ')
 
-        n_excel_ids = len(excel_ids)
+        n_words = len(words)
 
-        grid_cells = [word_to_grid[excel_id] for excel_id in excel_ids]
+        grid_cells = sentence_to_grid_cells(words)
 
-        if n_excel_ids > traj_n_frames:
+        if n_words > traj_n_frames:
             frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
-        elif n_excel_ids < traj_n_frames:
+        elif n_words < traj_n_frames:
             frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame)
         else:
             frame_to_grid_cell = {
@@ -257,8 +260,7 @@ def run(seq_info, json_data, word_to_grid, n_seq, out_dir, traj_lengths_out_dir,
             if params.vis:
                 frame_disp = np.copy(_input.all_frames[frame_id])
 
-                for excel_id in excel_ids:
-                    grid_cell = word_to_grid[excel_id]
+                for grid_cell in grid_cells:
                     draw_grid_cell(frame_disp, grid_cell, (grid_cy, grid_cx), grid_cell_size, color='green')
 
                 grid_cell = frame_to_grid_cell[frame_id]
@@ -312,12 +314,14 @@ def main():
     if 'database' in json_data:
         json_data = json_data['database']
 
-    word_to_grid = None
     if params.vocab_fmt == 0:
-        word_to_grid = excel_ids_to_grid(params.grid_res)
-    elif params.vocab_fmt == 1:
-        raise AssertionError('Not supported yet')
-
+        word_to_grid_cell = excel_ids_to_grid(params.grid_res)
+        sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
+    else:
+        sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
+                                                   fmt_type=params.vocab_fmt,
+                                                   max_diff=params.max_diff,
+                                                   )
     seq_info_list = []
     pbar = tqdm(seq_ids)
 
@@ -387,12 +391,11 @@ def main():
 
     n_proc = min(params.n_proc, n_seq)
 
-    import functools
     func = functools.partial(
         run,
         n_seq=n_seq,
         json_data=json_data,
-        word_to_grid=word_to_grid,
+        sentence_to_grid_cells=sentence_to_grid_cells,
         out_dir=out_dir,
         traj_lengths_out_dir=traj_lengths_out_dir,
         params=params,
