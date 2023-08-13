@@ -247,7 +247,7 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide sample=15
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide sample=15 size=480 @ n_proc=12 vocab_fmt=1 max_diff=99 n_proc=12 sample_traj=0 seq=1000
 <a id="diff_sample___slide_15_480_1k_9600_n_3_mot_to_dn_c_"></a>
 ##### diff-sample       @ slide-15-480/1k-9600/n-3/mot_to_dnc-->dnc_gen
-python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide sample=15 size=480 @ n_proc=12 vocab_fmt=1 max_diff=99 n_proc=12 sample_traj=1 seq=1000
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide sample=15 size=480 @ n_proc=12 vocab_fmt=1 max_diff=99 n_proc=12 sample_traj=1 seq=999
 
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var @slide sample=15 size=480 @ n_proc=12 vocab_fmt=1 max_diff=99 n_proc=12 sample_traj=1 vis=1 seq=782
 
