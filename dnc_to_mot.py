@@ -30,7 +30,7 @@ from input import Input
 from objects import Annotations
 from data import Data
 
-from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show
+from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show, annotate_and_show
 
 from dnc_utilities import excel_ids_to_grid, diff_sentence_to_grid_cells
 
@@ -116,45 +116,94 @@ def compress_traj(grid_ids, start_frame, end_frame):
     return frame_to_traj_dict
 
 
-def expand_traj(grid_ids, start_frame, end_frame):
+def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
+
     n_frames = end_frame - start_frame + 1
-    n_grid_ids = len(grid_ids)
+    n_grid_ids = len(grid_cells)
+
+    assert n_grid_ids >= 2, "there must be at least two grid cells to interpolate from"
 
     assert n_grid_ids < n_frames, "trajectory size must not exceed n_frames for expansion"
 
     print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
-        start_frame: grid_ids[0],
-        end_frame: grid_ids[-1],
+        start_frame: grid_cells[0],
+        end_frame: grid_cells[-1],
     }
-    skip_ratio = float(n_frames - 2) / float(n_grid_ids - 2)
+    skip_ratio = float(n_frames) / float(n_grid_ids)
     assigned_frames = [start_frame, end_frame]
 
-    for grid_ids_index in range(1, n_grid_ids - 1):
-        frame_id = start_frame + int(math.floor(skip_ratio * grid_ids_index))
+    for grid_cells_index in range(1, n_grid_ids - 1):
+        frame_id = start_frame + int(math.floor(skip_ratio * grid_cells_index))
 
         assert frame_id not in assigned_frames, f"already assigned frame_id: {frame_id}"
 
         assigned_frames.append(frame_id)
-        frame_to_traj_dict[frame_id] = grid_ids[grid_ids_index]
+        frame_to_traj_dict[frame_id] = grid_cells[grid_cells_index]
 
     unassigned_frames = [k for k in range(start_frame, end_frame + 1) if k not in assigned_frames]
 
     assert len(unassigned_frames) == n_frames - n_grid_ids, "something weird going on"
 
-    unassigned_frame_dists = [[abs(unassigned_frame - assigned_frame) for assigned_frame in assigned_frames]
-                              for unassigned_frame in unassigned_frames]
+    _pause = 1
 
-    nn_frame_ids = [np.argsort(dists) for dists in unassigned_frame_dists]
+    out_grid_cells = list(grid_cells[:])
 
     for i, unassigned_frame in enumerate(unassigned_frames):
-        nn_assigned_frame = int(nn_frame_ids[i][0])
-        nn_assigned_frame = assigned_frames[nn_assigned_frame]
+        future_assigned_frames = [assigned_frame for assigned_frame in assigned_frames if
+                                  assigned_frame > unassigned_frame]
+        past_assigned_frames = [assigned_frame for assigned_frame in assigned_frames if
+                                assigned_frame < unassigned_frame]
 
-        frame_to_traj_dict[unassigned_frame] = frame_to_traj_dict[nn_assigned_frame]
+        future_dists = [assigned_frame - unassigned_frame for assigned_frame in future_assigned_frames]
+        past_dists = [unassigned_frame - assigned_frame for assigned_frame in past_assigned_frames]
 
-    return frame_to_traj_dict
+        future_nn_frames = np.argsort(future_dists)
+        past_nn_frames = np.argsort(past_dists)
+
+        future_nn, past_nn = int(future_nn_frames[0]), int(past_nn_frames[0])
+
+        future_frame, past_frame = future_assigned_frames[future_nn], past_assigned_frames[past_nn]
+
+        future_dist, past_dist = future_dists[future_nn], past_dists[past_nn]
+
+        assert future_dist > 0, "future_dist must be > 0"
+        assert past_dist > 0, "past_dist must be > 0"
+
+        future_idy, future_idx = frame_to_traj_dict[future_frame]
+        past_idy, past_idx = frame_to_traj_dict[past_frame]
+
+        total_dist = future_dist + past_dist
+
+        assert total_dist > 0, "total_dist must be > 0"
+
+        grid_idy = int(round(past_idy + (future_idy - past_idy) * past_dist / total_dist))
+        grid_idx = int(round(past_idx + (future_idx - past_idx) * past_dist / total_dist))
+
+        interp_grid_cell = (grid_idy, grid_idx)
+
+        frame_disp = np.copy(frames[unassigned_frame])
+        for grid_cell in grid_cells:
+            disp_fn(frame_disp, grid_cell, color='green')
+
+        text = f'{unassigned_frame} ({grid_idy}, {grid_idx})\n' \
+            f'{past_frame} ({past_idy}, {past_idx})-->{past_dist}\n' \
+            f'{future_frame}({future_idy}, {future_idx})-->{future_dist}'
+
+        disp_fn(frame_disp, (future_idy, future_idx), color='white')
+        disp_fn(frame_disp, (past_idy, past_idx), color='black')
+        disp_fn(frame_disp, interp_grid_cell, color='gray')
+        _pause = annotate_and_show('expand_traj', frame_disp,
+                                   text=text,
+                                   pause=_pause, n_modules=0)
+
+        frame_to_traj_dict[unassigned_frame] = interp_grid_cell
+
+        out_grid_cells.append(interp_grid_cell)
+        # assigned_frames.append(unassigned_frame)
+
+    return out_grid_cells, frame_to_traj_dict
 
 
 def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_lengths_out_dir, params):
@@ -243,11 +292,15 @@ def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_length
         grid_cells = sentence_to_grid_cells(words)
 
         n_grid_cells = len(grid_cells)
+        disp_fn = functools.partial(draw_grid_cell,
+                                    grid_centers=(grid_cy, grid_cx),
+                                    grid_cell_size=grid_cell_size)
 
+        # frame = _input.all_frames[start_frame]
         if n_grid_cells > traj_n_frames:
             frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
         elif n_grid_cells < traj_n_frames:
-            frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame)
+            grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame, _input.all_frames, disp_fn)
         else:
             frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
@@ -261,11 +314,11 @@ def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_length
                 frame_disp = np.copy(_input.all_frames[frame_id])
 
                 for grid_cell in grid_cells:
-                    draw_grid_cell(frame_disp, grid_cell, (grid_cy, grid_cx), grid_cell_size, color='green')
+                    disp_fn(frame_disp, grid_cell, color='green')
 
                 grid_cell = frame_to_grid_cell[frame_id]
 
-                draw_grid_cell(frame_disp, grid_cell, (grid_cy, grid_cx), grid_cell_size, color='white', thickness=2)
+                disp_fn(frame_disp, grid_cell, color='white', thickness=2)
 
                 frame_disp = resize_ar(frame_disp, height=960)
 

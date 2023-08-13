@@ -4,6 +4,7 @@ import sys
 import cv2
 from datetime import datetime
 from tqdm import tqdm
+import math
 import glob
 
 sys.path.append('../isl_labeling_tool/deep_mdp')
@@ -177,7 +178,13 @@ def build_targets_densecap(
         """
         Iterate over all the frames in this temporal window
         """
-        frame_iter = range(start_frame_id, end_frame_id, sample_traj)
+
+        n_frames = end_frame_id - start_frame_id + 1
+        if sample_traj > 1:
+            n_frames = int(math.ceil(n_frames / sample_traj))
+            frame_iter = list(np.linspace(start_frame_id, end_frame_id, n_frames, dtype=np.int32))
+        else:
+            frame_iter = range(start_frame_id, end_frame_id + 1)
 
         if len(win_iter) > 1:
             win_iter.set_description(f'win {win_id}: frame {start_frame_id} --> {end_frame_id}')
