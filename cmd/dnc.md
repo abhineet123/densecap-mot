@@ -59,6 +59,8 @@ python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq.j
 
 python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000 vocab_fmt=1 max_diff=99 @slide sample=15 size=480
 
+python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000 vocab_fmt=1 max_diff=99 @slide sample=15 size=480
+
 <a id="all_seq_6_15___1k_9600_n_3__1"></a>
 ### all_seq__6_15       @ 1k-9600/n-3-->dnc
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg --batch_size 32 --num_workers 4

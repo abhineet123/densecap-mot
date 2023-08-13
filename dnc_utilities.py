@@ -399,7 +399,7 @@ def diff_sentence_to_grid_cells(words, fmt_type, max_diff=1):
             raise AssertionError(f'invalid word: {word}')
 
         grid_ids.append((grid_idy, grid_idx))
-        
+
         prev_grid_idy, prev_grid_idx = grid_idy, grid_idx
 
     return grid_ids

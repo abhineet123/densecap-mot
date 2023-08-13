@@ -240,13 +240,13 @@ def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_length
 
         words = sentence.split(' ')
 
-        n_words = len(words)
-
         grid_cells = sentence_to_grid_cells(words)
 
-        if n_words > traj_n_frames:
+        n_grid_cells = len(grid_cells)
+
+        if n_grid_cells > traj_n_frames:
             frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
-        elif n_words < traj_n_frames:
+        elif n_grid_cells < traj_n_frames:
             frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame)
         else:
             frame_to_grid_cell = {
