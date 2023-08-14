@@ -615,7 +615,7 @@ class ActionPropDenseCap(nn.Module):
             all_proposal_results.append(tuple(batch_result))
 
             end_t = time.time()
-            
+
             # print('Processing time for tIoU: {:.2f}, mask: {:.2f}, caption: {:.2f}'.format(
             #     mid1_t - start_t,
             #     mid2_t - mid1_t,

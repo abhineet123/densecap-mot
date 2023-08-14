@@ -119,8 +119,8 @@ def validate(model, loader, dataset, out_dir, args):
     :return:
     """
     model.eval()
-    densecap_result = defaultdict(list)
-    prop_result = defaultdict(list)
+    densecap_result = {}
+    prop_result = {}
 
     avg_prop_num = 0
     nbatches = len(loader)
