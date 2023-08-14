@@ -185,11 +185,6 @@ def get_model(text_proc, args):
 def main():
     args = get_args()  # type: TrainParams
 
-    torch.nn.Transformer
-
-    import torchvision
-    torchvision.models.vision_transformer.VisionTransformer
-
     print(f'args.resume: {args.resume}')
 
     # dist parallel, optional

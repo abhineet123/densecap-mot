@@ -2,6 +2,7 @@
 
 - [virtualenv](#virtualen_v_)
   - [x99       @ virtualenv](#x99___virtualenv_)
+  - [e5g       @ virtualenv](#e5g___virtualenv_)
   - [windows       @ virtualenv](#windows___virtualenv_)
 - [install](#install_)
 - [torch](#torch_)
@@ -12,11 +13,11 @@
   - [caffe-action       @ extract_feature](#caffe_action___extract_featur_e_)
     - [cmake       @ caffe-action/extract_feature](#cmake___caffe_action_extract_feature_)
   - [caffe-source       @ extract_feature](#caffe_source___extract_featur_e_)
-- [denseflow](#denseflow_)
-  - [orca       @ denseflow](#orca___denseflo_w_)
-    - [x99       @ orca/denseflow](#x99___orca_denseflow_)
+  - [denseflow       @ extract_feature](#denseflow___extract_featur_e_)
+    - [orca       @ denseflow/extract_feature](#orca___denseflow_extract_featur_e_)
+    - [x99       @ denseflow/extract_feature](#x99___denseflow_extract_featur_e_)
 - [x99 dpkg mess](#x99_dpkg_mess_)
-  - [caffe       @ x99_dpkg_mess](#caffe___x99_dpkg_mes_s_)
+    - [caffe       @ x99_dpkg_mess/](#caffe___x99_dpkg_mess_)
 - [bugs](#bug_s_)
 
 <!-- /MarkdownTOC -->
@@ -26,7 +27,10 @@
 mkvirtualenv dnc
 <a id="x99___virtualenv_"></a>
 ## x99       @ virtualenv-->dnc_setup
-mkvirtualenv -p python3.6 dnc
+mkvirtualenv -p python3.6 dnc<a id="x99___virtualenv_"></a>
+<a id="e5g___virtualenv_"></a>
+## e5g       @ virtualenv-->dnc_setup
+mkvirtualenv -p python3.7 dnc
 
 nano ~/.bashrc
 alias dnc='workon dnc'
@@ -39,6 +43,7 @@ dnc\Scripts\activate
 
 <a id="install_"></a>
 # install
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install "git+https://github.com/salaniz/pycocoevalcap.git"
 python -m spacy download en_core_web_sm
@@ -196,8 +201,8 @@ make pycaffe -j16
 
 make clean
 
-<a id="denseflow_"></a>
-# denseflow
+<a id="denseflow___extract_featur_e_"></a>
+## denseflow       @ extract_feature-->dnc_setup
 sudo apt install libzip-dev
 sudo apt install cmake
 
@@ -210,12 +215,12 @@ cd build
 cmake .. -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF -DCMAKE_C_COMPILER=/usr/bin/gcc
 make -j16
 
-<a id="orca___denseflo_w_"></a>
-## orca       @ denseflow-->dnc_setup
+<a id="orca___denseflow_extract_featur_e_"></a>
+### orca       @ denseflow/extract_feature-->dnc_setup
 /usr/lib/x86_64-linux-gnu/libboost_python-py27.so.1.58.0
 
-<a id="x99___orca_denseflow_"></a>
-### x99       @ orca/denseflow-->dnc_setup
+<a id="x99___denseflow_extract_featur_e_"></a>
+### x99       @ denseflow/extract_feature-->dnc_setup
 cp /home/abhineet/ubuntu16/usr/local/cuda-9.0/include/dynlink_nvcuvid.h /usr/local/cuda-10.2/include/
 
 cp /home/abhineet/ubuntu16/usr/local/cuda-9.0/include/dynlink_cuviddec.h /usr/local/cuda-10.2/include/
@@ -245,8 +250,8 @@ for package in $(apt-get upgrade 2>&1 |\
     apt-get install --reinstall "$package";
 done
 
-<a id="caffe___x99_dpkg_mes_s_"></a>
-## caffe       @ x99_dpkg_mess-->dnc_setup
+<a id="caffe___x99_dpkg_mess_"></a>
+### caffe       @ x99_dpkg_mess/-->dnc_setup
 apt-cache search gflags
 sudo apt-get install libgflags2.2 libgflags-dev
 

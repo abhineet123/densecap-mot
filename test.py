@@ -128,7 +128,7 @@ def validate(model, loader, dataset, out_dir, args):
     pbar = tqdm(loader, total=nbatches, ncols=120)
 
     for _iter, data in enumerate(pbar):
-        image_feat, original_num_frame, video_prefix, times = data
+        image_feat, original_num_frame, video_prefix, feat_frame_ids, times = data
         load_t, torch_t, collate_t = times
 
         pbar.set_description(f'times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
@@ -146,6 +146,10 @@ def validate(model, loader, dataset, out_dir, args):
             #     dataset.frame_to_second[video_name] = args.sampling_sec
             #     print(f"cannot find frame_to_second for video {video_name}")
 
+            if feat_frame_ids is not None:
+                feat_start_id, feat_end_id = feat_frame_ids
+                video_name = f'{video_name}--{feat_start_id}_{feat_end_id}'
+                
             sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
             all_proposal_results = model.module.inference(
                 image_feat,

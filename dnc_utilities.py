@@ -157,6 +157,7 @@ def build_targets_densecap(
             segment=[min_time, max_time],
             id=traj_id,
             sentence='',
+            # grid_cells=[],
         )
 
     out_img_id = 0
@@ -171,7 +172,8 @@ def build_targets_densecap(
     """
     Iterate over all the temporal windows in the sequence
     Note that temporal windows are really only needed during inference
-    For generating the training data, all the trajectories over the entire sequence should be considered together
+    For generating the training data, all the trajectories over the entire sequence 
+    should be considered together
     """
     for win_id, start_frame_id in enumerate(win_iter):
         end_frame_id = min(start_frame_id + win_size, n_frames) - 1
@@ -180,6 +182,14 @@ def build_targets_densecap(
         """
 
         n_frames = end_frame_id - start_frame_id + 1
+        """sampling the entire sequence instead of each trajectory individually 
+        can cause some trajectories
+         to become severely truncated depending on What is the nearest sampled frame to the 
+         last frame in the trajectory which might well be long before the actual frame
+         However, if the purpose of this sort of sampling is to match the 
+         trajectories with the available features in the similarly sampled feature extractor, 
+         then this is indeed probably the best way to do this
+         """
         if sample_traj > 1:
             n_frames = int(math.ceil(n_frames / sample_traj))
             frame_iter = list(np.linspace(start_frame_id, end_frame_id, n_frames, dtype=np.int32))
@@ -250,6 +260,8 @@ def build_targets_densecap(
                 obj_col = obj_cols[_id % n_obj_cols]
 
                 # show('frame_disp', frame_disp, _pause=0)
+
+                # traj_vocab['grid_cells'].append((grid_idy, grid_idx))
 
                 if vocab_fmt == 0:
                     excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx)
