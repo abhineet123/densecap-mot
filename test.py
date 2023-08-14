@@ -25,7 +25,6 @@ from dnc_data.anet_dataset import get_vocab_and_sentences
 from dnc_data.utils import update_values
 from dnc_utilities import get_latest_checkpoint
 
-
 from model.action_prop_dense_cap import ActionPropDenseCap
 from tools.eval_proposal_anet import ANETproposal
 
@@ -133,7 +132,9 @@ def validate(model, loader, dataset, out_dir, args):
 
         pbar.set_description(f'times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
 
-        video_name = os.path.basename(video_prefix[0])
+        # video_name = os.path.basename(video_prefix[0])
+        sampling_sec = 0.5
+        sampled_frames = 15
 
         with torch.no_grad():
             # image_feat = Variable(image_feat)
@@ -146,11 +147,8 @@ def validate(model, loader, dataset, out_dir, args):
             #     dataset.frame_to_second[video_name] = args.sampling_sec
             #     print(f"cannot find frame_to_second for video {video_name}")
 
-            if feat_frame_ids is not None:
-                feat_start_id, feat_end_id = feat_frame_ids
-                video_name = f'{video_name}--{feat_start_id}_{feat_end_id}'
-                
-            sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
+            # sampling_sec = dataset.frame_to_second[video_name]  # batch_size has to be 1
+
             all_proposal_results = model.module.inference(
                 image_feat,
                 original_num_frame,
@@ -164,22 +162,41 @@ def validate(model, loader, dataset, out_dir, args):
 
             for b in range(len(video_prefix)):
                 vid = os.path.basename(video_prefix[b])
+                if feat_frame_ids[0] is not None:
+                    feat_start_id, feat_end_id = feat_frame_ids[0]
+                    start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+                    vid = f'{vid}--{start_id}_{end_id}'
+
+                annotations = []
+                proposals = []
                 for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
                     pred_start_t = pred_start * sampling_sec
                     pred_end_t = pred_end * sampling_sec
 
-                    pred_start_frame = pred_start_t * args.fps
-                    pred_end_frame = pred_end_t * args.fps
+                    # pred_start_frame = pred_start_t * args.fps
+                    # pred_end_frame = pred_end_t * args.fps
 
-                    densecap_result[vid].append(
-                        {'sentence': sent,
-                         'timestamp': [pred_start_t, pred_end_t]})
+                    annotations.append(
+                        {
+                            'sentence': sent,
+                            'segment': [pred_start_t, pred_end_t]
+                        })
 
-                    prop_result[vid].append(
-                        {'segment': [pred_start_t, pred_end_t],
-                         'score': pred_s})
+                    proposals.append(
+                        {
+                            'segment': [pred_start_t, pred_end_t],
+                            'score': pred_s}
+                    )
 
                 avg_prop_num += len(all_proposal_results[b])
+                densecap_result[vid] = {
+                    "subset": "validation",
+                    "annotations": annotations
+                }
+                prop_result[vid] = {
+                    "subset": "validation",
+                    "annotations": proposals
+                }
 
         if _iter >= args.max_batches > 0:
             break
@@ -195,6 +212,8 @@ def validate(model, loader, dataset, out_dir, args):
     #             and ImageNet (https://github.com/yjxiong/anet2016-cuhk)'}
     # }
     dnc_out_path = linux_path(out_dir, f'densecap.json')
+    densecap_result = {'database': densecap_result}
+
     print(f'dnc_out_path: {dnc_out_path}')
     with open(dnc_out_path, 'w') as f:
         json.dump(densecap_result, f, indent=4)
