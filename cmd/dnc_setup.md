@@ -43,11 +43,9 @@ dnc\Scripts\activate
 
 <a id="install_"></a>
 # install
+python -m pip install pip==20.0.0
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-python -m pip install "git+https://github.com/salaniz/pycocoevalcap.git"
-python -m spacy download en_core_web_sm
-
 
 <a id="torch_"></a>
 # torch

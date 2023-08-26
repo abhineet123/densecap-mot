@@ -121,6 +121,8 @@ class TestParams(CFG):
         self.cap_dropout = 0.2
         self.cuda = True
         self.fps = 30
+        self.d_rgb = 2048
+        self.d_flow = 1024
         self.d_hidden = 2048
         self.d_model = 1024
         self.dataset = ''

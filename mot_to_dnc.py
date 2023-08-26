@@ -1,13 +1,14 @@
 import os
+import sys
 
 # script_dir = os.path.dirname(os.path.abspath(__file__))
 # script_parent_dir = script_dir.replace(os.sep, '/') + '/..'
-
-
-import sys
-
 # sys.path.append(script_parent_dir)
-sys.path.append('../isl_labeling_tool/deep_mdp')
+
+
+home_path = os.path.expanduser('~')
+deep_mdp_path = os.path.join(home_path, 'isl_labeling_tool', 'deep_mdp')
+sys.path.append(deep_mdp_path)
 
 import pandas as pd
 
@@ -33,13 +34,6 @@ from dnc_utilities import build_targets_densecap, build_targets_seq
 
 
 class Params:
-    """
-    :ivar mode:
-    0: build_targets_densecap
-    1: build_targets_seq
-
-    """
-
     class SlidingWindow:
         sample = 0
         size = 0
@@ -52,7 +46,12 @@ class Params:
         self.set = ''
         self.seq = ()
 
+        """:ivar mode:
+            0: build_targets_densecap
+            1: build_targets_seq
+        """
         self.mode = 0
+
         self.load = 0
         self.save = 1
         self.start = 0

@@ -60,7 +60,7 @@ class DropoutTime1D(nn.Module):
 
 
 class ActionPropDenseCap(nn.Module):
-    def __init__(self, dim_model, dim_hidden, n_layers, n_heads, vocab,
+    def __init__(self, dim_rgb, dim_flow, dim_model, dim_hidden, n_layers, n_heads, vocab,
                  in_emb_dropout, attn_dropout, vis_emb_dropout,
                  cap_dropout, nsamples, kernel_list, stride_factor,
                  learn_mask, window_length, max_sentence_len):
@@ -69,8 +69,11 @@ class ActionPropDenseCap(nn.Module):
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
+        self.dim_rgb = dim_rgb
+        self.dim_flow = dim_flow
         self.dim_model = dim_model
         self.max_sentence_len = max_sentence_len
+        self.enable_flow = dim_flow > 0
 
         self.mask_model = nn.Sequential(
             nn.Linear(dim_model + window_length, dim_model, bias=False),
@@ -79,9 +82,15 @@ class ActionPropDenseCap(nn.Module):
             nn.Linear(dim_model, window_length),
         )
 
+        self.rgb_conv = nn.Linear(self.dim_rgb, dim_model)
+
         """emb --> embedding"""
-        self.rgb_emb = nn.Linear(2048, dim_model // 2)
-        self.flow_emb = nn.Linear(1024, dim_model // 2)
+        if self.enable_flow:
+            self.rgb_emb = nn.Linear(self.dim_rgb, dim_model // 2)
+            self.flow_emb = nn.Linear(self.dim_flow, dim_model // 2)
+        else:
+            self.rgb_emb = nn.Linear(self.dim_rgb, dim_model)
+
         self.emb_out = nn.Sequential(
             # nn.BatchNorm1d(h_dim),
             DropoutTime1D(in_emb_dropout),
@@ -146,16 +155,19 @@ class ActionPropDenseCap(nn.Module):
 
         dtype = x.data.type()
 
-        """480 x 3072 --> 480 x 2048 and 480 x 1024"""
-        _x_rgb, _x_flow = torch.split(x, 2048, 2)
+        if self.enable_flow:
+            """480 x 3072 --> 480 x 2048 and 480 x 1024"""
+            _x_rgb, _x_flow = torch.split(x, self.dim_rgb, 2)
 
-        """480 x 512"""
-        x_rgb = self.rgb_emb(_x_rgb.contiguous())
-        """480 x 512"""
-        x_flow = self.flow_emb(_x_flow.contiguous())
+            """480 x 512"""
+            x_rgb = self.rgb_emb(_x_rgb.contiguous())
+            """480 x 512"""
+            x_flow = self.flow_emb(_x_flow.contiguous())
 
-        """480 x 1024"""
-        x = torch.cat((x_rgb, x_flow), 2)
+            """480 x 1024"""
+            x = torch.cat((x_rgb, x_flow), 2)
+        else:
+            x = self.rgb_emb(x)
 
         """dropout and relu"""
         x = self.emb_out(x)

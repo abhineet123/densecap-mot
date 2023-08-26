@@ -73,6 +73,8 @@ CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3
 #### best_val_model_6       @ all_seq_15_480_diff_sample/1k-9600/n-3-->dnc
 CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample.cfg ckpt_name=best_val_model_6.pth max_batches=100
 
+python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_15_480_diff_sample/best_val_model_6_on_validation_ set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000 @ vocab_fmt=1 max_diff=99 @slide sample=15 size=480
+
 <a id="all_seq_6_480_diff_sample___1k_9600_n_3_"></a>
 ### all_seq_6_480_diff_sample       @ 1k-9600/n-3-->dnc
 CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq_6_480_diff_sample.cfg --batch_size 32 --num_workers 4 --n_proc 12

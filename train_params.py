@@ -75,6 +75,8 @@ class TrainParams:
         self.cls_weight = 1.0
         self.cuda = 1
         self.d_hidden = 2048
+        self.d_rgb = 2048
+        self.d_flow = 1024
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''
@@ -175,8 +177,9 @@ def get_args():
     parser.add_argument('--num_workers', default=1, type=int)
 
     # Model settings: General
-    parser.add_argument('--d_model', default=1024, type=int,
-                        help='size of the rnn in number of hidden nodes in each layer')
+    parser.add_argument('--d_rgb', default=2048, type=int)
+    parser.add_argument('--d_flow', default=1024, type=int)
+    parser.add_argument('--d_model', default=1024, type=int, help='size of the rnn in number of hidden nodes in each layer')
     parser.add_argument('--d_hidden', default=2048, type=int)
     parser.add_argument('--n_heads', default=8, type=int)
     parser.add_argument('--in_emb_dropout', default=0.1, type=float)
