@@ -5,6 +5,8 @@
     - [all_seq__6_6       @ 25-2400/n-1](#all_seq_6_6___25_2400_n_1_)
     - [all_seq__6_15       @ 25-2400/n-1](#all_seq_6_15___25_2400_n_1_)
     - [seq_0_25__6_15       @ 25-2400/n-1](#seq_0_25_6_15___25_2400_n_1_)
+  - [1k-9600       @ n-1](#1k_9600___n_1_)
+    - [seq_0_to_99_win_2-f0_max_4       @ 1k-9600/n-1](#seq_0_to_99_win_2_f0_max_4___1k_9600_n_1_)
 - [n-3](#n_3_)
   - [1k-9600       @ n-3](#1k_9600___n_3_)
     - [all_seq__6_15       @ 1k-9600/n-3](#all_seq_6_15___1k_9600_n_3_)
@@ -42,6 +44,11 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_25_2400_var/all_seq__6
 ### seq_0_25__6_15       @ 25-2400/n-1-->dnc
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_25_2400_var/seq_0_25__6_15.cfg --checkpoint_path log/MNIST_MOT_RGB_512x512_1_25_2400_var/seq_0_25__6_15 --batch_size 32 --cuda
 
+<a id="1k_9600___n_1_"></a>
+## 1k-9600       @ n-1-->dnc
+<a id="seq_0_to_99_win_2_f0_max_4___1k_9600_n_1_"></a>
+### seq_0_to_99_win_2-f0_max_4       @ 1k-9600/n-1-->dnc
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_4.cfg --batch_size 32 --num_workers 4
 <a id="n_3_"></a>
 # n-3
 <a id="1k_9600___n_3_"></a>

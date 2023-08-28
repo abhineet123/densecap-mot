@@ -57,37 +57,45 @@ def get_dataset(args):
         save_path=sample_list_dir)
 
     # Create the dataset and data loader instance
-    train_dataset = ANetDataset(args.feature_root,
-                                n_videos['training'],
-                                args.train_splits,
-                                args.slide_window_size,
-                                args.dur_file,
-                                args.kernel_list,
-                                text_proc, raw_data,
-                                args.pos_thresh, args.neg_thresh,
-                                args.stride_factor,
-                                args.dataset,
-                                args.sampling_sec,
-                                save_samplelist=args.save_train_samplelist,
-                                load_samplelist=args.load_train_samplelist,
-                                sample_list_dir=args.train_samplelist_path,
-                                )
+    train_dataset = ANetDataset(
+        image_path=args.feature_root,
+        n_vids=n_videos['training'],
+        splits=args.train_splits,
+        slide_window_size=args.slide_window_size,
+        dur_file=args.dur_file,
+        kernel_list=args.kernel_list,
+        text_proc=text_proc,
+        raw_data=raw_data,
+        pos_thresh=args.pos_thresh,
+        neg_thresh=args.neg_thresh,
+        stride_factor=args.stride_factor,
+        enable_flow=args.enable_flow,
+        dataset=args.dataset,
+        sampling_sec=args.sampling_sec,
+        save_samplelist=args.save_train_samplelist,
+        load_samplelist=args.load_train_samplelist,
+        sample_list_dir=args.train_samplelist_path,
+    )
 
-    valid_dataset = ANetDataset(args.feature_root,
-                                n_videos['validation'],
-                                args.val_splits,
-                                args.slide_window_size,
-                                args.dur_file,
-                                args.kernel_list,
-                                text_proc, raw_data,
-                                args.pos_thresh, args.neg_thresh,
-                                args.stride_factor,
-                                args.dataset,
-                                args.sampling_sec,
-                                save_samplelist=args.save_valid_samplelist,
-                                load_samplelist=args.load_valid_samplelist,
-                                sample_list_dir=args.valid_samplelist_path,
-                                )
+    valid_dataset = ANetDataset(
+        image_path=args.feature_root,
+        n_vids=n_videos['validation'],
+        splits=args.val_splits,
+        slide_window_size=args.slide_window_size,
+        dur_file=args.dur_file,
+        kernel_list=args.kernel_list,
+        text_proc=text_proc,
+        raw_data=raw_data,
+        pos_thresh=args.pos_thresh,
+        neg_thresh=args.neg_thresh,
+        stride_factor=args.stride_factor,
+        enable_flow=args.enable_flow,
+        dataset=args.dataset,
+        sampling_sec=args.sampling_sec,
+        save_samplelist=args.save_valid_samplelist,
+        load_samplelist=args.load_valid_samplelist,
+        sample_list_dir=args.valid_samplelist_path,
+    )
 
     # if text_proc is not None:
     #     exit()
@@ -135,7 +143,8 @@ def get_model(text_proc, dataset, args):
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
         feat_shape=dataset.feat_shape,
-        dim_flow=dataset.d_flow,
+        enable_flow=args.enable_flow,
+        rgb_ch=args.rgb_ch,
         dim_model=args.d_model,
         dim_hidden=args.d_hidden,
         n_layers=args.n_layers,

@@ -29,16 +29,25 @@ from dnc_data.utils import segment_iou
 
 # dataloader for training
 class ANetDataset(Dataset):
-    def __init__(self, image_path,
-                 n_vids,
-                 splits,
-                 slide_window_size,
-                 dur_file, kernel_list, text_proc, raw_data,
-                 pos_thresh, neg_thresh, stride_factor, dataset,
-                 sampling_sec,
-                 save_samplelist,
-                 load_samplelist,
-                 sample_list_dir):
+    def __init__(
+            self,
+            image_path,
+            n_vids,
+            splits,
+            slide_window_size,
+            dur_file,
+            kernel_list,
+            text_proc,
+            raw_data,
+            pos_thresh,
+            neg_thresh,
+            stride_factor,
+            enable_flow,
+            dataset,
+            sampling_sec,
+            save_samplelist,
+            load_samplelist,
+            sample_list_dir):
         super(ANetDataset, self).__init__()
 
         # n_vids = len(raw_data)
@@ -51,6 +60,7 @@ class ANetDataset(Dataset):
         self.pos_thresh = pos_thresh
         self.neg_thresh = neg_thresh
         self.raw_data = raw_data
+        self.enable_flow = enable_flow
 
         self.save_samplelist = save_samplelist
         self.sample_list_dir = sample_list_dir
@@ -59,6 +69,8 @@ class ANetDataset(Dataset):
         self.n_vids = n_vids
         self.splits = splits
         self.split_paths = split_paths
+
+        self.feat_shape = None
 
         self.samples_loaded = False
 
@@ -204,6 +216,7 @@ class ANetDataset(Dataset):
 
                     self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
                         float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)
+                    print()
             else:
                 raise NotImplementedError(f'Unsupported dataset: {dataset}')
 
@@ -221,47 +234,73 @@ class ANetDataset(Dataset):
         os.makedirs(out_txt_dir, exist_ok=1)
 
         vid_info_list = []
-        for vid, val in tqdm(self.raw_data.items(), desc='generating vid_info_list', ncols=100, total=self.n_vids):
+        for vid_id, (vid, val) in enumerate(tqdm(self.raw_data.items(),
+                                                 desc='generating vid_info_list',
+                                                 ncols=100,
+                                                 total=self.n_vids)):
             annotations = val['annotations']
-
-            if '--' in vid:
-                feat_name, vid_frame_ids = vid.split('--')
-                vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
-
-                start_id, end_id = vid_frame_ids
-
-                n_subseq_frames = end_id - start_id
-                assert n_subseq_frames == self.vid_frame[vid], \
-                    f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
-
-                feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
-                    end_id / self.sampled_frames[vid])
-
-                feat_frame_ids = (feat_start_id, feat_end_id)
-            else:
-                feat_name = vid
-                feat_frame_ids = None
 
             for split, split_path in zip(self.splits, self.split_paths):
                 if val['subset'] != split:
                     continue
-
-                video_prefix = os.path.join(split_path, feat_name)
-
                 # n_feat_frames = int(9600 / 15)
+                feat_name = vid
+                feat_frame_ids = None
 
-                resnet_feat_path = video_prefix + '_resnet.npy'
-                assert os.path.isfile(resnet_feat_path), f"nonexistent resnet_feat_path: {resnet_feat_path}"
+                if self.enable_flow:
+                    """assume that each npy file contains features for entire sequence"""
 
-                bn_feat_path = video_prefix + '_bn.npy'
-                assert os.path.isfile(bn_feat_path), f"nonexistent bn_feat_path: {bn_feat_path}"
+                    if '--' in vid:
+                        feat_name, vid_frame_ids = vid.split('--')
+                        vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
 
-                resnet_feat = np.load(resnet_feat_path)
-                bn_feat = np.load(bn_feat_path)
+                        start_id, end_id = vid_frame_ids
 
-                n_feat_frames = bn_feat.shape[0]
+                        n_subseq_frames = end_id - start_id
+                        assert n_subseq_frames == self.vid_frame[vid], \
+                            f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
 
-                assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
+                        feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
+                            end_id / self.sampled_frames[vid])
+
+                        feat_frame_ids = (feat_start_id, feat_end_id)
+
+                    video_prefix = os.path.join(split_path, feat_name)
+
+                    resnet_feat_path = video_prefix + '_resnet.npy'
+                    assert os.path.isfile(resnet_feat_path), f"nonexistent resnet_feat_path: {resnet_feat_path}"
+
+                    bn_feat_path = video_prefix + '_bn.npy'
+                    assert os.path.isfile(bn_feat_path), f"nonexistent bn_feat_path: {bn_feat_path}"
+
+                    resnet_feat = np.load(resnet_feat_path)
+                    resnet_feat_dim = resnet_feat.shape[1]
+
+                    bn_feat = np.load(bn_feat_path)
+
+                    n_feat_frames = bn_feat.shape[0]
+                    bn_feat_dim = bn_feat.shape[1]
+
+                    self.feat_shape = (resnet_feat_dim, bn_feat_dim)
+
+                    assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
+                else:
+                    """assume that each npy file contains features only for one subsequence"""
+                    feat_path = vid + '.npy'
+                    assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
+
+                    if vid_id == 0:
+                        feat = np.load(feat_path)
+                        n_feat_frames = feat.shape[0]
+
+                        if len(feat.shape) == 4:
+                            ch, h, w = feat.shape[1:]
+                            self.feat_shape = (ch, h, w)
+                        elif len(feat.shape) == 2:
+                            feat_dim = feat.shape[1]
+                            self.feat_shape = (feat_dim,)
+                        else:
+                            raise AssertionError(f'invalid feat.shape: {feat.shape}')
 
                 if feat_frame_ids is None:
                     feat_frame_ids = (0, n_feat_frames)

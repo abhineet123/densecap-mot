@@ -77,6 +77,7 @@ class TrainParams:
         self.d_hidden = 2048
         # self.d_rgb = 2048
         # self.d_flow = 1024
+        self.rgb_ch = 4
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''
@@ -124,6 +125,8 @@ class TrainParams:
         self.slide_window_size = 480
         self.slide_window_stride = 20
         self.stride_factor = 100
+
+        self.enable_flow = 0
 
         self.start_from = ''
 
@@ -205,6 +208,7 @@ def get_args():
     parser.add_argument('--stride_factor', default=100, type=int,
                         help='the proposal temporal conv kernel stride is determined by math.ceil('
                              'kernel_len/stride_factor)')
+    parser.add_argument('--enable_flow', default=0, type=int)
 
     # Optimization: General
     parser.add_argument('--max_epochs', default=1000, type=int, help='max number of epochs to run for')

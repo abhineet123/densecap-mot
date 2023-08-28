@@ -60,22 +60,42 @@ class DropoutTime1D(nn.Module):
 
 
 class ActionPropDenseCap(nn.Module):
-    def __init__(self, feat_shape, dim_flow, dim_model, dim_hidden, n_layers, n_heads, vocab,
-                 in_emb_dropout, attn_dropout, vis_emb_dropout,
-                 cap_dropout, nsamples, kernel_list, stride_factor,
-                 learn_mask, window_length, max_sentence_len):
+    def __init__(
+            self,
+            feat_shape,
+            enable_flow,
+            rgb_ch,
+            dim_model,
+            dim_hidden,
+            n_layers,
+            n_heads,
+            vocab,
+            in_emb_dropout,
+            attn_dropout,
+            vis_emb_dropout,
+            cap_dropout,
+            nsamples,
+            kernel_list,
+            stride_factor,
+            learn_mask,
+            window_length,
+            max_sentence_len):
         super(ActionPropDenseCap, self).__init__()
 
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
         self.feat_shape = feat_shape
+        self.rgb_ch = rgb_ch
 
         self.dim_rgb = None
         self.rgb_conv = None
+        self.rgb_emb = None
         self.flow_emb = None
+        self.dim_flow = None
 
-        self.dim_flow = dim_flow
+        self.enable_flow = enable_flow
+
         self.dim_model = dim_model
         self.max_sentence_len = max_sentence_len
 
@@ -86,34 +106,32 @@ class ActionPropDenseCap(nn.Module):
             nn.Linear(dim_model, window_length),
         )
 
-        if len(feat_shape) == 3:
-            ch, h, w = feat_shape
-
-            feat_size = int(h * w)
-            assert self.dim_model % feat_size == 0, \
-                f"dim_model {dim_model} it is not divisible by feat_size {feat_size}"
-
-            out_ch = int(self.dim_model / feat_size)
-
-            """1x1 conv"""
-            self.rgb_conv = nn.Sequential(
-                nn.Conv2d(
-                    in_channels=ch,
-                    out_channels=out_ch,
-                    kernel_size=1,
-                ),
-                nn.Flatten()
-            )
-        elif len(feat_shape) == 1:
-            self.dim_rgb = feat_shape[0]
-        else:
-            raise AssertionError(f'Invalid feat_shape: {feat_shape}')
-
         """emb --> embedding"""
-        if self.dim_flow > 0:
+        if self.enable_flow:
+            self.dim_rgb, self.dim_flow = self.feat_shape
             self.rgb_emb = nn.Linear(self.dim_rgb, dim_model // 2)
             self.flow_emb = nn.Linear(self.dim_flow, dim_model // 2)
         else:
+            if len(feat_shape) == 3:
+                ch, h, w = feat_shape
+
+                feat_size = int(h * w)
+                """1x1 conv"""
+
+                self.rgb_conv = nn.Sequential(
+                    nn.Conv2d(
+                        in_channels=ch,
+                        out_channels=self.rgb_ch,
+                        kernel_size=1,
+                    ),
+                    nn.Flatten()
+                )
+                self.dim_rgb = int(self.rgb_ch*feat_size)
+            elif len(feat_shape) == 1:
+                self.dim_rgb = feat_shape[0]
+            else:
+                raise AssertionError(f'Invalid feat_shape: {feat_shape}')
+
             self.rgb_emb = nn.Linear(self.dim_rgb, dim_model)
 
         self.emb_out = nn.Sequential(
@@ -180,11 +198,12 @@ class ActionPropDenseCap(nn.Module):
 
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
+
             x = self.rgb_conv(x)
 
         batch_size, temporal_size, _ = x.size()
 
-        if self.flow_emb is not None:
+        if self.enable_flow:
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
             _x_rgb, _x_flow = torch.split(x, self.dim_rgb, 2)
 
@@ -432,15 +451,25 @@ class ActionPropDenseCap(nn.Module):
                   min_prop_num, max_prop_num,
                   min_prop_num_before_nms, pos_thresh, stride_factor,
                   gated_mask=False):
-        B, T, _ = x.size()
+
+        if self.rgb_conv is not None:
+            assert self.flow_emb is None, "cannot have flow features with rgb_conv"
+
+            x = self.rgb_conv(x)
+
+        batch_size, temporal_size, _ = x.size()
         dtype = x.data.type()
 
-        x_rgb, x_flow = torch.split(x, 2048, 2)
-        x_rgb = self.rgb_emb(x_rgb.contiguous())
-        x_flow = self.flow_emb(x_flow.contiguous())
+        if self.enable_flow:
+            x_rgb, x_flow = torch.split(x, self.dim_rgb, 2)
+            x_rgb = self.rgb_emb(x_rgb.contiguous())
+            x_flow = self.flow_emb(x_flow.contiguous())
 
-        x = torch.cat((x_rgb, x_flow), 2)
+            x = torch.cat((x_rgb, x_flow), 2)
+        else:
+            x = self.rgb_emb(x)
 
+        """dropout and relu"""
         x = self.emb_out(x)
 
         vis_feat, all_emb = self.vis_emb(x)
@@ -465,13 +494,13 @@ class ActionPropDenseCap(nn.Module):
             pred_o = kernel(vis_feat)
             anchor_c = torch.from_numpy(np.arange(
                 float(kernel_size) / 2.0,
-                float(T + 1 - kernel_size / 2.0),
+                float(temporal_size + 1 - kernel_size / 2.0),
                 math.ceil(kernel_size / stride_factor)
             )).type(dtype)
             if anchor_c.size(0) != pred_o.size(-1):
                 raise Exception("size mismatch!")
 
-            anchor_c = anchor_c.expand(B, 1, anchor_c.size(0))
+            anchor_c = anchor_c.expand(batch_size, 1, anchor_c.size(0))
             anchor_l = torch.FloatTensor(anchor_c.size()).fill_(kernel_size).type(dtype)
 
             pred_final = torch.cat((pred_o, anchor_l, anchor_c), 1)
@@ -505,7 +534,7 @@ class ActionPropDenseCap(nn.Module):
         """
         the usual plethora of annoying handcrafted heuristics including NMS
         """
-        for b in range(B):
+        for b in range(batch_size):
             crt_pred = prop_all.data[b]
             crt_pred_cen = pred_cen.data[b]
             crt_pred_len = pred_len.data[b]
@@ -545,9 +574,9 @@ class ActionPropDenseCap(nn.Module):
                             hasoverlap = True
 
                     if not hasoverlap:
-                        pred_bin_window_mask = torch.zeros(1, T, 1).type(dtype)
-                        win_start = math.floor(max(min(pred_start, min(original_frame_len, T) - 1), 0))
-                        win_end = math.ceil(max(min(pred_end, min(original_frame_len, T)), 1))
+                        pred_bin_window_mask = torch.zeros(1, temporal_size, 1).type(dtype)
+                        win_start = math.floor(max(min(pred_start, min(original_frame_len, temporal_size) - 1), 0))
+                        win_end = math.ceil(max(min(pred_end, min(original_frame_len, temporal_size)), 1))
                         # if win_start >= win_end:
                         #     print('length: {}, mask window start: {} >= window end: {}, skipping'.format(
                         #         original_frame_len, win_start, win_end,
@@ -565,10 +594,10 @@ class ActionPropDenseCap(nn.Module):
                             anc_cen = crt_pred[5, sel_idx[prop_idx]]
                             # only use the pos sample to train,
                             # could potentially use more sample for training mask, but this is easier to do
-                            amask = torch.zeros(1, T).type(dtype)
+                            amask = torch.zeros(1, temporal_size).type(dtype)
                             amask[0,
                             max(0, math.floor(anc_cen - anc_len / 2.)):
-                            min(T, math.ceil(anc_cen + anc_len / 2.))] = 1.
+                            min(temporal_size, math.ceil(anc_cen + anc_len / 2.))] = 1.
                             anchor_window_mask.append(amask)
 
                             pred_start_lst.append(torch.Tensor([pred_start_w]).type(dtype))
@@ -577,7 +606,7 @@ class ActionPropDenseCap(nn.Module):
                                                                       math.floor(
                                                                           anc_cen - anc_len / 2.))]).type(
                                 dtype))
-                            anchor_end_lst.append(torch.Tensor([min(T,
+                            anchor_end_lst.append(torch.Tensor([min(temporal_size,
                                                                     math.ceil(
                                                                         anc_cen + anc_len / 2.))]).type(
                                 dtype))
@@ -598,8 +627,8 @@ class ActionPropDenseCap(nn.Module):
             mid1_t = time.time()
 
             if len(pred_masks) == 0:  # append all-one window if no window is proposed
-                pred_masks.append(torch.ones(1, T, 1).type(dtype))
-                pred_results[0] = np.array([0, min(original_frame_len, T), pos_thresh])
+                pred_masks.append(torch.ones(1, temporal_size, 1).type(dtype))
+                pred_results[0] = np.array([0, min(original_frame_len, temporal_size), pos_thresh])
                 crt_nproposal = 1
 
             pred_masks = torch.cat(pred_masks, 0)
@@ -635,7 +664,7 @@ class ActionPropDenseCap(nn.Module):
 
             pred_sentence = []
             # use cap_batch as caption batch size
-            cap_batch = math.ceil(480 * 256 / T)
+            cap_batch = math.ceil(480 * 256 / temporal_size)
             for sent_i in range(math.ceil(window_mask.size(0) / cap_batch)):
                 batch_start = sent_i * cap_batch
                 batch_end = min((sent_i + 1) * cap_batch, window_mask.size(0))
