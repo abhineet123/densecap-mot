@@ -35,6 +35,7 @@ from dnc_utilities import build_targets_densecap, build_targets_seq
 
 class Params:
     class SlidingWindow:
+        num = 0
         sample = 0
         size = 0
         stride = 0
@@ -45,6 +46,8 @@ class Params:
 
         self.set = ''
         self.seq = ()
+        self.start_seq = ()
+        self.end_seq = ()
 
         """:ivar mode:
             0: build_targets_densecap
@@ -89,7 +92,7 @@ def run(seq_info, sample_traj, out_dir, traj_lengths_out_dir, params):
     :return:
     """
 
-    seq_id, seq_suffix, start_id, end_id = seq_info
+    seq_id, start_id, end_id = seq_info
 
     _logger = CustomLogger.setup(__name__)
 
@@ -109,8 +112,7 @@ def run(seq_info, sample_traj, out_dir, traj_lengths_out_dir, params):
     _input = Input(input_params, _logger)
     seq_name = _data.seq_name
 
-    if seq_suffix:
-        seq_name = f'{seq_name}--{seq_suffix}'
+    seq_name = f'{seq_name}--{start_id}_{end_id}'
 
     print(f'\nseq {seq_id + 1}: {seq_name}\n')
 
@@ -213,6 +215,19 @@ def main():
     if not seq_ids:
         seq_ids = tuple(range(n_sequences))
 
+    if params.start_seq or params.end_seq:
+        assert len(params.start_seq) == len(params.end_seq), "mismatch between start_seq and end_seq lengths"
+        temp_seq_ids = []
+        for start_seq, end_seq in zip(params.start_seq, params.end_seq):
+            if start_seq < 0:
+                start_seq = 0
+
+            if end_seq < 0:
+                end_seq = len(seq_ids) - 1
+
+            temp_seq_ids += list(seq_ids[start_seq:end_seq + 1])
+        seq_ids = tuple(temp_seq_ids)
+
     sample = params.slide.sample
     if sample <= 0:
         sample = 1
@@ -244,10 +259,11 @@ def main():
         if win_stride <= 0:
             win_stride = win_size
 
+        win_id = 0
         while True:
             abs_start_id = int(start_id * sample)
 
-            if abs_start_id >= seq_n_frames:
+            if abs_start_id >= seq_n_frames or win_id >= params.slide.num > 0:
                 break
 
             end_id = start_id + win_size
@@ -258,13 +274,15 @@ def main():
                 abs_end_id = seq_n_frames
                 end_id = int(abs_end_id / sample)
 
-            suffix = f'{abs_start_id}_{abs_end_id}'
+            # suffix = f'{abs_start_id}_{abs_end_id}'
 
-            seq_info_list.append((seq_id, suffix, abs_start_id, abs_end_id))
+            seq_info_list.append((seq_id, abs_start_id, abs_end_id))
 
-            print(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
+            # print(f'{seq_name}--{suffix}: {abs_start_id} to {abs_end_id}')
 
             start_id += win_stride
+
+            win_id += 1
 
     n_seq = len(seq_info_list)
 
@@ -276,7 +294,6 @@ def main():
 
     traj_lengths_out_dir = linux_path(out_dir, 'traj_lengths')
     os.makedirs(traj_lengths_out_dir, exist_ok=1)
-
 
     database = {}
     duration_frame_csv_rows = []
@@ -363,8 +380,6 @@ def main():
 
     with open(seq_to_traj_lengths_out_path, 'w') as fid:
         fid.write(seq_to_traj_lengths_str)
-
-
 
     traj_lengths_out_path = linux_path(traj_lengths_out_dir, f'all.txt')
     np.savetxt(traj_lengths_out_path, np.asarray(all_traj_lengths, dtype=np.uint32), fmt='%d')

@@ -121,22 +121,10 @@ def get_dataset(args):
     else:
         train_sampler = None
 
-    train_loader = DataLoader(train_dataset,
-                              batch_size=args.batch_size,
-                              shuffle=(train_sampler is None), sampler=train_sampler,
-                              num_workers=args.num_workers,
-                              collate_fn=anet_collate_fn)
-
-    valid_loader = DataLoader(valid_dataset,
-                              batch_size=args.valid_batch_size,
-                              shuffle=False,
-                              num_workers=args.num_workers,
-                              collate_fn=anet_collate_fn)
-
-    return train_loader, valid_loader, text_proc, train_sampler
+    return train_dataset, valid_dataset, text_proc, train_sampler
 
 
-def get_model(text_proc, args):
+def get_model(text_proc, dataset, args):
     """
 
     :param text_proc:
@@ -146,8 +134,8 @@ def get_model(text_proc, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        dim_rgb=args.d_rgb,
-        dim_flow=args.d_flow,
+        feat_shape=dataset.feat_shape,
+        dim_flow=dataset.d_flow,
         dim_model=args.d_model,
         dim_hidden=args.d_hidden,
         n_layers=args.n_layers,
@@ -242,7 +230,19 @@ def main():
         args.dur_file = linux_path(args.db_root, args.dur_file)
 
     print('loading dataset')
-    train_loader, valid_loader, text_proc, train_sampler = get_dataset(args)
+    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(args)
+
+    train_loader = DataLoader(train_dataset,
+                              batch_size=args.batch_size,
+                              shuffle=(train_sampler is None), sampler=train_sampler,
+                              num_workers=args.num_workers,
+                              collate_fn=anet_collate_fn)
+
+    valid_loader = DataLoader(valid_dataset,
+                              batch_size=args.valid_batch_size,
+                              shuffle=False,
+                              num_workers=args.num_workers,
+                              collate_fn=anet_collate_fn)
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -254,7 +254,7 @@ def main():
     os.makedirs(args.ckpt, exist_ok=True)
 
     print('building model')
-    model = get_model(text_proc, args)
+    model = get_model(text_proc, train_dataset, args)
 
     # filter params that don't require gradient (credit: PyTorch Forum issue 679)
     # smaller learning rate for the decoder

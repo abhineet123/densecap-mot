@@ -60,7 +60,7 @@ class DropoutTime1D(nn.Module):
 
 
 class ActionPropDenseCap(nn.Module):
-    def __init__(self, dim_rgb, dim_flow, dim_model, dim_hidden, n_layers, n_heads, vocab,
+    def __init__(self, feat_shape, dim_flow, dim_model, dim_hidden, n_layers, n_heads, vocab,
                  in_emb_dropout, attn_dropout, vis_emb_dropout,
                  cap_dropout, nsamples, kernel_list, stride_factor,
                  learn_mask, window_length, max_sentence_len):
@@ -69,11 +69,15 @@ class ActionPropDenseCap(nn.Module):
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
-        self.dim_rgb = dim_rgb
+        self.feat_shape = feat_shape
+
+        self.dim_rgb = None
+        self.rgb_conv = None
+        self.flow_emb = None
+
         self.dim_flow = dim_flow
         self.dim_model = dim_model
         self.max_sentence_len = max_sentence_len
-        self.enable_flow = dim_flow > 0
 
         self.mask_model = nn.Sequential(
             nn.Linear(dim_model + window_length, dim_model, bias=False),
@@ -82,10 +86,31 @@ class ActionPropDenseCap(nn.Module):
             nn.Linear(dim_model, window_length),
         )
 
-        self.rgb_conv = nn.Linear(self.dim_rgb, dim_model)
+        if len(feat_shape) == 3:
+            ch, h, w = feat_shape
+
+            feat_size = int(h * w)
+            assert self.dim_model % feat_size == 0, \
+                f"dim_model {dim_model} it is not divisible by feat_size {feat_size}"
+
+            out_ch = int(self.dim_model / feat_size)
+
+            """1x1 conv"""
+            self.rgb_conv = nn.Sequential(
+                nn.Conv2d(
+                    in_channels=ch,
+                    out_channels=out_ch,
+                    kernel_size=1,
+                ),
+                nn.Flatten()
+            )
+        elif len(feat_shape) == 1:
+            self.dim_rgb = feat_shape[0]
+        else:
+            raise AssertionError(f'Invalid feat_shape: {feat_shape}')
 
         """emb --> embedding"""
-        if self.enable_flow:
+        if self.dim_flow > 0:
             self.rgb_emb = nn.Linear(self.dim_rgb, dim_model // 2)
             self.flow_emb = nn.Linear(self.dim_flow, dim_model // 2)
         else:
@@ -151,11 +176,15 @@ class ActionPropDenseCap(nn.Module):
                 sample_prob=0, stride_factor=10, scst=False,
                 gated_mask=False):
         """4 x 480 x 3072"""
-        batch_size, temporal_size, _ = x.size()
-
         dtype = x.data.type()
 
-        if self.enable_flow:
+        if self.rgb_conv is not None:
+            assert self.flow_emb is None, "cannot have flow features with rgb_conv"
+            x = self.rgb_conv(x)
+
+        batch_size, temporal_size, _ = x.size()
+
+        if self.flow_emb is not None:
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
             _x_rgb, _x_flow = torch.split(x, self.dim_rgb, 2)
 

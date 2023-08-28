@@ -75,8 +75,8 @@ class TrainParams:
         self.cls_weight = 1.0
         self.cuda = 1
         self.d_hidden = 2048
-        self.d_rgb = 2048
-        self.d_flow = 1024
+        # self.d_rgb = 2048
+        # self.d_flow = 1024
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''

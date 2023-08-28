@@ -43,6 +43,7 @@
             - [all       @ 25-2400/n-1/mot_to_dnc](#all___25_2400_n_1_mot_to_dnc_)
             - [seq_0_25       @ 25-2400/n-1/mot_to_dnc](#seq_0_25___25_2400_n_1_mot_to_dnc_)
         - [1k-9600       @ n-1/mot_to_dnc](#1k_9600___n_1_mot_to_dnc_)
+            - [1k-9600-dummy-100_2       @ 1k-9600/n-1/mot_to_dnc](#1k_9600_dummy_100_2___1k_9600_n_1_mot_to_dnc_)
     - [n-2       @ mot_to_dnc](#n_2___mot_to_dnc_)
         - [25-2000-f       @ n-2/mot_to_dnc](#25_2000_f___n_2_mot_to_dnc_)
             - [all       @ 25-2000-f/n-2/mot_to_dnc](#all___25_2000_f_n_2_mot_to_dnc_)
@@ -184,7 +185,6 @@ python3 extract_feature.py set=MNIST_MOT_RGB_512x512_5_25_2000 interval=6
 # mot_to_dnc
 <a id="n_1___mot_to_dnc_"></a>
 ## n-1       @ mot_to_dnc-->dnc_gen
-
 <a id="25_2000_f___n_1_mot_to_dnc_"></a>
 ### 25-2000-f       @ n-1/mot_to_dnc-->dnc_gen
 <a id="all___25_2000_f_n_1_mot_to_dnc_"></a>
@@ -206,6 +206,9 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_25_2400_var seq=0,25
 <a id="1k_9600___n_1_mot_to_dnc_"></a>
 ### 1k-9600       @ n-1/mot_to_dnc-->dnc_gen
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var n_proc=12
+<a id="1k_9600_dummy_100_2___1k_9600_n_1_mot_to_dnc_"></a>
+#### 1k-9600-dummy-100_2       @ 1k-9600/n-1/mot_to_dnc-->dnc_gen
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var start_seq=0,1000 end_seq=99,1099 @slide size=480 num=2 sample=1
 
 <a id="n_2___mot_to_dnc_"></a>
 ## n-2       @ mot_to_dnc-->dnc_gen
