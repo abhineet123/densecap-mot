@@ -43,20 +43,20 @@ def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
 
 
 def build_targets_densecap(
-        vocab_fmt, max_diff, sample_traj,
-        n_frames, frame_size, frames, annotations, seq_name,
-        grid_res, frame_gap, win_size, fps, out_dir, vis):
-    """
-
-    :param Annotations annotations:
-    :param list[np.ndarray] frames:
-    :param tuple(int, int) grid_res:
-    :param int frame_gap: frame_gap
-    :param int win_size: temporal window size
-    :return:
-
-    """
-
+        vocab_fmt: int,
+        max_diff: int,
+        sample_traj: int,
+        n_frames: int,
+        frame_size: tuple,
+        frames: list,
+        annotations: Annotations,
+        seq_name,
+        grid_res,
+        frame_gap,
+        win_size,
+        fps,
+        out_dir,
+        vis):
     if vis:
         assert frames is not None, "frames must be provided for visualization"
 
@@ -223,7 +223,7 @@ def build_targets_densecap(
             for grid_id in range(n_grid_cells):
                 prev_grid_idy, prev_grid_idx = np.unravel_index(grid_id, grid_res)
 
-                excel_idy, excel_idx = grid_to_excel_ids(prev_grid_idy, prev_grid_idx)
+                excel_idy, excel_idx = grid_to_excel_ids(prev_grid_idy, prev_grid_idx, grid_res)
 
                 offset_cx, offset_cy = grid_cx[prev_grid_idy, prev_grid_idx], grid_cy[prev_grid_idy, prev_grid_idx]
 
@@ -264,7 +264,7 @@ def build_targets_densecap(
                 # traj_vocab['grid_cells'].append((grid_idy, grid_idx))
 
                 if vocab_fmt == 0:
-                    excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx)
+                    excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx, grid_res)
                     word = excel_idx + excel_idy
                     if traj_vocab['sentence']:
                         traj_vocab['sentence'] += ' ' + word
@@ -491,20 +491,26 @@ def excel_ids_to_grid(grid_res):
     return excel_id_dict
 
 
-def grid_to_excel_ids(grid_idy, grid_idx):
-    excel_idy = str(grid_idy + 1)
+def grid_to_excel_ids(grid_idy, grid_idx, grid_res):
 
-    excel_idx_num_1 = int(grid_idx / 26)
+    n_dig_y, n_dig_x = len(str(grid_res[0])), len(str(grid_res[1]))
 
-    if excel_idx_num_1 == 0:
-        excel_idx = str(chr(grid_idx + 65))
-    else:
-        excel_idx_num_2 = int(grid_idx % 26)
+    fmt_y, fmt_x = f'%0{n_dig_y}d', f'%0{n_dig_x}d'
 
-        excel_idx_1 = str(chr(excel_idx_num_1 - 1 + 65))
-        excel_idx_2 = str(chr(excel_idx_num_2 + 65))
+    excel_idy = fmt_y % grid_idy
+    excel_idx = fmt_x % grid_idx
 
-        excel_idx = excel_idx_1 + excel_idx_2
+    # excel_idy = str(grid_idy + 1)
+    # excel_idx_num_1 = int(grid_idx / 26)
+    # if excel_idx_num_1 == 0:
+    #     excel_idx = str(chr(grid_idx + 65))
+    # else:
+    #     excel_idx_num_2 = int(grid_idx % 26)
+    #
+    #     excel_idx_1 = str(chr(excel_idx_num_1 - 1 + 65))
+    #     excel_idx_2 = str(chr(excel_idx_num_2 + 65))
+    #
+    #     excel_idx = excel_idx_1 + excel_idx_2
 
     return excel_idy, excel_idx
 
