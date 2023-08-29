@@ -606,7 +606,7 @@ def _get_pos_neg(vid_info,
     """
     annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_frames, sampling_sec = vid_info
 
-    print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
+    # print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
 
     window_start = 0
     window_end = slide_window_size
