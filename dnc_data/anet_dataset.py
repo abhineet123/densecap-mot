@@ -285,8 +285,11 @@ class ANetDataset(Dataset):
 
                     assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
                 else:
+
                     """assume that each npy file contains features only for one subsequence"""
-                    feat_path = vid + '.npy'
+                    video_prefix = os.path.join(split_path, vid)
+
+                    feat_path = video_prefix + '.npy'
                     assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
 
                     if vid_id == 0:
