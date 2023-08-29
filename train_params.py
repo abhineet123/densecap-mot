@@ -182,9 +182,10 @@ def get_args():
     parser.add_argument('--num_workers', default=1, type=int)
 
     # Model settings: General
-    parser.add_argument('--d_rgb', default=2048, type=int)
-    parser.add_argument('--d_flow', default=1024, type=int)
+    # parser.add_argument('--d_rgb', default=2048, type=int)
+    # parser.add_argument('--d_flow', default=1024, type=int)
     parser.add_argument('--d_model', default=1024, type=int, help='size of the rnn in number of hidden nodes in each layer')
+    parser.add_argument('--rgb_ch', default=4, type=int)
     parser.add_argument('--d_hidden', default=2048, type=int)
     parser.add_argument('--n_heads', default=8, type=int)
     parser.add_argument('--in_emb_dropout', default=0.1, type=float)
