@@ -212,7 +212,7 @@ class ANetDataset(Dataset):
                     self.vid_dur[vid_name] = float(vid_dur)
                     self.vid_frame[vid_name] = float(vid_frame)
                     self.fps[vid_name] = float(vid_frame) / float(vid_dur)
-                    self.sampled_frames[vid_name] = int(self.fps[vid_name] * sampling_sec)
+                    self.sampled_frames[vid_name] = round(self.fps[vid_name] * sampling_sec)
 
                     self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
                         float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)
