@@ -355,7 +355,7 @@ class ANetDataset(Dataset):
         else:
             results = [None] * n_vids
 
-            for vid_idx, vid_info in enumerate(vid_info_list):
+            for vid_idx, vid_info in enumerate(tqdm(vid_info_list, desc="get_pos_neg")):
                 results[vid_idx] = _get_pos_neg(
                     vid_info,
                     n_vids=n_vids,
@@ -862,18 +862,19 @@ def _get_pos_neg(vid_info,
         n_pos_seg += len(pos_seg[k])
 
     if save_samplelist:
-        sample_list_size = sys.getsizeof(sample_list)
-        sample_list_size_mb = sample_list_size / 1e6
         sample_list_path = os.path.join(sample_list_dir, f'{vid}.pkl')
-        print(f'\n{vid} : saving sample_list of size {sample_list_size_mb} MB to {sample_list_path}')
+
+        # sample_list_size = sys.getsizeof(sample_list)
+        # sample_list_size_mb = sample_list_size / 1e6
+        # print(f'\n{vid} : saving sample_list of size {sample_list_size_mb} MB to {sample_list_path}')
         with open(sample_list_path, 'wb') as f:
             pickle.dump(sample_list, f)
-        print(f'\n{vid} : done')
+        # print(f'\n{vid} : done')
     out_txt_path = os.path.join(out_txt_dir, f'{vid}.log')
 
-    print(f'\n{vid} : saving out_txt to {out_txt_path}')
+    # print(f'\n{vid} : saving out_txt to {out_txt_path}')
     with open(out_txt_path, 'w') as fid:
         fid.write(out_txt)
-    print(f'\n{vid} : done')
+    # print(f'\n{vid} : done')
 
     return sample_list, video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
