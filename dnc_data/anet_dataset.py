@@ -216,7 +216,7 @@ class ANetDataset(Dataset):
 
                     self.frame_to_second[vid_name] = float(vid_dur) * math.ceil(
                         float(vid_frame) * 1. / float(vid_dur) * sampling_sec) * 1. / float(vid_frame)
-                    print()
+                    # print()
             else:
                 raise NotImplementedError(f'Unsupported dataset: {dataset}')
 
