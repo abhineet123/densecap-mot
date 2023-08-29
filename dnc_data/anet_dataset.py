@@ -638,8 +638,8 @@ def _get_pos_neg(vid_info,
     # pos_collected = [False] * n_anc
     anc_iter = range(n_anc)
 
-    # if not is_parallel:
-    anc_iter = tqdm(anc_iter, ncols=100)
+    if is_parallel:
+        anc_iter = tqdm(anc_iter, ncols=100)
 
     anc_len_to_n_pos = defaultdict(int)
     gt_len_to_count = defaultdict(int)
