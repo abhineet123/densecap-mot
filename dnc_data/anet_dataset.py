@@ -291,9 +291,9 @@ class ANetDataset(Dataset):
 
                     feat_path = video_prefix + '.npy'
                     assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
+                    feat = np.load(feat_path)
 
                     if vid_id == 0:
-                        feat = np.load(feat_path)
                         n_feat_frames = feat.shape[0]
 
                         if len(feat.shape) == 4:
@@ -304,6 +304,12 @@ class ANetDataset(Dataset):
                             self.feat_shape = (feat_dim,)
                         else:
                             raise AssertionError(f'invalid feat.shape: {feat.shape}')
+                    else:
+                        assert feat.shape[0] == n_feat_frames, \
+                            f"n_feat_frames mismatch: {n_feat_frames}, {feat.shape[0]}"
+                        assert feat.shape[1:] == self.feat_shape, "self.feat_shape mismatch"
+
+                    print()
 
                 if feat_frame_ids is None:
                     feat_frame_ids = (0, n_feat_frames)

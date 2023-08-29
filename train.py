@@ -188,7 +188,7 @@ def main():
     print(f'args.resume: {args.resume}')
 
     if args.sampling_sec == 0:
-        args.sampling_sec = 1.0 / float(args.fps)
+        args.sampling_sec = float(args.sampled_frames) / float(args.fps)
 
     # dist parallel, optional
     args.distributed = args.world_size > 1
