@@ -355,7 +355,7 @@ class ANetDataset(Dataset):
         else:
             results = [None] * n_vids
 
-            for vid_idx, vid_info in enumerate(tqdm(vid_info_list, desc="get_pos_neg")):
+            for vid_idx, vid_info in enumerate(tqdm(vid_info_list, desc="get_pos_neg", ncols=100)):
                 results[vid_idx] = _get_pos_neg(
                     vid_info,
                     n_vids=n_vids,
