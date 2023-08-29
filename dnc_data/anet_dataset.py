@@ -234,12 +234,12 @@ class ANetDataset(Dataset):
         os.makedirs(out_txt_dir, exist_ok=1)
 
         vid_info_list = []
+        n_feat_frames = None
         for vid_id, (vid, val) in enumerate(tqdm(self.raw_data.items(),
                                                  desc='generating vid_info_list',
                                                  ncols=100,
                                                  total=self.n_vids)):
             annotations = val['annotations']
-
             for split, split_path in zip(self.splits, self.split_paths):
                 if val['subset'] != split:
                     continue
@@ -285,14 +285,13 @@ class ANetDataset(Dataset):
 
                     assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
                 else:
-
                     """assume that each npy file contains features only for one subsequence"""
                     video_prefix = os.path.join(split_path, vid)
 
                     feat_path = video_prefix + '.npy'
                     assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
 
-                    if vid_id == 0:
+                    if n_feat_frames is None:
                         feat = np.load(feat_path)
 
                         n_feat_frames = feat.shape[0]
