@@ -596,7 +596,7 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
 def _get_pos_neg(vid_info,
                  n_vids, slide_window_size, anc_len_all,
                  anc_cen_all, pos_thresh, neg_thresh,
-                 save_samplelist, sample_list_dir, out_txt_dir):
+                 save_samplelist, sample_list_dir, out_txt_dir, is_parallel):
     """
     try to find a matching anchor for every single GT segment by choosing the anchor with the maximum temporal IOU
     with each GT segment and hoping that each of the latter has at least one anchor with IOU > 0.7
@@ -606,7 +606,8 @@ def _get_pos_neg(vid_info,
     """
     annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_frames, sampling_sec = vid_info
 
-    # print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
+    if is_parallel:
+        print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
 
     window_start = 0
     window_end = slide_window_size
