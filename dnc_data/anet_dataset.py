@@ -309,7 +309,7 @@ class ANetDataset(Dataset):
                             f"n_feat_frames mismatch: {n_feat_frames}, {feat.shape[0]}"
                         assert feat.shape[1:] == self.feat_shape, "self.feat_shape mismatch"
 
-                    print()
+                    # print()
 
                 if feat_frame_ids is None:
                     feat_frame_ids = (0, n_feat_frames)
