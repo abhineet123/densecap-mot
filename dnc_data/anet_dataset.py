@@ -79,6 +79,15 @@ class ANetDataset(Dataset):
 
         if load_samplelist:
             if os.path.isdir(sample_list_dir):
+                attr_dir = os.path.join(sample_list_dir, f'attributes')
+                print(f'loading attributes from: {attr_dir}')
+                pkl_files = glob.glob(os.path.join(attr_dir, '*.pkl'), recursive=False)
+                for pkl_file in pkl_files:
+                    attr_name = os.path.splitext(os.path.basename(pkl_file))[0]
+                    with open(pkl_file, 'rb') as f:
+                        attr = pickle.load(f)
+                        setattr(self,  attr_name, attr)
+
                 print(f'loading samples from: {sample_list_dir}')
                 pkl_files = glob.glob(os.path.join(sample_list_dir, '*.pkl'), recursive=False)
                 n_pkl_files = len(pkl_files)
@@ -103,6 +112,8 @@ class ANetDataset(Dataset):
                         pbar.set_description(f'\t{vid:50s}: {len(sample_dict[vid]):5d} samples')
 
                     print(f'loaded {len(self.sample_list)} samples for {len(sample_dict)} videos')
+
+                    vid_prefix = self.sample_list[0][0]
 
                     self.samples_loaded = True
                     return
@@ -330,7 +341,11 @@ class ANetDataset(Dataset):
 
         if self.save_samplelist:
             print(f'saving samples to: {self.sample_list_dir}')
-            os.makedirs(self.sample_list_dir, exist_ok=1)
+            attr_dir = os.path.join(self.sample_list_dir, f'attributes')
+            os.makedirs(attr_dir, exist_ok=1)
+            feat_shape_path = os.path.join(attr_dir, f'feat_shape.pkl')
+            with open(feat_shape_path, 'wb') as f:
+                pickle.dump(self.feat_shape, f)
 
         print('matching anchors to ground truth segments')
         print(f'out_txt_dir: {out_txt_dir}')
