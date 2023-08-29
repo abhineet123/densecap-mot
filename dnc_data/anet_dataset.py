@@ -348,6 +348,7 @@ class ANetDataset(Dataset):
                 save_samplelist=self.save_samplelist,
                 sample_list_dir=self.sample_list_dir,
                 out_txt_dir=out_txt_dir,
+                is_parallel=1,
             )
             with multiprocessing.Pool(n_proc) as pool:
                 results = pool.map(func, vid_info_list)
@@ -366,6 +367,7 @@ class ANetDataset(Dataset):
                     save_samplelist=self.save_samplelist,
                     sample_list_dir=self.sample_list_dir,
                     out_txt_dir=out_txt_dir,
+                    is_parallel=0,
                 )
 
         vid_counter = 0
