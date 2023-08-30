@@ -205,6 +205,8 @@ class ActionPropDenseCap(nn.Module):
 
             x = self.rgb_conv(x_reshaped)
 
+            x = torch.reshape(x, (batch_size,  temporal_size, -1))
+
         if self.enable_flow:
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
             _x_rgb, _x_flow = torch.split(x, self.dim_rgb, 2)
