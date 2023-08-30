@@ -206,7 +206,7 @@ class ActionPropDenseCap(nn.Module):
         if self.enable_flow:
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
             _x_rgb, _x_flow = torch.split(x, self.dim_rgb, 2)
-            
+
             _x_rgb_c = _x_rgb.contiguous()
             _x_flow_c = _x_flow.contiguous()
 

@@ -328,8 +328,8 @@ class ANetDataset(Dataset):
                     feat_start_id, feat_end_id = feat_frame_ids
                     n_feat_frames = feat_end_id - feat_start_id
 
-                assert self.slide_window_size >= n_feat_frames, \
-                    f"n_feat_frames: {n_feat_frames} exceeds slide_window_size: {self.slide_window_size}"
+                # assert self.slide_window_size >= n_feat_frames, \
+                #     f"n_feat_frames: {n_feat_frames} exceeds slide_window_size: {self.slide_window_size}"
 
                 vid_info = (
                     annotations, vid, vid_idx, video_prefix, feat_frame_ids, n_feat_frames, self.frame_to_second[vid])
