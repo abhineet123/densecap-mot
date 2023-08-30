@@ -126,7 +126,7 @@ class ActionPropDenseCap(nn.Module):
                     ),
                     nn.Flatten()
                 )
-                self.dim_rgb = int(self.rgb_ch*feat_size)
+                self.dim_rgb = int(self.rgb_ch * feat_size)
             elif len(feat_shape) == 1:
                 self.dim_rgb = feat_shape[0]
             else:
@@ -195,13 +195,15 @@ class ActionPropDenseCap(nn.Module):
                 gated_mask=False):
         """4 x 480 x 3072"""
         dtype = x.data.type()
+        batch_size, temporal_size = x.size()[:2]
 
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
 
-            x = self.rgb_conv(x)
+            """concat batch and temporal dims"""
+            x_reshaped = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
 
-        batch_size, temporal_size, _ = x.size()
+            x = self.rgb_conv(x_reshaped)
 
         if self.enable_flow:
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
