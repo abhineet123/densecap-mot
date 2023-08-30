@@ -476,7 +476,7 @@ def anet_collate_fn(batch_lst):
 
     sentence_batch = torch.from_numpy(np.ones((batch_size, sentence.size(0)), dtype='int64')).long()
     batch_shape = (batch_size, ) + img_feat.shape
-    
+
     img_batch = torch.zeros(batch_shape).float()
     tempo_seg_pos = torch.from_numpy(np.zeros((batch_size, sample_each, 4))).float()
     tempo_seg_neg = torch.from_numpy(np.zeros((batch_size, sample_each, 2))).float()
