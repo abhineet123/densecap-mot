@@ -201,9 +201,9 @@ class ActionPropDenseCap(nn.Module):
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
 
             """concat batch and temporal dims"""
-            x_reshaped = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
+            x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
 
-            x = self.rgb_conv(x_reshaped)
+            x = self.rgb_conv(x)
 
             x = torch.reshape(x, (batch_size,  temporal_size, -1))
 
