@@ -49,11 +49,10 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_25_2400_var/seq_0_25__
 ## 1k-9600       @ n-1-->dnc
 <a id="seq_0_to_99_win_2_f0_max_4___1k_9600_n_1_"></a>
 ### seq_0_to_99_win_2-f0_max_4       @ 1k-9600/n-1-->dnc
-python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_4.cfg --batch_size 32 --num_workers 4
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_4.cfg --batch_size 32 --num_workers 0
 <a id="seq_0_to_99_win_2_f0_max_16___1k_9600_n_1_"></a>
 ### seq_0_to_99_win_2-f0_max_16       @ 1k-9600/n-1-->dnc
-python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16.cfg --batch_size 32 --num_workers 4
-
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16.cfg --batch_size 32 --num_workers 0
 
 <a id="n_3_"></a>
 # n-3
