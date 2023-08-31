@@ -87,7 +87,10 @@ class Params:
 def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, params: Params):
     seq_id, start_id, end_id = seq_info
 
+    import logging
+
     _logger = CustomLogger.setup(__name__)
+    _logger.setLevel(logging.DEBUG)
 
     _data = Data(params.data, _logger)
 
