@@ -143,7 +143,7 @@ class TestParams(CFG):
         self.n_layers = 2
         self.num_workers = 2
         self.pos_thresh = 0.7
-        self.sampling_sec = 0.5
+        self.sampled_frames = 1
 
         self.slide_window_size = 480
         self.slide_window_stride = 20

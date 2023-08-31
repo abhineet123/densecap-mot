@@ -67,7 +67,7 @@ def get_dataset(args):
     return test_loader, test_dataset, text_proc
 
 
-def get_model(text_proc, args):
+def get_model(text_proc, dataset, args):
     """
 
     :param text_proc:
@@ -77,8 +77,9 @@ def get_model(text_proc, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        dim_rgb=args.d_rgb,
-        dim_flow=args.d_flow,
+        feat_shape=dataset.feat_shape,
+        enable_flow=args.enable_flow,
+        rgb_ch=args.rgb_ch,
         dim_model=args.d_model,
         dim_hidden=args.d_hidden,
         n_layers=args.n_layers,
@@ -136,8 +137,9 @@ def validate(model, loader, dataset, out_dir, args):
         pbar.set_description(f'times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
 
         # video_name = os.path.basename(video_prefix[0])
-        sampling_sec = 0.5
-        sampled_frames = 15
+        sampled_frames = args.sampled_frames
+
+        sampling_sec = args.sampled_frames / args.fps
 
         with torch.no_grad():
             # image_feat = Variable(image_feat)
@@ -304,7 +306,7 @@ def main():
     test_loader, test_dataset, text_proc = get_dataset(args)
 
     print('building model')
-    model = get_model(text_proc, args)
+    model = get_model(text_proc, test_dataset, args)
 
     validate(model, test_loader, test_dataset, out_dir, args)
 

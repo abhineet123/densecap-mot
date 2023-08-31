@@ -425,6 +425,9 @@ class ANetDataset(Dataset):
             feat_frame_ids = None
 
         sentence = torch.from_numpy(np.asarray(sentence))
+
+        sample = (pos_seg, neg_seg, sentence)
+
         if self.enable_flow:
             start = time.time()
             if feat_frame_ids is not None:
@@ -454,7 +457,7 @@ class ANetDataset(Dataset):
             end2 = time.time()
         else:
             start = time.time()
-            img_feat_np = np.load(video_prefix + '.npy')
+            img_feat_np = np.load(video_prefix + '.npy', mmap_mode='r')
             end = time.time()
 
             img_feat = torch.from_numpy(img_feat_np).float()
@@ -463,14 +466,15 @@ class ANetDataset(Dataset):
         load_t = (end - start) * 1000
         torch_t = (end2 - end) * 1000
 
-        return pos_seg, sentence, neg_seg, img_feat, load_t, torch_t
-
+        return img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t
 
 def anet_collate_fn(batch_lst):
     start = time.time()
 
     sample_each = 10  # TODO, hard coded
-    pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[0]
+    img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t = batch_lst[0]
+
+    pos_seg, neg_seg, sentence = sample
 
     batch_size = len(batch_lst)
 
@@ -484,13 +488,21 @@ def anet_collate_fn(batch_lst):
     batch_load_t = 0
     batch_torch_t = 0
 
+    video_prefix = []
+    feat_frame_ids_all = []
+
+    frame_length = torch.zeros(batch_size, dtype=torch.int)
+
     for batch_idx in range(batch_size):
-        pos_seg, sentence, neg_seg, img_feat, load_t, torch_t = batch_lst[batch_idx]
+        img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t = batch_lst[batch_idx]
+        pos_seg, neg_seg, sentence = sample
 
         batch_load_t += load_t
         batch_torch_t += torch_t
 
         img_batch[batch_idx, ...] = img_feat
+
+        frame_length[batch_idx] = total_frame
 
         pos_seg_tensor = torch.from_numpy(np.asarray(pos_seg)).float()
 
@@ -522,7 +534,9 @@ def anet_collate_fn(batch_lst):
 
     times = (batch_load_t, batch_torch_t, collate_t)
 
-    return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
+    # return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
+    samples = (tempo_seg_pos, tempo_seg_neg, sentence_batch)
+    return img_batch, frame_length, video_prefix, feat_frame_ids_all, samples, times
 
 
 def get_vocab_and_sentences(dataset_file, splits, save_path):

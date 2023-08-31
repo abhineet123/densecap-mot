@@ -359,7 +359,7 @@ class ActionPropDenseCap(nn.Module):
                     continue
 
                 """
-                What seems to be happening is that each one of the 480 frame temporal Windows is Subjected to 
+                What seems to be happening is that each one of the 480 frame temporal windows is subjected to 
                 multiple temporal convolutions using different kernel sizes And all of these are concatenated 
                 along the depth dimension in such a way that the resultant indices correspond to the 
                 video indices stored in the positive and negative anchors

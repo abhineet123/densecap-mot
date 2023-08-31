@@ -117,7 +117,6 @@ def compress_traj(grid_ids, start_frame, end_frame):
 
 
 def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
-
     n_frames = end_frame - start_frame + 1
     n_grid_ids = len(grid_cells)
 
@@ -206,79 +205,70 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
     return out_grid_cells, frame_to_traj_dict
 
 
-def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_lengths_out_dir, params):
-    """
+def run(dnc_data, frames, seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir,
+        params: Params, show):
+    if frames is None:
+        seq_id, seq_suffix, start_id, end_id = seq_info
 
-    :param seq_info:
-    :param n_seq:
-    :param out_dir:
-    :param traj_lengths_out_dir:
-    :param Params params:
-    :return:
-    """
+        _logger = CustomLogger.setup(__name__)
 
-    seq_id, seq_suffix, start_id, end_id = seq_info
+        _data = Data(params.data, _logger)
 
-    _logger = CustomLogger.setup(__name__)
+        if not _data.initialize(params.set, seq_id, 0, _logger, silent=1):
+            _logger.error('Data module could not be initialized')
+            return None
 
-    _data = Data(params.data, _logger)
+        subset = "training" if _data.split == 'train' else "validation"
 
-    if not _data.initialize(params.set, seq_id, 0, _logger, silent=1):
-        _logger.error('Data module could not be initialized')
-        return None
+        input_params = copy.deepcopy(params.input)  # type: Input.Params
 
-    subset = "training" if _data.split == 'train' else "validation"
+        """end_id is exclusive but Input expects inclusive"""
+        input_params.frame_ids = (start_id, end_id - 1)
 
-    input_params = copy.deepcopy(params.input)  # type: Input.Params
+        input_params.batch_mode = 1
 
-    """end_id is exclusive but Input expects inclusive"""
-    input_params.frame_ids = (start_id, end_id - 1)
+        _input = Input(input_params, _logger)
+        seq_name = _data.seq_name
 
-    _input = Input(input_params, _logger)
-    seq_name = _data.seq_name
+        if seq_suffix:
+            seq_name = f'{seq_name}--{seq_suffix}'
 
-    if seq_suffix:
-        seq_name = f'{seq_name}--{seq_suffix}'
+        print(f'\nseq {seq_id + 1} / {n_seq}: {seq_name}\n')
 
-    print(f'\nseq {seq_id + 1} / {n_seq}: {seq_name}\n')
+        if not _input.initialize(_data):
+            _logger.error('Input pipeline could not be initialized')
+            return False
 
-    if not _input.initialize(_data):
-        _logger.error('Input pipeline could not be initialized')
-        return False
+        # read detections and annotations
+        if not _input.read_annotations():
+            _logger.error('Annotations could not be read')
+            return False
 
-    # read detections and annotations
-    if not _input.read_annotations():
-        _logger.error('Annotations could not be read')
-        return False
+        if dnc_data is None:
+            dnc_data = json_data[seq_name]
 
-    # if not _input.read_detections():
-    #     _logger.error('Detections could not be read')
-    #     return False
+            if isinstance(dnc_data, dict):
+                dnc_data = dnc_data['annotations']
 
-    dnc_data = json_data[seq_name]
+        _n_frames = _input.n_frames
 
-    if isinstance(dnc_data, dict):
-        dnc_data = dnc_data['annotations']
+        # duration = float(_n_frames) / params.fps
+        _annotations = _input.annotations  # type: Annotations
+        # _detections = _input.detections  # type: Detections
 
-    _frame_size = _input.frame_size
-    _n_frames = _input.n_frames
+        frames = _input.all_frames
 
-    duration = float(_n_frames) / params.fps
-    # _frames = _input.all_frames
-    _annotations = _input.annotations  # type: Annotations
-    # _detections = _input.detections  # type: Detections
+    frame_res = frames[0].shape[:2]
 
-    if params.vis:
-        _input._read_all_frames()
-
-    frame_size = _input.frame_size
     grid_res = params.grid_res
-    grid_cell_size = np.array([frame_size[i] / grid_res[i] for i in range(2)])
+    grid_cell_size = np.array([frame_res[i] / grid_res[i] for i in range(2)])
 
-    grid_x, grid_y = [np.arange(grid_cell_size[i] / 2.0, frame_size[i], grid_cell_size[i]) for i in range(2)]
+    grid_x, grid_y = [np.arange(grid_cell_size[i] / 2.0, frame_res[i], grid_cell_size[i]) for i in range(2)]
     grid_cx, grid_cy = np.meshgrid(grid_x, grid_y)
 
-    for traj_datum in dnc_data:
+    frame_disp_dict = {}
+
+    for traj_id, traj_datum in enumerate(dnc_data):
         sentence = traj_datum["sentence"].upper()
         timestamp = traj_datum["segment"]
 
@@ -300,7 +290,7 @@ def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_length
         if n_grid_cells > traj_n_frames:
             frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
         elif n_grid_cells < traj_n_frames:
-            grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame, _input.all_frames, disp_fn)
+            grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn)
         else:
             frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
@@ -309,9 +299,11 @@ def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_length
 
         _pause = 1
 
+        frame_disp_list = []
+
         for frame_id in range(start_frame, end_frame + 1):
             if params.vis:
-                frame_disp = np.copy(_input.all_frames[frame_id])
+                frame_disp = np.copy(frames[frame_id])
 
                 for grid_cell in grid_cells:
                     disp_fn(frame_disp, grid_cell, color='green')
@@ -322,7 +314,15 @@ def run(seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir, traj_length
 
                 frame_disp = resize_ar(frame_disp, height=960)
 
-                _pause = show('frame_disp', frame_disp, _pause=_pause)
+                if show:
+                    _pause = show('frame_disp', frame_disp, _pause=_pause)
+                else:
+                    frame_disp_list.append(frame_disp)
+
+        frame_disp_dict[traj_id] = frame_disp_list
+
+    return frame_disp_list
+
 
 
 def main():

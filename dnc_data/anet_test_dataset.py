@@ -145,39 +145,52 @@ class ANetTestDataset(Dataset):
 
     def __getitem__(self, index):
         video_prefix, feat_frame_ids = self.sample_list[index]
-        start = time.time()
 
-        if feat_frame_ids is not None:
-            feat_start_id, feat_end_id = feat_frame_ids
+        if self.enable_flow:
 
-            resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
-            bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+            start = time.time()
+            if feat_frame_ids is not None:
+                feat_start_id, feat_end_id = feat_frame_ids
 
-            resnet_feat = np.array(resnet_feat)
-            bn_feat = np.array(bn_feat)
+                resnet_feat = np.load(video_prefix + '_resnet.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+                bn_feat = np.load(video_prefix + '_bn.npy', mmap_mode='r')[feat_start_id:feat_end_id, ...]
+
+                resnet_feat = np.array(resnet_feat)
+                bn_feat = np.array(bn_feat)
+
+            else:
+                resnet_feat = np.load(video_prefix + '_resnet.npy')
+                bn_feat = np.load(video_prefix + '_bn.npy')
+
+            end = time.time()
+
+            resnet_feat = torch.from_numpy(resnet_feat).float()
+            bn_feat = torch.from_numpy(bn_feat).float()
+
+
+            if self.learn_mask:
+                img_feat = torch.from_numpy(np.zeros((self.slide_window_size,
+                                                      resnet_feat.size(1) + bn_feat.size(1)))).float()
+                torch.cat((resnet_feat, bn_feat), dim=1,
+                          out=img_feat[:min(bn_feat.size(0), self.slide_window_size)])
+            else:
+                img_feat = torch.cat((resnet_feat, bn_feat), 1)
+            end2 = time.time()
 
         else:
-            resnet_feat = np.load(video_prefix + '_resnet.npy')
-            bn_feat = np.load(video_prefix + '_bn.npy')
+            start = time.time()
+            img_feat_np = np.load(video_prefix + '.npy', mmap_mode='r')
+            end = time.time()
 
-        end = time.time()
+            img_feat = torch.from_numpy(img_feat_np).float()
+            end2 = time.time()
+
         load_t = (end - start) * 1000
-
-        resnet_feat = torch.from_numpy(resnet_feat).float()
-        bn_feat = torch.from_numpy(bn_feat).float()
-
-        if self.learn_mask:
-            img_feat = torch.from_numpy(np.zeros((self.slide_window_size,
-                                                  resnet_feat.size(1) + bn_feat.size(1)))).float()
-            torch.cat((resnet_feat, bn_feat), dim=1,
-                      out=img_feat[:min(bn_feat.size(0), self.slide_window_size)])
-        else:
-            img_feat = torch.cat((resnet_feat, bn_feat), 1)
-
-        end2 = time.time()
         torch_t = (end2 - end) * 1000
 
-        return img_feat, bn_feat.size(0), video_prefix, feat_frame_ids, load_t, torch_t
+        total_frames = img_feat.size(0)
+
+        return img_feat, total_frames, video_prefix, feat_frame_ids, load_t, torch_t
 
 
 def anet_test_collate_fn(batch_lst):

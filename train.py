@@ -34,6 +34,7 @@ import torch.utils.data.distributed
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap
 from dnc_utilities import get_latest_checkpoint
+import dnc_to_mot
 
 sys.path.append('../isl_labeling_tool/deep_mdp')
 
@@ -515,7 +516,8 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
     for train_iter, data in enumerate(pbar):
         global_iter = epoch * nbatches + train_iter
 
-        (img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times) = data
+        img_batch, frame_length, video_prefix, feat_frame_ids_all, samples, times = data
+        tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
         pbar.set_description(f'training epoch {epoch} times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
 
@@ -648,12 +650,19 @@ def valid(epoch, model, loader,
     nbatches = len(loader)
     pbar = tqdm(loader, total=nbatches, ncols=120)
 
+    sampled_frames = args.sampled_frames
+
+    sampling_sec = args.sampled_frames / args.fps
+
+    densecap_result = {}
+
     for val_iter, data in enumerate(pbar):
         global_iter = epoch * nbatches + val_iter
 
-        (img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times) = data
-
+        img_batch, frame_length, video_prefix, feat_frame_ids, samples, times = data
+        tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
+
         pbar.set_description(f'validation epoch {epoch} times: {load_t:.3f},{torch_t:.3f},{collate_t:.3f}')
 
         with torch.no_grad():
@@ -675,6 +684,52 @@ def valid(epoch, model, loader,
                                    tempo_seg_neg, sentence_batch,
                                    stride_factor=args.stride_factor,
                                    gated_mask=args.gated_mask)
+
+            all_proposal_results = model.module.inference(
+                img_batch,
+                frame_length,
+                sampling_sec,
+                args.min_prop_num,
+                args.max_prop_num,
+                args.min_prop_before_nms,
+                args.pos_thresh,
+                args.stride_factor,
+                gated_mask=args.gated_mask)
+
+            for b in range(len(video_prefix)):
+                vid = os.path.basename(video_prefix[b])
+                if feat_frame_ids[0] is not None:
+                    feat_start_id, feat_end_id = feat_frame_ids[0]
+                    start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+                    vid = f'{vid}--{start_id}_{end_id}'
+
+                annotations = []
+                proposals = []
+                for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
+                    pred_start_t = pred_start * sampling_sec
+                    pred_end_t = pred_end * sampling_sec
+
+                    # pred_start_frame = pred_start_t * args.fps
+                    # pred_end_frame = pred_end_t * args.fps
+
+                    annotations.append(
+                        {
+                            'sentence': sent,
+                            'segment': [pred_start_t, pred_end_t]
+                        })
+
+                    proposals.append(
+                        {
+                            'segment': [pred_start_t, pred_end_t],
+                            'score': pred_s}
+                    )
+
+                # densecap_result[vid] = {
+                #     "subset": "validation",
+                #     "annotations": annotations
+                # }
+
+                dnc_to_mot.run(annotations)
 
             cls_loss = model.module.bce_loss(pred_score, gt_score) * args.cls_weight
             reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * args.reg_weight
