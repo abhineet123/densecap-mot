@@ -211,7 +211,9 @@ def anet_test_collate_fn(batch_lst):
 
     batch_size = len(batch_lst)
 
-    img_batch = torch.zeros(batch_size, img_feat.size(0), img_feat.size(1))
+    batch_shape = (batch_size, ) + img_feat.shape
+
+    img_batch = torch.zeros(batch_shape).float()
 
     frame_length = torch.zeros(batch_size, dtype=torch.int)
 
@@ -227,7 +229,7 @@ def anet_test_collate_fn(batch_lst):
         batch_load_t += load_t
         batch_torch_t += torch_t
 
-        img_batch[batch_idx, :] = img_feat
+        img_batch[batch_idx, ...] = img_feat
         frame_length[batch_idx] = total_frames
         video_prefix.append(vid)
         feat_frame_ids_all.append(feat_frame_ids)
