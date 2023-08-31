@@ -15,7 +15,8 @@ from torch.utils.data import Dataset
 
 
 class ANetTestDataset(Dataset):
-    def __init__(self, image_path,
+    def __init__(self,
+                 image_path,
                  slide_window_size,
                  dur_file,
                  dataset,
@@ -24,13 +25,16 @@ class ANetTestDataset(Dataset):
                  raw_data,
                  split,
                  learn_mask,
-                 sample_list_dir):
+                 sample_list_dir,
+                 enable_flow
+                 ):
         super(ANetTestDataset, self).__init__()
 
         self.split = split
         split_path = os.path.join(image_path, self.split)
         self.slide_window_size = slide_window_size
         self.learn_mask = learn_mask
+        self.enable_flow = enable_flow
 
         self.sample_list_dir = sample_list_dir
 
@@ -84,26 +88,30 @@ class ANetTestDataset(Dataset):
 
                 # file_path = os.path.join(split_path, vid + '_bn.npy')
                 # assert os.path.isfile(file_path), "file does not exist: {}".format(file_path)
+                if self.enable_flow:
+                    if '--' in vid:
+                        feat_name, vid_frame_ids = vid.split('--')
+                        vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
 
-                if '--' in vid:
-                    feat_name, vid_frame_ids = vid.split('--')
-                    vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+                        start_id, end_id = vid_frame_ids
 
-                    start_id, end_id = vid_frame_ids
+                        n_subseq_frames = end_id - start_id
+                        assert n_subseq_frames == self.vid_frame[vid], \
+                            f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
 
-                    n_subseq_frames = end_id - start_id
-                    assert n_subseq_frames == self.vid_frame[vid], \
-                        f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
+                        feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
+                            end_id / self.sampled_frames[vid])
 
-                    feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
-                        end_id / self.sampled_frames[vid])
+                        feat_frame_ids = (feat_start_id, feat_end_id)
+                    else:
+                        feat_name = vid
+                        feat_frame_ids = None
 
-                    feat_frame_ids = (feat_start_id, feat_end_id)
+                    video_prefix = os.path.join(split_path, feat_name)
                 else:
-                    feat_name = vid
+                    """assume that each npy file contains features only for one subsequence"""
+                    video_prefix = os.path.join(split_path, vid)
                     feat_frame_ids = None
-
-                video_prefix = os.path.join(split_path, feat_name)
 
                 self.sample_list.append((video_prefix, feat_frame_ids))
 
