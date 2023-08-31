@@ -718,12 +718,6 @@ def valid(epoch, model, loader,
                             'segment': [pred_start_t, pred_end_t]
                         })
 
-                    proposals.append(
-                        {
-                            'segment': [pred_start_t, pred_end_t],
-                            'score': pred_s}
-                    )
-
                 # densecap_result[vid] = {
                 #     "subset": "validation",
                 #     "annotations": annotations
