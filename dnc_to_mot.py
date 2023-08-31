@@ -206,7 +206,8 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
 
 def run(dnc_data, frames, seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir,
-        params: Params, show):
+        params: Params):
+
     if frames is None:
         seq_id, seq_suffix, start_id, end_id = seq_info
 
