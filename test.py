@@ -59,6 +59,7 @@ def get_dataset(args):
         learn_mask=args.learn_mask,
         sample_list_dir=args.sample_list_path,
         enable_flow=args.enable_flow,
+        feat_shape=args.feat_shape,
     )
 
     test_loader = DataLoader(test_dataset,
