@@ -46,6 +46,7 @@ def build_targets_densecap(
         vocab_fmt: int,
         max_diff: int,
         sample_traj: int,
+        fixed_traj_len: int,
         n_frames: int,
         frame_size: tuple,
         frames: list,
@@ -87,7 +88,6 @@ def build_targets_densecap(
     n_obj_cols = len(obj_cols)
     vocab_annotations = [None] * annotations.n_traj
     vocab = []
-    prev_grid_ids = [None] * annotations.n_traj
     traj_lengths = []
 
     max_traj_length = 0
@@ -263,35 +263,13 @@ def build_targets_densecap(
 
                 # traj_vocab['grid_cells'].append((grid_idy, grid_idx))
 
-                if vocab_fmt == 0:
-                    excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx, grid_res)
-                    word = excel_idx + excel_idy
-                    if traj_vocab['sentence']:
-                        traj_vocab['sentence'] += ' ' + word
-                    else:
-                        traj_vocab['sentence'] = word
-
+                excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx, grid_res)
+                word = excel_idx + excel_idy
+                if traj_vocab['sentence']:
+                    traj_vocab['sentence'] += ' ' + word
                 else:
-                    if traj_vocab['sentence']:
-                        _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
-                        word = grid_to_direction(
-                            (_prev_grid_idy, _prev_grid_idx),
-                            (grid_idy, grid_idx),
-                            max_diff=max_diff
-                        )
+                    traj_vocab['sentence'] = word
 
-                        traj_vocab['sentence'] += ' ' + word
-                    else:
-                        if vocab_fmt == 1:
-                            word = f'R{grid_idy} C{grid_idx}'
-                        elif vocab_fmt == 2:
-                            word = f'R{grid_idy}C{grid_idx}'
-
-                        traj_vocab['sentence'] = word
-
-                vocab += word.split(' ')
-
-                prev_grid_ids[traj_id] = (grid_idy, grid_idx)
 
                 if vis:
                     # _id = f'{target_id}-{traj_id}-{win_id}'
@@ -315,6 +293,49 @@ def build_targets_densecap(
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
 
     vocab = sorted(list(set(vocab)))
+
+    n_traj_ids = len(vocab_annotations)
+
+    if fixed_traj_len > 0:
+        print(f'curtailing all trajectories to length: {fixed_traj_len}')
+
+        valid_traj_ids = []
+
+        for traj_id, traj_vocab in enumerate(vocab_annotations):
+            sentence = traj_vocab['sentence']
+            words = sentence.split(' ')
+            n_words = len(words)
+
+            if n_words >= fixed_traj_len:
+                traj_sample_ids = list(np.linspace(0, n_words-1, fixed_traj_len, dtype=np.int32))
+                sampled_words = [words[i] for i in traj_sample_ids]
+                sentence = ' '.join(sampled_words)
+                valid_traj_ids.append(traj_id)
+
+                traj_vocab['sentence'] = sentence
+
+        n_valid_traj_ids = len(valid_traj_ids)
+        print(f'found {n_valid_traj_ids} / {n_traj_ids} valid trajectories')
+        vocab_annotations = [vocab_annotations[traj_id] for traj_id in valid_traj_ids]
+
+    # if False:
+    #     if traj_vocab['sentence']:
+    #         _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
+    #         word = grid_to_direction(
+    #             (_prev_grid_idy, _prev_grid_idx),
+    #             (grid_idy, grid_idx),
+    #             max_diff=max_diff
+    #         )
+    #
+    #         traj_vocab['sentence'] += ' ' + word
+    #     else:
+    #         if vocab_fmt == 1:
+    #             word = f'R{grid_idy} C{grid_idx}'
+    #         elif vocab_fmt == 2:
+    #             word = f'R{grid_idy}C{grid_idx}'
+    #
+    #         traj_vocab['sentence'] = word
+
 
     return vocab_annotations, traj_lengths, vocab
 

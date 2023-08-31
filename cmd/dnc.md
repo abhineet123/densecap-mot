@@ -57,7 +57,10 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16.cfg --batch_size 32 --num_workers 0
 <a id="best_val_model_178___seq_0_to_99_win_2_f0_max_16_1k_9600_n_1_"></a>
 #### best_val_model_178       @ seq_0_to_99_win_2-f0_max_16/1k-9600/n-1-->dnc
-CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16.cfg ckpt_name=best_val_model_178.pth max_batches=100
+CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16.cfg ckpt_name=best_val_model_178.pth max_batches=1
+
+python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16/best_val_model_178_on_validation_/densecap.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
+
 <a id="n_3_"></a>
 # n-3
 <a id="1k_9600___n_3_"></a>
@@ -67,7 +70,7 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_1_10
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg --batch_size 32 --num_workers 4
 <a id="best_val_model_42___all_seq_6_15_1k_9600_n_3_"></a>
 #### best_val_model_42       @ all_seq__6_15/1k-9600/n-3-->dnc
-CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg ckpt_name=best_val_model_42.pth max_batches=100
+CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15.cfg ckpt_name=best_val_model_42.pth max_batches=1
 
 python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_3_1000_9600_var/all_seq__6_15/epoch_88_on_validation_ set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
 

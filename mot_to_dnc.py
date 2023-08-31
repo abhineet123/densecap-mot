@@ -72,6 +72,8 @@ class Params:
         self.max_diff = 1
         self.sample_traj = 0
 
+        self.fixed_traj_len = 0
+
         self.win_size = 0
 
         self.n_proc = 1
@@ -82,16 +84,7 @@ class Params:
         self.ann = Annotations.Params()
 
 
-def run(seq_info, sample_traj, out_dir, traj_lengths_out_dir, params):
-    """
-
-    :param seq_info:
-    :param out_dir:
-    :param traj_lengths_out_dir:
-    :param Params params:
-    :return:
-    """
-
+def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, params: Params):
     seq_id, start_id, end_id = seq_info
 
     _logger = CustomLogger.setup(__name__)
@@ -148,6 +141,7 @@ def run(seq_info, sample_traj, out_dir, traj_lengths_out_dir, params):
             params.vocab_fmt,
             params.max_diff,
             sample_traj,
+            fixed_traj_len,
             n_frames,
             frame_size,
             _input.all_frames,
@@ -307,6 +301,7 @@ def main():
     import functools
     func = functools.partial(
         run,
+        fixed_traj_len=params.fixed_traj_len,
         sample_traj=sample_traj,
         out_dir=out_dir,
         traj_lengths_out_dir=traj_lengths_out_dir,
