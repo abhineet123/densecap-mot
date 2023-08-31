@@ -144,10 +144,14 @@ class TestParams(CFG):
         self.num_workers = 2
         self.pos_thresh = 0.7
         self.sampled_frames = 1
+        self.sampling_sec = 0
 
         self.slide_window_size = 480
         self.slide_window_stride = 20
         self.stride_factor = 100
+
+        self.rgb_ch = 4
+        self.enable_flow = 0
 
         self.max_batches = 0
 

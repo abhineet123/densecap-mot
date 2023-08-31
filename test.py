@@ -47,16 +47,17 @@ def get_dataset(args):
         save_path=args.sample_list_path)
 
     # Create the dataset and data loader instance
-    test_dataset = ANetTestDataset(args.feature_root,
-                                   args.slide_window_size,
-                                   args.dur_file,
-                                   args.dataset,
-                                   args.sampling_sec,
-                                   text_proc,
-                                   raw_data,
-                                   args.test_split,
-                                   args.learn_mask,
-                                   args.sample_list_path)
+    test_dataset = ANetTestDataset(
+        args.feature_root,
+        args.slide_window_size,
+        args.dur_file,
+        args.dataset,
+        args.sampling_sec,
+        text_proc,
+        raw_data,
+        args.test_split,
+        args.learn_mask,
+        args.sample_list_path)
 
     test_loader = DataLoader(test_dataset,
                              batch_size=args.batch_size,
@@ -137,9 +138,6 @@ def validate(model, loader, dataset, out_dir, args):
         pbar.set_description(f'times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
 
         # video_name = os.path.basename(video_prefix[0])
-        sampled_frames = args.sampled_frames
-
-        sampling_sec = args.sampled_frames / args.fps
 
         with torch.no_grad():
             # image_feat = Variable(image_feat)
@@ -157,7 +155,7 @@ def validate(model, loader, dataset, out_dir, args):
             all_proposal_results = model.module.inference(
                 image_feat,
                 original_num_frame,
-                sampling_sec,
+                args.sampling_sec,
                 args.min_prop_num,
                 args.max_prop_num,
                 args.min_prop_before_nms,
@@ -169,14 +167,15 @@ def validate(model, loader, dataset, out_dir, args):
                 vid = os.path.basename(video_prefix[b])
                 if feat_frame_ids[0] is not None:
                     feat_start_id, feat_end_id = feat_frame_ids[0]
-                    start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+                    start_id, end_id = int(feat_start_id * args.sampled_frames), \
+                                       int(feat_end_id * args.sampled_frames)
                     vid = f'{vid}--{start_id}_{end_id}'
 
                 annotations = []
                 proposals = []
                 for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
-                    pred_start_t = pred_start * sampling_sec
-                    pred_end_t = pred_end * sampling_sec
+                    pred_start_t = pred_start * args.sampling_sec
+                    pred_end_t = pred_end * args.sampling_sec
 
                     # pred_start_frame = pred_start_t * args.fps
                     # pred_end_frame = pred_end_t * args.fps
@@ -265,6 +264,8 @@ def main():
     with open(args.cfgs_file, 'r') as handle:
         options_yaml = yaml.safe_load(handle)
     update_values(options_yaml, vars(args))
+
+    args.sampling_sec = args.sampled_frames / args.fps
 
     if args.gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
