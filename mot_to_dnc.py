@@ -90,7 +90,7 @@ def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, pa
     import logging
 
     _logger = CustomLogger.setup(__name__)
-    _logger.setLevel(logging.DEBUG)
+    _logger.setLevel(logging.WARNING)
 
     _data = Data(params.data, _logger)
 
