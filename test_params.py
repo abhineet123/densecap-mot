@@ -152,7 +152,7 @@ class TestParams(CFG):
 
         self.rgb_ch = 4
         self.enable_flow = 0
-        self.feat_shape = ()
+        self.feat_shape = []
 
         self.max_batches = 0
 
