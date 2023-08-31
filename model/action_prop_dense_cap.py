@@ -85,7 +85,7 @@ class ActionPropDenseCap(nn.Module):
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
-        self.feat_shape = feat_shape
+        self.feat_shape = tuple(feat_shape)
         self.rgb_ch = rgb_ch
 
         self.dim_rgb = None
@@ -205,7 +205,7 @@ class ActionPropDenseCap(nn.Module):
 
             x = self.rgb_conv(x)
 
-            x = torch.reshape(x, (batch_size,  temporal_size, -1))
+            x = torch.reshape(x, (batch_size, temporal_size, -1))
 
         if self.enable_flow:
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
@@ -466,7 +466,7 @@ class ActionPropDenseCap(nn.Module):
 
             x = self.rgb_conv(x)
 
-            x = torch.reshape(x, (batch_size,  temporal_size, -1))
+            x = torch.reshape(x, (batch_size, temporal_size, -1))
 
         dtype = x.data.type()
 
