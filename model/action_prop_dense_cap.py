@@ -211,13 +211,10 @@ class ActionPropDenseCap(nn.Module):
             """480 x 3072 --> 480 x 2048 and 480 x 1024"""
             _x_rgb, _x_flow = torch.split(x, self.dim_rgb, 2)
 
-            _x_rgb_c = _x_rgb.contiguous()
-            _x_flow_c = _x_flow.contiguous()
-
             """480 x 512"""
-            x_rgb = self.rgb_emb(_x_rgb_c)
+            x_rgb = self.rgb_emb(_x_rgb.contiguous())
             """480 x 512"""
-            x_flow = self.flow_emb(_x_flow_c)
+            x_flow = self.flow_emb(_x_flow.contiguous())
 
             """480 x 1024"""
             x = torch.cat((x_rgb, x_flow), 2)
@@ -459,12 +456,18 @@ class ActionPropDenseCap(nn.Module):
                   min_prop_num_before_nms, pos_thresh, stride_factor,
                   gated_mask=False):
 
+        batch_size, temporal_size = x.size()[:2]
+
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
 
+            """concat batch and temporal dims"""
+            x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
+
             x = self.rgb_conv(x)
 
-        batch_size, temporal_size, _ = x.size()
+            x = torch.reshape(x, (batch_size,  temporal_size, -1))
+
         dtype = x.data.type()
 
         if self.enable_flow:
