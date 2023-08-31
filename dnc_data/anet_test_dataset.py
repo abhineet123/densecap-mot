@@ -26,7 +26,8 @@ class ANetTestDataset(Dataset):
                  split,
                  learn_mask,
                  sample_list_dir,
-                 enable_flow
+                 enable_flow,
+                 feat_shape,
                  ):
         super(ANetTestDataset, self).__init__()
 
@@ -43,6 +44,8 @@ class ANetTestDataset(Dataset):
         self.fps = {}
         self.vid_dur = {}
         self.vid_frame = {}
+
+        self.feat_shape = feat_shape
 
         with open(dur_file) as f:
             if dataset == 'anet':
