@@ -48,16 +48,18 @@ def get_dataset(args):
 
     # Create the dataset and data loader instance
     test_dataset = ANetTestDataset(
-        args.feature_root,
-        args.slide_window_size,
-        args.dur_file,
-        args.dataset,
-        args.sampling_sec,
-        text_proc,
-        raw_data,
-        args.test_split,
-        args.learn_mask,
-        args.sample_list_path)
+        image_path=args.feature_root,
+        slide_window_size=args.slide_window_size,
+        dur_file=args.dur_file,
+        dataset=args.dataset,
+        sampling_sec =args.sampling_sec,
+        text_proc=text_proc,
+        raw_data=raw_data,
+        split=args.test_split,
+        learn_mask=args.learn_mask,
+        sample_list_dir=args.sample_list_path,
+        enable_flow=args.enable_flow,
+    )
 
     test_loader = DataLoader(test_dataset,
                              batch_size=args.batch_size,
