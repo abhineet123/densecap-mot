@@ -246,7 +246,7 @@ def generate_batch(params: Params,
                         try:
                             obj_state.col = obj_cols_str[target_id]
                         except KeyError:
-                            obj_col_id = np.random.randint(0, len(valid_frg_cols))
+                            obj_col_id = random.randint(0, len(valid_frg_cols))
                             obj_cols_str[target_id] = valid_frg_cols[obj_col_id]
                             obj_state.col = obj_cols_str[target_id]
 
