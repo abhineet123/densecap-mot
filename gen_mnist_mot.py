@@ -799,10 +799,10 @@ def main():
 
     n_proc = params.n_proc
     if n_proc > 1:
-        import multiprocessing
+        from multiprocessing import get_context
 
         print(f'running in parallel over {n_proc} processes')
-        with multiprocessing.Pool(n_proc) as pool:
+        with get_context("spawn").Pool() as pool:
             results = pool.map(func, seq_info_list)
 
         results.sort(key=lambda x: x[0])
