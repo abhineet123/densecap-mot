@@ -27,6 +27,7 @@ class State:
     step = None
     target_id = None
     label = None
+    col = None
 
 
 class Params:
@@ -74,7 +75,8 @@ class Params:
     codec = 'mp4v'
     fps = 30
 
-    min_col_diff_percent = 25
+    min_col_diff_percent = 30
+    min_valid_cols = 40
 
     n_seq = 25
     n_frames = 2e3
@@ -87,7 +89,7 @@ class Params:
     # train_frame_num = 20
     # test_frame_num = 20
 
-    n_proc = 1
+    n_proc = 10
 
 
 def get_col_diff(_col1, _col2):
@@ -101,7 +103,9 @@ def get_col_diff(_col1, _col2):
 
 def generate_batch(params: Params,
                    states,
-                   seq_id, batch_id,
+                   seq_id,
+                   seq_name,
+                   batch_id,
                    img_dir, vis_img_dir,
                    save_as_vid,
                    video_out,
@@ -165,11 +169,15 @@ def generate_batch(params: Params,
 
     while n_out_imgs < params.batch_size:
 
+        out_img_id = batch_id * params.batch_size + n_out_imgs + 1
+
+        vis_text = f'seq {seq_id} batch {batch_id} frame {out_img_id}'
+
         batch_img_id += 1
         img_gt_data = []
 
         for obj_id in range(0, params.n_objs):
-            obj_state = states[obj_id]
+            obj_state = states[obj_id] #type: State
             if obj_state.duration < params.appear_interval:  # wait for interval frames
                 obj_state.duration += 1
             elif obj_state.duration == params.appear_interval:  # allow birth
@@ -229,13 +237,22 @@ def generate_batch(params: Params,
                     obj_state.target_id = target_id
                     obj_state.label = data_label
 
+                    if params.rgb:
+
+                        # data_patch_r = data_patch.detach().clone().squeeze()
+                        # data_patch_g = data_patch.detach().clone().squeeze()
+                        # data_patch_b = data_patch.detach().clone().squeeze()
+                        try:
+                            obj_state.col = obj_cols_str[target_id]
+                        except KeyError:
+                            obj_col_id = np.random.randint(0, len(valid_frg_cols))
+                            obj_cols_str[target_id] = valid_frg_cols[obj_col_id]
+                            obj_state.col = obj_cols_str[target_id]
 
             else:  # exists
                 data_patch = obj_state.patch
                 x1, y1, vx, vy = obj_state.bbox
                 step = obj_state.step
-                _target_id = obj_state.target_id + 1
-                _obj_label = obj_state.label
 
                 x = round(x1 + step * vx)
                 y = round(y1 + step * vy)
@@ -252,22 +269,7 @@ def generate_batch(params: Params,
                     # put the patch on image and synthesize a new frame
                     if params.rgb:
 
-                        # data_patch_r = data_patch.detach().clone().squeeze()
-                        # data_patch_g = data_patch.detach().clone().squeeze()
-                        # data_patch_b = data_patch.detach().clone().squeeze()
-                        try:
-                            obj_col_str = obj_cols_str[_target_id]
-                        except KeyError:
-                            obj_col_id = np.random.randint(0, len(valid_frg_cols))
-                            obj_cols_str[_target_id] = valid_frg_cols[obj_col_id]
-                            obj_col_str = obj_cols_str[_target_id]
-
-                        _col_abs_diff_percent = get_col_diff(bkg_col_str, obj_col_str)
-
-                        assert _col_abs_diff_percent > params.min_col_diff_percent, \
-                            f"invalid color combination: {bkg_col_str}, {obj_col_str}"
-
-                        obj_col = col_bgr[obj_col_str]
+                        obj_col = col_bgr[obj_state.col]
 
                         # data_patch_r[data_patch_r != 0] = obj_col[0]
                         # data_patch_r[data_patch_r == 0] = bkg_col[0]
@@ -335,22 +337,32 @@ def generate_batch(params: Params,
                     # update the position
                     obj_state.step += 1
 
-                    _obj_gt_data = [_target_id, left - obj_w + 1, top - obj_h + 1, patch_w, patch_h, _obj_label]
+                    _obj_gt_data = [obj_state.target_id,
+                                    left - obj_w + 1, top - obj_h + 1,
+                                    patch_w, patch_h, obj_state.label]
 
                     if params.rgb:
-                        obj_col_str = obj_cols_str[_target_id]
-                        obj_col = col_bgr[obj_col_str][::-1]
+                        obj_col = col_bgr[obj_state.col][::-1]
                         obj_col_num_str = '_'.join(map(str, obj_col))
 
-                        _obj_gt_data += [obj_col_str, obj_col_num_str]
+                        _obj_gt_data += [obj_state.col, obj_col_num_str]
 
                     img_gt_data.append(_obj_gt_data)
 
-                    # print('batch_id: {} out_img_id: {}'.format(batch_id, out_img_id))
+            if params.rgb and obj_state.target_id is not None:
+                _col_abs_diff_percent = get_col_diff(bkg_col_str, obj_state.col)
+
+                assert _col_abs_diff_percent > params.min_col_diff_percent, \
+                    f"invalid color combination: {bkg_col_str}, {obj_state.col}"
+
+                vis_text += f'\n' \
+                    f'bkg: {bkg_col_str},{col_bgr[bkg_col_str]}' \
+                    f' obj: {obj_state.col},{col_bgr[obj_state.col]} ' \
+                    f'diff: {_col_abs_diff_percent:.2f}'
+
 
         if img_gt_data:
 
-            out_img_id = batch_id * params.batch_size + n_out_imgs + 1
             if first_img_id is None:
                 first_img_id = out_img_id - 1
 
@@ -391,7 +403,7 @@ def generate_batch(params: Params,
 
                     bbox = [xmin, ymin, obj_w, obj_h]
 
-                    draw_box(vis_img, bbox, f'{_target_id}')
+                    draw_box(vis_img, bbox, f'{obj_state.target_id}')
 
                 if params.show_img == 2:
                     if save_as_vid:
@@ -401,9 +413,10 @@ def generate_batch(params: Params,
                         cv2.imwrite(vis_out_path, vis_img)
                 else:
                     vis_img_show = annotate_and_show('vis_img', vis_img,
-                                                     text=f'seq {seq_id} batch {batch_id} frame {out_img_id}',
-                                                     n_modules=0, only_annotate=1)
-                    cv2.imshow('vis_img', vis_img_show)
+                                                     text=vis_text,
+                                                     n_modules=0,
+                                                     only_annotate=1)
+                    cv2.imshow(seq_name, vis_img_show)
                     k = cv2.waitKey(1 - pause)
                     if k == 32:
                         pause = 1 - pause
@@ -439,7 +452,7 @@ def generate_seq(
 
     print(f'\n{split} seq {seq_id + 1} / {n_seq[split]}\n')
 
-    target_ids = []
+    target_ids = [-1, ]
     obj_cols_str = {}
     first_img_id = None
     states = [State() for _ in range(params.n_objs)]
@@ -503,8 +516,11 @@ def generate_seq(
     n_batches = batch_nums[split]
     for batch_id in tqdm(range(n_batches), ncols=80):  # for each batch of images
         out_batch = generate_batch(
-            params, states,
-            seq_id, batch_id,
+            params,
+            states,
+            seq_id,
+            seq_name,
+            batch_id,
             img_path,
             vis_img_path,
             save_as_vid,
@@ -749,7 +765,7 @@ def main():
     min_valid_cols = np.amin(n_valid_cols_list)
     max_valid_cols = np.amax(n_valid_cols_list)
 
-    assert min_valid_cols > 50, "min_valid_cols is too low"
+    assert min_valid_cols > params.min_valid_cols, "min_valid_cols is too low"
 
     seq_names = []
     seq_n_frames = []
