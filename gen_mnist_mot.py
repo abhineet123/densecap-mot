@@ -178,7 +178,7 @@ def generate_batch(params: Params,
         img_gt_data = []
 
         for obj_id in range(0, params.n_objs):
-            obj_state = states[obj_id] #type: State
+            obj_state = states[obj_id]  # type: State
             if obj_state.duration < params.appear_interval:  # wait for interval frames
                 obj_state.duration += 1
             elif obj_state.duration == params.appear_interval:  # allow birth
@@ -339,8 +339,11 @@ def generate_batch(params: Params,
                     obj_state.step += 1
 
                     _obj_gt_data = [obj_state.target_id,
-                                    left - obj_w + 1, top - obj_h + 1,
-                                    patch_w, patch_h, obj_state.label]
+                                    left - obj_w + 1,
+                                    top - obj_h + 1,
+                                    patch_w,
+                                    patch_h,
+                                    obj_state.label]
 
                     if params.rgb:
                         obj_col = col_bgr[obj_state.col][::-1]
@@ -360,7 +363,6 @@ def generate_batch(params: Params,
                     f'bkg: {bkg_col_str},{col_bgr[bkg_col_str]}' \
                     f' obj: {obj_state.col},{col_bgr[obj_state.col]} ' \
                     f'diff: {_col_abs_diff_percent:.2f}'
-
 
         if img_gt_data:
 
@@ -404,7 +406,7 @@ def generate_batch(params: Params,
 
                     bbox = [xmin, ymin, obj_w, obj_h]
 
-                    draw_box(vis_img, bbox, f'{obj_state.target_id}')
+                    draw_box(vis_img, bbox, f'{_target_id}')
 
                 if params.show_img == 2:
                     if save_as_vid:
@@ -455,7 +457,7 @@ def generate_seq(
 
     print(f'\n{split} seq {seq_id + 1} / {n_seq[split]}\n')
 
-    target_ids = [-1, ]
+    target_ids = [0, ]
     obj_cols_str = {}
     first_img_id = None
     states = [State() for _ in range(params.n_objs)]
