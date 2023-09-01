@@ -130,6 +130,10 @@ class TrainParams:
 
         self.enable_flow = 0
 
+        self.vocab_fmt = 0
+        self.max_diff = 0
+        self.grid_res = []
+
         self.img_dir_name = 'Images'
         self.ext = 'mp4'
 

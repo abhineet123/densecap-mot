@@ -35,7 +35,7 @@ from train_params import TrainParams, get_args
 # misc
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap
-from dnc_utilities import get_latest_checkpoint
+from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells
 
 import dnc_to_mot
 
@@ -45,6 +45,7 @@ from input import Input
 from objects import Annotations
 
 from utilities import linux_path, CustomLogger
+
 
 def get_dataset(args):
     """
@@ -660,6 +661,16 @@ def valid(epoch, model, loader,
 
     densecap_result = {}
 
+    if params.vocab_fmt == 0:
+        word_to_grid_cell = excel_ids_to_grid(params.grid_res)
+        sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
+    else:
+        import functools
+        sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
+                                                   fmt_type=params.vocab_fmt,
+                                                   max_diff=params.max_diff,
+                                                   )
+
     for val_iter, data in enumerate(pbar):
         global_iter = epoch * nbatches + val_iter
 
@@ -738,7 +749,16 @@ def valid(epoch, model, loader,
                 #     "annotations": annotations
                 # }
 
-                dnc_to_mot.run(dnc_data=annotations, frames=_input.all_frames)
+                dnc_to_mot.run(
+                    dnc_data=annotations,
+                    frames=_input.all_frames,
+                    seq_info=None,
+                    json_data=None,
+                    n_seq=None,
+                    out_dir=None,
+                    params=None,
+                    sentence_to_grid_cells=sentence_to_grid_cells,
+                )
 
             cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
             reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
