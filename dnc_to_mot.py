@@ -22,6 +22,7 @@ from datetime import datetime
 
 import functools
 
+import cv2
 import copy
 import paramparse
 
@@ -31,6 +32,7 @@ from objects import Annotations
 from data import Data
 
 from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show, annotate_and_show
+from utilities import CVText, col_bgr
 
 from dnc_utilities import excel_ids_to_grid, diff_sentence_to_grid_cells
 
@@ -44,6 +46,7 @@ class Params:
     """
 
     class SlidingWindow:
+        num = 0
         sample = 0
         size = 0
         stride = 0
@@ -182,20 +185,20 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
         interp_grid_cell = (grid_idy, grid_idx)
 
-        frame_disp = np.copy(frames[unassigned_frame])
-        for grid_cell in grid_cells:
-            disp_fn(frame_disp, grid_cell, color='green')
-
-        text = f'{unassigned_frame} ({grid_idy}, {grid_idx})\n' \
-            f'{past_frame} ({past_idy}, {past_idx})-->{past_dist}\n' \
-            f'{future_frame}({future_idy}, {future_idx})-->{future_dist}'
-
-        disp_fn(frame_disp, (future_idy, future_idx), color='white')
-        disp_fn(frame_disp, (past_idy, past_idx), color='black')
-        disp_fn(frame_disp, interp_grid_cell, color='gray')
-        _pause = annotate_and_show('expand_traj', frame_disp,
-                                   text=text,
-                                   pause=_pause, n_modules=0)
+        # frame_disp = np.copy(frames[unassigned_frame])
+        # for grid_cell in grid_cells:
+        #     disp_fn(frame_disp, grid_cell, color='green')
+        #
+        # text = f'{unassigned_frame} ({grid_idy}, {grid_idx})\n' \
+        #     f'{past_frame} ({past_idy}, {past_idx})-->{past_dist}\n' \
+        #     f'{future_frame}({future_idy}, {future_idx})-->{future_dist}'
+        #
+        # disp_fn(frame_disp, (future_idy, future_idx), color='white')
+        # disp_fn(frame_disp, (past_idy, past_idx), color='black')
+        # disp_fn(frame_disp, interp_grid_cell, color='gray')
+        # _pause = annotate_and_show('expand_traj', frame_disp,
+        #                            text=text,
+        #                            pause=_pause, n_modules=0)
 
         frame_to_traj_dict[unassigned_frame] = interp_grid_cell
 
@@ -205,7 +208,7 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
     return out_grid_cells, frame_to_traj_dict
 
 
-def run(dnc_data, frames, seq_info, json_data, sentence_to_grid_cells, n_seq, out_dir,
+def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, out_dir,
         params: Params):
 
     if frames is None:
@@ -245,12 +248,6 @@ def run(dnc_data, frames, seq_info, json_data, sentence_to_grid_cells, n_seq, ou
             _logger.error('Annotations could not be read')
             return False
 
-        if dnc_data is None:
-            dnc_data = json_data[seq_name]
-
-            if isinstance(dnc_data, dict):
-                dnc_data = dnc_data['annotations']
-
         _n_frames = _input.n_frames
 
         # duration = float(_n_frames) / params.fps
@@ -258,6 +255,12 @@ def run(dnc_data, frames, seq_info, json_data, sentence_to_grid_cells, n_seq, ou
         # _detections = _input.detections  # type: Detections
 
         frames = _input.all_frames
+
+        if dnc_data is None:
+            dnc_data = json_data[seq_name]
+
+            if isinstance(dnc_data, dict):
+                dnc_data = dnc_data['annotations']
 
     frame_res = frames[0].shape[:2]
 
@@ -312,6 +315,12 @@ def run(dnc_data, frames, seq_info, json_data, sentence_to_grid_cells, n_seq, ou
                 grid_cell = frame_to_grid_cell[frame_id]
 
                 disp_fn(frame_disp, grid_cell, color='white', thickness=2)
+
+                header_fmt = CVText()
+                location = (header_fmt.location + header_fmt.offset[0], header_fmt.location + header_fmt.offset[1])
+                color = col_bgr[header_fmt.color]
+                cv2.putText(frame_disp, f'frame {frame_id}', location, header_fmt.font,
+                            header_fmt.size, color, header_fmt.thickness, header_fmt.line_type)
 
                 frame_disp = resize_ar(frame_disp, height=960)
 
@@ -399,9 +408,12 @@ def main():
         win_stride = params.slide.stride
         if win_stride <= 0:
             win_stride = win_size
-
+        win_id = 0
         while True:
             abs_start_id = int(start_id * interval)
+
+            if abs_start_id >= seq_n_frames or win_id >= params.slide.num > 0:
+                break
 
             if abs_start_id >= seq_n_frames:
                 break
@@ -425,6 +437,8 @@ def main():
 
             start_id += win_stride
 
+            win_id += 1
+
     n_seq = len(seq_info_list)
 
     # exit()
@@ -447,11 +461,13 @@ def main():
 
     func = functools.partial(
         run,
+        dnc_data=None,
+        frames=None,
         n_seq=n_seq,
         json_data=json_data,
         sentence_to_grid_cells=sentence_to_grid_cells,
         out_dir=out_dir,
-        traj_lengths_out_dir=traj_lengths_out_dir,
+        # traj_lengths_out_dir=traj_lengths_out_dir,
         params=params,
     )
 

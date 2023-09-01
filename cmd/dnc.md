@@ -61,6 +61,9 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py cfgs_file=cfgs/MNIST_MOT_RGB_512x512_1_10
 
 python3 dnc_to_mot.py json=log/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2-f0_max_16/best_val_model_178_on_validation_/densecap.json set=MNIST_MOT_RGB_512x512_3_1000_9600_var seq=1000
 
+python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_99_win_2_fix_20.json set=MNIST_MOT_RGB_512x512_1_1000_9600_var seq=1000 @slide size=480 num=2 sample=1
+
+
 <a id="n_3_"></a>
 # n-3
 <a id="1k_9600___n_3_"></a>

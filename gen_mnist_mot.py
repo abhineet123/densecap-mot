@@ -87,19 +87,30 @@ class Params:
     # train_frame_num = 20
     # test_frame_num = 20
 
+    n_proc = 1
 
-def process_batch(params: Params,
-                  states,
-                  seq_id, batch_id,
-                  img_dir, vis_img_dir,
-                  save_as_vid,
-                  video_out,
-                  vis_video_out,
-                  data_num,
-                  mnist_image_data, mnist_gt_data,
-                  out_gt_data, img_ids, bkg_col_str, valid_frg_cols):
-    global target_id, obj_cols_str, first_img_id
 
+def get_col_diff(_col1, _col2):
+    _col1_num = np.asarray(col_bgr[_col1], dtype=np.float32)
+    _col2_num = np.asarray(col_bgr[_col2], dtype=np.float32)
+    _col_abs_diff = np.sum(np.fabs(_col1_num - _col2_num)) / 3.0
+    _col_abs_diff_percent = (_col_abs_diff / 255.0) * 100.0
+
+    return _col_abs_diff_percent
+
+
+def generate_batch(params: Params,
+                   states,
+                   seq_id, batch_id,
+                   img_dir, vis_img_dir,
+                   save_as_vid,
+                   video_out,
+                   vis_video_out,
+                   data_num,
+                   mnist_image_data, mnist_gt_data,
+                   out_gt_data, img_ids,
+                   target_ids, obj_cols_str,
+                   bkg_col_str, valid_frg_cols):
     pause = params.pause
 
     # obj_h = params.obj_h
@@ -205,15 +216,19 @@ def process_batch(params: Params,
                     vx = velocity * math.cos(theta)
                     vy = velocity * math.sin(theta)
 
+                    max_target_id = max(target_ids)
+                    target_id = max_target_id + 1
+                    target_ids.append(target_id)
+
                     # initial states
                     obj_state.duration = params.appear_interval + 1
                     obj_state.patch = data_patch
                     obj_state.bbox = [x1, y1, vx, vy]
                     obj_state.step = 0
+
                     obj_state.target_id = target_id
                     obj_state.label = data_label
 
-                    target_id += 1
 
             else:  # exists
                 data_patch = obj_state.patch
@@ -244,7 +259,13 @@ def process_batch(params: Params,
                             obj_col_str = obj_cols_str[_target_id]
                         except KeyError:
                             obj_col_id = np.random.randint(0, len(valid_frg_cols))
-                            obj_col_str = obj_cols_str[_target_id] = valid_frg_cols[obj_col_id]
+                            obj_cols_str[_target_id] = valid_frg_cols[obj_col_id]
+                            obj_col_str = obj_cols_str[_target_id]
+
+                        _col_abs_diff_percent = get_col_diff(bkg_col_str, obj_col_str)
+
+                        assert _col_abs_diff_percent > params.min_col_diff_percent, \
+                            f"invalid color combination: {bkg_col_str}, {obj_col_str}"
 
                         obj_col = col_bgr[obj_col_str]
 
@@ -394,9 +415,179 @@ def process_batch(params: Params,
     return org_seq, states
 
 
-def main():
-    global target_id, first_img_id
+def generate_seq(
+        seq_info,
+        n_seq,
+        n_cols,
+        all_cols,
+        valid_cols,
+        save_as_vid,
+        batch_nums,
+        data_num,
+        mnist_image_data,
+        mnist_gt_data,
+        output_img_dir,
+        output_gt_dir,
+        output_vis_dir,
+        params: Params
+):
+    split, seq_id = seq_info
 
+    n_dig = len(str(n_seq[split]))
+    fmt = f'%0{n_dig}d'
+    seq_id_str = fmt % seq_id
+
+    print(f'\n{split} seq {seq_id + 1} / {n_seq[split]}\n')
+
+    target_ids = []
+    obj_cols_str = {}
+    first_img_id = None
+    states = [State() for _ in range(params.n_objs)]
+
+    seq_name = f'{split}_{seq_id_str}'
+
+    bkg_col_str = None
+    valid_frg_cols = None
+
+    if params.rgb:
+        bkg_col_id = np.random.randint(0, n_cols)
+        bkg_col_str = all_cols[bkg_col_id]
+        bkg_col = col_bgr[bkg_col_str][::-1]
+        bkg_col_num_str = '_'.join(map(str, bkg_col))
+
+        # valid_frg_cols = all_cols[:]
+        # valid_frg_cols.remove(bkg_col_str)
+        valid_frg_cols = valid_cols[bkg_col_str]
+
+        assert valid_frg_cols, "no valid_frg_cols found for {}".format(bkg_col_str)
+
+        seq_name = f'{seq_name}_{bkg_col_str}_{bkg_col_num_str}'
+
+        print('bkg_col_str: {}'.format(bkg_col_str))
+        print('bkg_col_num_str: {}'.format(bkg_col_num_str))
+        print('n_valid_frg_cols: {}'.format(len(valid_frg_cols)))
+
+    video_out = None
+    vis_video_out = None
+
+    mot_gt_path = linux_path(output_gt_dir, f'{seq_name}.txt')
+
+    if save_as_vid:
+        codec = params.codec
+        fourcc = cv2.VideoWriter_fourcc(*codec)
+
+        img_path = linux_path(output_img_dir, f'{seq_name}.{params.save_fmt}')
+        video_out = cv2.VideoWriter(img_path, fourcc, params.fps, (params.img_w, params.img_h))
+
+        vis_img_path = linux_path(output_vis_dir, f'{seq_name}.{params.save_fmt}')
+        csv_file_path = linux_path(output_img_dir, f'{seq_name}.csv')
+
+        if params.show_img == 2:
+            vis_video_out = cv2.VideoWriter(vis_img_path, fourcc, params.fps, (params.img_w, params.img_h))
+    else:
+        img_path = linux_path(output_img_dir, seq_name)
+        vis_img_path = linux_path(output_vis_dir, seq_name)
+        os.makedirs(img_path, exist_ok=1)
+        csv_file_path = linux_path(img_path, 'annotations.csv')
+        if params.show_img == 2:
+            os.makedirs(vis_img_path, exist_ok=1)
+
+    print(f'saving images to {img_path}')
+    print(f'saving csv GT to {csv_file_path}')
+    print(f'saving MOT GT to {mot_gt_path}')
+
+    # img_id = 0
+    img_ids = []
+    gt_data = defaultdict(list)
+
+    n_batches = batch_nums[split]
+    for batch_id in tqdm(range(n_batches), ncols=80):  # for each batch of images
+        out_batch = generate_batch(
+            params, states,
+            seq_id, batch_id,
+            img_path,
+            vis_img_path,
+            save_as_vid,
+            video_out,
+            vis_video_out,
+            data_num, mnist_image_data, mnist_gt_data,
+            gt_data, img_ids, bkg_col_str, valid_frg_cols)
+
+        org_seq_batch, states = out_batch
+
+        # print(seq_name + ': ' + str(batch_id + 1) + ' / ' + str(n_batches))
+
+    print('fixing missing image IDs')
+    img_ids_unique = list(set(img_ids))
+    img_ids_sorted = sorted(img_ids_unique)
+    mot_gt_file = open(mot_gt_path, "w")
+    csv_raw = []
+
+    n_frames = len(img_ids_sorted)
+
+    for i, src_img_id in enumerate(img_ids_sorted):
+        dst_img_id = i + 1
+
+        src_fname = f'image{src_img_id:06d}.jpg'
+        dst_fname = f'image{dst_img_id:06d}.jpg'
+
+        for _gt_data in gt_data[src_img_id]:
+            _target_id, xmin, ymin, obj_w, obj_h, label = _gt_data[:6]
+
+            mot_gt_file.write("{:d},{:d},{:.3f},{:.3f},{:.3f},{:.3f},1,-1,-1,-1\n".format(
+                dst_img_id, _target_id, xmin, ymin, obj_w, obj_h
+            ))
+
+            xmax = xmin + obj_w
+            ymax = ymin + obj_h
+
+            raw_data = {
+                'filename': dst_fname,
+                'width': int(params.img_w),
+                'height': int(params.img_h),
+                'class': label,
+                'xmin': xmin,
+                'ymin': ymin,
+                'xmax': xmax,
+                'ymax': ymax,
+                'confidence': 1.0,
+                'target_id': _target_id,
+            }
+
+            if params.rgb:
+                obj_col, obj_col_num = _gt_data[6:8]
+                raw_data.update(
+                    {
+                        'color': obj_col,
+                        'color_num': obj_col_num,
+                    }
+                )
+
+            csv_raw.append(raw_data)
+
+        if src_img_id == dst_img_id:
+            continue
+
+        if save_as_vid:
+            raise AssertionError("mismatch between source and destination image IDs")
+
+        src_path = linux_path(img_path, src_fname)
+        dst_path = linux_path(img_path, dst_fname)
+        shutil.move(src_path, dst_path)
+
+    mot_gt_file.close()
+    if video_out is not None:
+        video_out.release()
+    if vis_video_out is not None:
+        vis_video_out.release()
+
+    df = pd.DataFrame(csv_raw)
+    df.to_csv(csv_file_path)
+
+    return seq_name, n_frames
+
+
+def main():
     params = Params()
     paramparse.process(params)
 
@@ -525,25 +716,25 @@ def main():
         _col: []
         for _col in all_cols
     }
-
+    valid_cols_dbg = {
+        (_col, col_bgr[_col]): []
+        for _col in all_cols
+    }
     for _id, _col1 in enumerate(all_cols):
-        _col1_num = np.asarray(col_bgr[_col1], dtype=np.float32)
         for _col2 in all_cols[_id + 1:]:
-
-            # if _col1 == _col2:
-            #     continue
-
-            _col2_num = np.asarray(col_bgr[_col2], dtype=np.float32)
-
-            _col_abs_diff = np.sum(np.fabs(_col1_num - _col2_num)) / 3.0
-            _col_abs_diff_percent = (_col_abs_diff / 255.0) * 100.0
-
+            _col_abs_diff_percent = get_col_diff(_col1, _col2)
             col_diffs[_col1][_col2] = _col_abs_diff_percent
             col_diffs[_col2][_col1] = _col_abs_diff_percent
 
             if _col_abs_diff_percent > params.min_col_diff_percent:
                 valid_cols[_col2].append(_col1)
                 valid_cols[_col1].append(_col2)
+
+                _col1_num = col_bgr[_col1]
+                _col2_num = col_bgr[_col2]
+
+                valid_cols_dbg[(_col2, _col2_num)].append((_col1, _col1_num, _col_abs_diff_percent))
+                valid_cols_dbg[(_col1, _col1_num)].append((_col2, _col2_num, _col_abs_diff_percent))
 
     bkg_col_str = ''
 
@@ -562,169 +753,44 @@ def main():
     seq_n_frames = []
     valid_frg_cols = None
 
-    # with Parallel(n_jobs=core_num, backend="threading") as parallel:
-    for split in ['train', 'test']:
-        for seq_id in range(n_seq[split]):
-            print(f'\n{split} seq {seq_id + 1} / {n_seq[split]}\n')
+    seq_info_list = [(split, seq_id) for split in ['train', 'test'] for seq_id in range(n_seq[split])]
 
-            target_id = 0
-            first_img_id = None
-            states = [State() for _ in range(params.n_objs)]
-            seq_name = split + '_{}'.format(seq_id)
+    import functools
 
-            if params.rgb:
-                bkg_col_id = np.random.randint(0, n_cols)
-                bkg_col_str = all_cols[bkg_col_id]
-                bkg_col = col_bgr[bkg_col_str][::-1]
-                bkg_col_num_str = '_'.join(map(str, bkg_col))
+    func = functools.partial(
+        generate_seq,
+        n_seq=n_seq,
+        n_cols=n_cols,
+        all_cols=all_cols,
+        valid_cols=valid_cols,
+        save_as_vid=save_as_vid,
+        batch_nums=batch_nums,
+        data_num=data_num,
+        mnist_image_data=mnist_image_data,
+        mnist_gt_data=mnist_gt_data,
+        output_img_dir=output_img_dir,
+        output_gt_dir=output_gt_dir,
+        output_vis_dir=output_vis_dir,
+        params=params,
+    )
 
-                # valid_frg_cols = all_cols[:]
-                # valid_frg_cols.remove(bkg_col_str)
-                valid_frg_cols = valid_cols[bkg_col_str]
+    n_proc = params.n_proc
+    if n_proc > 1:
+        import multiprocessing
 
-                assert valid_frg_cols, "no valid_frg_cols found for {}".format(bkg_col_str)
+        print(f'running in parallel over {n_proc} processes')
+        with multiprocessing.Pool(n_proc) as pool:
+            results = pool.map(func, seq_info_list)
 
-                seq_name = '{}_{}_{}'.format(seq_name, bkg_col_str, bkg_col_num_str)
+        results.sort(key=lambda x: x[0])
+    else:
+        results = []
+        for seq_info in seq_info_list:
+            result = func(seq_info)
 
-                print('bkg_col_str: {}'.format(bkg_col_str))
-                print('bkg_col_num_str: {}'.format(bkg_col_num_str))
-                print('n_valid_frg_cols: {}'.format(len(valid_frg_cols)))
+            results.append(result)
 
-            seq_names.append(seq_name)
-
-            video_out = None
-            vis_video_out = None
-
-            mot_gt_path = linux_path(output_gt_dir, f'{seq_name}.txt')
-
-            if save_as_vid:
-                codec = params.codec
-                fourcc = cv2.VideoWriter_fourcc(*codec)
-
-                img_path = linux_path(output_img_dir, f'{seq_name}.{params.save_fmt}')
-                video_out = cv2.VideoWriter(img_path, fourcc, params.fps, (params.img_w, params.img_h))
-
-                vis_img_path = linux_path(output_vis_dir, f'{seq_name}.{params.save_fmt}')
-                csv_file_path = linux_path(output_img_dir, f'{seq_name}.csv')
-
-                if params.show_img == 2:
-                    vis_video_out = cv2.VideoWriter(vis_img_path, fourcc, params.fps, (params.img_w, params.img_h))
-            else:
-                img_path = linux_path(output_img_dir, seq_name)
-                vis_img_path = linux_path(output_vis_dir, seq_name)
-                os.makedirs(img_path, exist_ok=1)
-                csv_file_path = linux_path(img_path, 'annotations.csv')
-                if params.show_img == 2:
-                    os.makedirs(vis_img_path, exist_ok=1)
-
-            print(f'saving images to {img_path}')
-            print(f'saving csv GT to {csv_file_path}')
-            print(f'saving MOT GT to {mot_gt_path}')
-
-            # img_id = 0
-            img_ids = []
-            gt_data = defaultdict(list)
-
-            n_batches = batch_nums[split]
-            for batch_id in tqdm(range(n_batches), ncols=80):  # for each batch of images
-
-                # out_batch = parallel(
-                #     delayed(process_batch)(
-                #         params, states,
-                #         seq_id, batch_id,
-                #         img_path,
-                #         vis_img_path,
-                #         save_as_vid,
-                #         video_out,
-                #         vis_video_out,
-                #         data_num, mnist_image_data,
-                #         mnist_gt_data, gt_data, img_ids, bkg_col_str, valid_frg_cols))
-                # out_batch = list(zip(*out_batch))
-                # org_seq_batch, states = out_batch
-
-                out_batch = process_batch(
-                    params, states,
-                    seq_id, batch_id,
-                    img_path,
-                    vis_img_path,
-                    save_as_vid,
-                    video_out,
-                    vis_video_out,
-                    data_num, mnist_image_data, mnist_gt_data,
-                    gt_data, img_ids, bkg_col_str, valid_frg_cols)
-
-                org_seq_batch, states = out_batch
-
-                # print(seq_name + ': ' + str(batch_id + 1) + ' / ' + str(n_batches))
-
-            print('fixing missing image IDs')
-            img_ids_unique = list(set(img_ids))
-            img_ids_sorted = sorted(img_ids_unique)
-            mot_gt_file = open(mot_gt_path, "w")
-            csv_raw = []
-
-            n_frames = len(img_ids_sorted)
-            seq_n_frames.append(n_frames)
-
-            for i, src_img_id in enumerate(img_ids_sorted):
-                dst_img_id = i + 1
-
-                src_fname = f'image{src_img_id:06d}.jpg'
-                dst_fname = f'image{dst_img_id:06d}.jpg'
-
-                for _gt_data in gt_data[src_img_id]:
-                    _target_id, xmin, ymin, obj_w, obj_h, label = _gt_data[:6]
-
-                    mot_gt_file.write("{:d},{:d},{:.3f},{:.3f},{:.3f},{:.3f},1,-1,-1,-1\n".format(
-                        dst_img_id, _target_id, xmin, ymin, obj_w, obj_h
-                    ))
-
-                    xmax = xmin + obj_w
-                    ymax = ymin + obj_h
-
-                    raw_data = {
-                        'filename': dst_fname,
-                        'width': int(params.img_w),
-                        'height': int(params.img_h),
-                        'class': label,
-                        'xmin': xmin,
-                        'ymin': ymin,
-                        'xmax': xmax,
-                        'ymax': ymax,
-                        'confidence': 1.0,
-                        'target_id': _target_id,
-                    }
-
-                    if params.rgb:
-                        obj_col, obj_col_num = _gt_data[6:8]
-                        raw_data.update(
-                            {
-                                'color': obj_col,
-                                'color_num': obj_col_num,
-                            }
-                        )
-
-                    csv_raw.append(raw_data)
-
-                if src_img_id == dst_img_id:
-                    continue
-
-                if save_as_vid:
-                    raise AssertionError("mismatch between source and destination image IDs")
-
-                src_path = linux_path(img_path, src_fname)
-                dst_path = linux_path(img_path, dst_fname)
-                shutil.move(src_path, dst_path)
-
-            mot_gt_file.close()
-            if video_out is not None:
-                video_out.release()
-            if vis_video_out is not None:
-                vis_video_out.release()
-
-            df = pd.DataFrame(csv_raw)
-            df.to_csv(csv_file_path)
-
+    seq_names, seq_n_frames = list(zip(*results))
     n_seq = len(seq_names)
     seq_names_list_str = ',\n'.join(map(
         lambda _seq_id: f"{_seq_id}: ('{seq_names[_seq_id]}', {seq_n_frames[_seq_id]})",
@@ -736,29 +802,8 @@ def main():
     with open(seq_info_path, "w") as fid:
         fid.write(seq_names_list_str)
 
-    # # save the data configuration
-    # data_config = {
-    #     'params.task': params.task,
-    #     'train_batch_num': batch_nums['train'],
-    #     'test_batch_num': batch_nums['test'],
-    #     'N': N,
-    #     'params.batch_size': params.batch_size,
-    #     'params.n_channels': params.n_channels,
-    #     'params.img_h': params.img_h,
-    #     'params.img_w': params.img_w,
-    #     'params.obj_h': params.obj_h,
-    #     'w': params.obj_w,
-    #     'zeta_s': params.scale_var,
-    #     'zeta_r': [1, params.ratio_var]
-    # }
-    # utils.save_json(data_config, linux_path(output_dir, 'data_config.json'))
-
 
 if __name__ == '__main__':
-    target_id = 0
-    obj_cols_str = {}
-    first_img_id = None
-
     SIIF.setup()
 
     main()
