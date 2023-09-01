@@ -246,7 +246,7 @@ def generate_batch(params: Params,
                         try:
                             obj_state.col = obj_cols_str[target_id]
                         except KeyError:
-                            obj_col_id = random.randint(0, len(valid_frg_cols))
+                            obj_col_id = random.randint(0, len(valid_frg_cols) - 1)
                             obj_cols_str[target_id] = valid_frg_cols[obj_col_id]
                             obj_state.col = obj_cols_str[target_id]
 
@@ -468,7 +468,7 @@ def generate_seq(
     valid_frg_cols = None
 
     if params.rgb:
-        bkg_col_id = random.randint(0, n_cols)
+        bkg_col_id = random.randint(0, n_cols - 1)
         bkg_col_str = all_cols[bkg_col_id]
         bkg_col = col_bgr[bkg_col_str][::-1]
         bkg_col_num_str = '_'.join(map(str, bkg_col))

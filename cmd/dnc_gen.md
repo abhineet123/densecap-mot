@@ -92,7 +92,7 @@ python3 gen_mnist_mot.py show_img=0 n_seq=25 n_frames=2e3 img_h=512 n_objs=1 vel
 python3 gen_mnist_mot.py show_img=0 n_seq=25 n_frames=2400 img_h=512 n_objs=1
 <a id="100_960___n_1_512_gen_mnist_mo_t_"></a>
 #### 100-960       @ n-1/512/gen_mnist_mot-->dnc_gen
-python3 gen_mnist_mot.py show_img=1 n_seq=100 n_frames=960 img_h=512 n_objs=1 n_proc=12
+python3 gen_mnist_mot.py show_img=0 n_seq=100 n_frames=960 img_h=512 n_objs=1 n_proc=12
 <a id="1k_9600___n_1_512_gen_mnist_mo_t_"></a>
 #### 1k-9600       @ n-1/512/gen_mnist_mot-->dnc_gen
 python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=9600 img_h=512 n_objs=1
