@@ -510,9 +510,9 @@ def generate_seq(
         if params.show_img == 2:
             os.makedirs(vis_img_path, exist_ok=1)
 
-    print(f'saving images to {img_path}')
-    print(f'saving csv GT to {csv_file_path}')
-    print(f'saving MOT GT to {mot_gt_path}')
+    print(f'\nsaving images to {img_path}')
+    # print(f'\nsaving csv GT to {csv_file_path}')
+    # print(f'\nsaving MOT GT to {mot_gt_path}')
 
     # img_id = 0
     img_ids = []
