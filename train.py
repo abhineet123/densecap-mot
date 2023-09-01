@@ -30,17 +30,21 @@ from torch.nn.utils import clip_grad_norm_
 import torch.distributed as dist
 import torch.utils.data.distributed
 
+from train_params import TrainParams, get_args
+
 # misc
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap
 from dnc_utilities import get_latest_checkpoint
+
 import dnc_to_mot
 
 sys.path.append('../isl_labeling_tool/deep_mdp')
 
-from train_params import TrainParams, get_args
-from utilities import linux_path
+from input import Input
+from objects import Annotations
 
+from utilities import linux_path, CustomLogger
 
 def get_dataset(args):
     """
@@ -639,7 +643,7 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
 
 def valid(epoch, model, loader,
           # writer,
-          args):
+          params: TrainParams):
     model.eval()
     valid_loss = []
     val_cls_loss = []
@@ -650,9 +654,9 @@ def valid(epoch, model, loader,
     nbatches = len(loader)
     pbar = tqdm(loader, total=nbatches, ncols=120)
 
-    sampled_frames = args.sampled_frames
+    sampled_frames = params.sampled_frames
 
-    sampling_sec = args.sampled_frames / args.fps
+    sampling_sec = params.sampled_frames / params.fps
 
     densecap_result = {}
 
@@ -671,7 +675,7 @@ def valid(epoch, model, loader,
             # tempo_seg_neg = Variable(tempo_seg_neg)
             # sentence_batch = Variable(sentence_batch)
 
-            if args.cuda:
+            if params.cuda:
                 img_batch = img_batch.cuda()
                 tempo_seg_neg = tempo_seg_neg.cuda()
                 tempo_seg_pos = tempo_seg_pos.cuda()
@@ -682,19 +686,19 @@ def valid(epoch, model, loader,
              pred_sentence, gt_sent,
              _, mask_loss) = model(img_batch, tempo_seg_pos,
                                    tempo_seg_neg, sentence_batch,
-                                   stride_factor=args.stride_factor,
-                                   gated_mask=args.gated_mask)
+                                   stride_factor=params.stride_factor,
+                                   gated_mask=params.gated_mask)
 
             all_proposal_results = model.module.inference(
                 img_batch,
                 frame_length,
                 sampling_sec,
-                args.min_prop_num,
-                args.max_prop_num,
-                args.min_prop_before_nms,
-                args.pos_thresh,
-                args.stride_factor,
-                gated_mask=args.gated_mask)
+                params.min_prop_num,
+                params.max_prop_num,
+                params.min_prop_before_nms,
+                params.pos_thresh,
+                params.stride_factor,
+                gated_mask=params.gated_mask)
 
             for b in range(len(video_prefix)):
                 vid = os.path.basename(video_prefix[b])
@@ -702,6 +706,17 @@ def valid(epoch, model, loader,
                     feat_start_id, feat_end_id = feat_frame_ids[0]
                     start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
                     vid = f'{vid}--{start_id}_{end_id}'
+
+                src_dir_path = params.db_root
+                if params.img_dir_name:
+                    src_dir_path = linux_path(src_dir_path, params.img_dir_name)
+                vid_path = linux_path(src_dir_path, vid)
+                if params.ext:
+                    vid_path = f'{vid_path}.{params.ext}'
+
+                _input_params = Input.Params(source_type=-1, batch_mode=True, path=vid_path)
+                _logger = CustomLogger.setup(__name__)
+                _input = Input(_input_params, _logger)
 
                 annotations = []
                 proposals = []
@@ -723,16 +738,16 @@ def valid(epoch, model, loader,
                 #     "annotations": annotations
                 # }
 
-                dnc_to_mot.run(annotations)
+                dnc_to_mot.run(dnc_data=annotations, frames=_input.all_frames)
 
-            cls_loss = model.module.bce_loss(pred_score, gt_score) * args.cls_weight
-            reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * args.reg_weight
-            sent_loss = F.cross_entropy(pred_sentence, gt_sent) * args.sent_weight
+            cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
+            reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+            sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
 
             total_loss = cls_loss + reg_loss + sent_loss
 
             if mask_loss is not None:
-                mask_loss = args.mask_weight * mask_loss
+                mask_loss = params.mask_weight * mask_loss
                 total_loss += mask_loss
             else:
                 mask_loss = cls_loss.new(1).fill_(0)

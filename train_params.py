@@ -130,6 +130,13 @@ class TrainParams:
 
         self.enable_flow = 0
 
+        self.img_dir_name = 'Images'
+        self.ext = 'mp4'
+
+        self.min_prop_before_nms = 200
+        self.min_prop_num = 50
+        self.max_prop_num = 500
+
         self.start_from = ''
 
         self.train_splits = ['training', ]
@@ -214,6 +221,13 @@ def get_args():
                         help='the proposal temporal conv kernel stride is determined by math.ceil('
                              'kernel_len/stride_factor)')
     parser.add_argument('--enable_flow', default=0, type=int)
+
+    parser.add_argument('--img_dir_name', default='Images', type=str)
+    parser.add_argument('--ext', default='mp4', type=str)
+
+    parser.add_argument('--min_prop_before_nms', default=200, type=int)
+    parser.add_argument('--min_prop_num', default=50, type=int)
+    parser.add_argument('--max_prop_num', default=500, type=int)
 
     # Optimization: General
     parser.add_argument('--max_epochs', default=1000, type=int, help='max number of epochs to run for')
