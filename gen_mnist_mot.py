@@ -412,7 +412,7 @@ def generate_batch(params: Params,
 
             n_out_imgs += 1
 
-    return org_seq, states
+    return org_seq, states, first_img_id
 
 
 def generate_seq(
@@ -511,9 +511,11 @@ def generate_seq(
             video_out,
             vis_video_out,
             data_num, mnist_image_data, mnist_gt_data,
-            gt_data, img_ids, bkg_col_str, valid_frg_cols)
+            gt_data, img_ids,
+            target_ids, obj_cols_str, first_img_id,
+            bkg_col_str, valid_frg_cols)
 
-        org_seq_batch, states = out_batch
+        org_seq_batch, states, first_img_id = out_batch
 
         # print(seq_name + ': ' + str(batch_id + 1) + ' / ' + str(n_batches))
 
