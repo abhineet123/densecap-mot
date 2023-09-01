@@ -109,7 +109,7 @@ def generate_batch(params: Params,
                    data_num,
                    mnist_image_data, mnist_gt_data,
                    out_gt_data, img_ids,
-                   target_ids, obj_cols_str,
+                   target_ids, obj_cols_str, first_img_id,
                    bkg_col_str, valid_frg_cols):
     pause = params.pause
 
