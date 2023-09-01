@@ -8,7 +8,8 @@ import shutil
 import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
-from random import randrange, uniform
+import random
+import time
 
 # from joblib import Parallel, delayed
 
@@ -123,8 +124,8 @@ def generate_batch(params: Params,
     h_range = params.max_obj_h - params.min_obj_h
     w_range = params.max_obj_w - params.min_obj_w
 
-    h_rand = randrange(h_range + 1)
-    w_rand = randrange(w_range + 1)
+    h_rand = random.randrange(h_range + 1)
+    w_rand = random.randrange(w_range + 1)
 
     obj_h = params.min_obj_h + h_rand
     obj_w = params.min_obj_w + w_rand
@@ -219,7 +220,7 @@ def generate_batch(params: Params,
                     if params.velocity:
                         velocity = params.velocity
                     else:
-                        velocity = uniform(params.min_velocity, params.max_velocity)
+                        velocity = random.uniform(params.min_velocity, params.max_velocity)
 
                     vx = velocity * math.cos(theta)
                     vy = velocity * math.sin(theta)
@@ -444,6 +445,8 @@ def generate_seq(
         output_vis_dir,
         params: Params
 ):
+    random.seed(time.time_ns())
+
     split, seq_id = seq_info
 
     n_dig = len(str(n_seq[split]))
