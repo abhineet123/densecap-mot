@@ -89,7 +89,7 @@ class Params:
     # train_frame_num = 20
     # test_frame_num = 20
 
-    n_proc = 10
+    n_proc = 1
 
 
 def get_col_diff(_col1, _col2):
