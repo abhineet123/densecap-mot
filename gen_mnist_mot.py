@@ -29,6 +29,7 @@ class State:
     target_id = None
     label = None
     col = None
+    col_diff = None
 
 
 class Params:
@@ -250,6 +251,11 @@ def generate_batch(params: Params,
                             obj_cols_str[target_id] = valid_frg_cols[obj_col_id]
                             obj_state.col = obj_cols_str[target_id]
 
+                        obj_state.col_diff = get_col_diff(bkg_col_str, obj_state.col)
+
+                        assert obj_state.col_diff > params.min_col_diff_percent, \
+                            f"invalid color combination: {bkg_col_str}, {obj_state.col}"
+
             else:  # exists
                 data_patch = obj_state.patch
                 x1, y1, vx, vy = obj_state.bbox
@@ -354,15 +360,10 @@ def generate_batch(params: Params,
                     img_gt_data.append(_obj_gt_data)
 
             if params.rgb and obj_state.target_id is not None:
-                _col_abs_diff_percent = get_col_diff(bkg_col_str, obj_state.col)
-
-                assert _col_abs_diff_percent > params.min_col_diff_percent, \
-                    f"invalid color combination: {bkg_col_str}, {obj_state.col}"
-
                 vis_text += f'\n' \
                     f'bkg: {bkg_col_str},{col_bgr[bkg_col_str]}' \
                     f' obj: {obj_state.col},{col_bgr[obj_state.col]} ' \
-                    f'diff: {_col_abs_diff_percent:.2f}'
+                    f'diff: {obj_state.col_diff:.2f}'
 
         if img_gt_data:
 
