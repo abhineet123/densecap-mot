@@ -208,9 +208,11 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
     return out_grid_cells, frame_to_traj_dict
 
 
-def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, out_dir,
+def run(seq_info, dnc_data, frames, json_data,
+        sentence_to_grid_cells, n_seq, out_dir, out_name,
         grid_res, fps, vis,
-        params: Params):
+        params: Params
+        ):
     if frames is None:
         seq_id, seq_suffix, start_id, end_id = seq_info
 
@@ -237,6 +239,9 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
         if seq_suffix:
             seq_name = f'{seq_name}--{seq_suffix}'
 
+        if not out_name:
+            out_name = seq_name
+
         print(f'\nseq {seq_id + 1} / {n_seq}: {seq_name}\n')
 
         if not _input.initialize(_data):
@@ -262,14 +267,22 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
             if isinstance(dnc_data, dict):
                 dnc_data = dnc_data['annotations']
 
-    frame_res = frames[0].shape[:2]
+    frame_h, frame_w = frames[0].shape[:2]
+
+    frame_res = (frame_h, frame_w)
 
     grid_cell_size = np.array([frame_res[i] / grid_res[i] for i in range(2)])
 
     grid_x, grid_y = [np.arange(grid_cell_size[i] / 2.0, frame_res[i], grid_cell_size[i]) for i in range(2)]
     grid_cx, grid_cy = np.meshgrid(grid_x, grid_y)
 
-    frame_disp_dict = {}
+    # frame_disp_dict = {}
+
+    show_img = vis == 1 or vis == 3
+    save_img = vis == 2 or vis == 3
+
+    if save_img:
+        assert out_name, "out_name must be provided"
 
     for traj_id, traj_datum in enumerate(dnc_data):
         sentence = traj_datum["sentence"].upper()
@@ -277,7 +290,7 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
 
         start_t, end_t = timestamp
 
-        start_frame, end_frame = int(start_t * params.fps), int(end_t * params.fps)
+        start_frame, end_frame = int(start_t * fps), int(end_t * fps)
         traj_n_frames = end_frame - start_frame + 1
 
         words = sentence.split(' ')
@@ -302,10 +315,21 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
 
         _pause = 1
 
-        frame_disp_list = []
+        # frame_disp_list = []
+
+        if save_img:
+            save_fmt = 'mp4'
+            codec = 'mp4v'
+            fps = 30
+            out_path = linux_path(out_dir, f'{out_name}--{traj_id}.{save_fmt}')
+
+            codec = params.codec
+            fourcc = cv2.VideoWriter_fourcc(*codec)
+
+            video_out = cv2.VideoWriter(out_path, fourcc, params.fps, (frame_w, frame_h))
 
         for frame_id in range(start_frame, end_frame + 1):
-            if params.vis:
+            if vis:
                 frame_disp = np.copy(frames[frame_id])
 
                 for grid_cell in grid_cells:
@@ -321,16 +345,17 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
                 cv2.putText(frame_disp, f'frame {frame_id}', location, header_fmt.font,
                             header_fmt.size, color, header_fmt.thickness, header_fmt.line_type)
 
-                frame_disp = resize_ar(frame_disp, height=960)
+                # frame_disp = resize_ar(frame_disp, height=960)
 
-                if show:
+                if show_img:
                     _pause = show('frame_disp', frame_disp, _pause=_pause)
-                else:
-                    frame_disp_list.append(frame_disp)
 
-        frame_disp_dict[traj_id] = frame_disp_list
+                if save_img:
+                    video_out.write(frame_disp)
+        if save_img:
+            video_out.release()
 
-    return frame_disp_list
+        # frame_disp_dict[traj_id] = frame_disp_list
 
 
 def main():
@@ -466,6 +491,9 @@ def main():
         sentence_to_grid_cells=sentence_to_grid_cells,
         out_dir=out_dir,
         # traj_lengths_out_dir=traj_lengths_out_dir,
+        grid_res=params.grid_res,
+        fps=params.fps,
+        vis=params.vis,
         params=params,
     )
 

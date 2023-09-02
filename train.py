@@ -322,7 +322,9 @@ def main():
     all_training_losses = []
 
     tb_path = linux_path(args.ckpt, 'tb')
+    vis_path = linux_path(args.ckpt, 'vis')
     os.makedirs(tb_path, exist_ok=1)
+    os.makedirs(vis_path, exist_ok=1)
 
     print(f'saving tensorboard log to: {tb_path}')
 
@@ -383,7 +385,7 @@ def main():
                 torch.save(model.state_dict(), ckpt)
 
         (valid_loss, val_cls_loss,
-         val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, args)
+         val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, vis_path, args)
 
         writer.add_scalar('val/loss', valid_loss, train_epoch)
         writer.add_scalar('val/cls_loss', val_cls_loss, train_epoch)
@@ -643,7 +645,7 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
 
 
 def valid(epoch, model, loader,
-          # writer,
+          vis_path,
           params: TrainParams):
     model.eval()
     valid_loss = []
@@ -713,10 +715,6 @@ def valid(epoch, model, loader,
 
             for b in range(len(video_prefix)):
                 vid = os.path.basename(video_prefix[b])
-                if feat_frame_ids[0] is not None:
-                    feat_start_id, feat_end_id = feat_frame_ids[0]
-                    start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
-                    vid = f'{vid}--{start_id}_{end_id}'
 
                 src_dir_path = params.db_root
                 if params.img_dir_name:
@@ -726,11 +724,18 @@ def valid(epoch, model, loader,
                     vid_path = f'{vid_path}.{params.ext}'
 
                 _input_params = Input.Params(source_type=-1, batch_mode=True, path=vid_path)
+
+                if feat_frame_ids[0] is not None:
+                    feat_start_id, feat_end_id = feat_frame_ids[0]
+                    start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+                    vid = f'{vid}--{start_id}_{end_id}'
+
+                    _input_params.frame_ids = (start_id, end_id - 1)
+
                 _logger = CustomLogger.setup(__name__)
                 _input = Input(_input_params, _logger)
 
                 annotations = []
-                proposals = []
                 for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
                     pred_start_t = pred_start * sampling_sec
                     pred_end_t = pred_end * sampling_sec
@@ -755,12 +760,13 @@ def valid(epoch, model, loader,
                     seq_info=None,
                     json_data=None,
                     n_seq=None,
-                    out_dir=None,
-                    params=None,
+                    out_dir=vis_path,
+                    out_name=vid,
                     sentence_to_grid_cells=sentence_to_grid_cells,
                     grid_res=params.grid_res,
                     fps=params.fps,
                     vis=params.vis,
+                    params=None,
                 )
 
             cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
