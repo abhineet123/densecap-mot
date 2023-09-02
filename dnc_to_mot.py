@@ -209,8 +209,8 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
 
 def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, out_dir,
+        grid_res, fps, vis,
         params: Params):
-
     if frames is None:
         seq_id, seq_suffix, start_id, end_id = seq_info
 
@@ -264,7 +264,6 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
 
     frame_res = frames[0].shape[:2]
 
-    grid_res = params.grid_res
     grid_cell_size = np.array([frame_res[i] / grid_res[i] for i in range(2)])
 
     grid_x, grid_y = [np.arange(grid_cell_size[i] / 2.0, frame_res[i], grid_cell_size[i]) for i in range(2)]
@@ -332,7 +331,6 @@ def run(seq_info, dnc_data, frames, json_data, sentence_to_grid_cells, n_seq, ou
         frame_disp_dict[traj_id] = frame_disp_list
 
     return frame_disp_list
-
 
 
 def main():

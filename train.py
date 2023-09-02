@@ -758,6 +758,9 @@ def valid(epoch, model, loader,
                     out_dir=None,
                     params=None,
                     sentence_to_grid_cells=sentence_to_grid_cells,
+                    grid_res=params.grid_res,
+                    fps=params.fps,
+                    vis=params.vis,
                 )
 
             cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight

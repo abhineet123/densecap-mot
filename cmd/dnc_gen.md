@@ -45,6 +45,7 @@
             - [seq_0_25       @ 25-2400/n-1/mot_to_dnc](#seq_0_25___25_2400_n_1_mot_to_dnc_)
         - [1k-9600       @ n-1/mot_to_dnc](#1k_9600___n_1_mot_to_dnc_)
             - [1k-9600-dummy-100_2       @ 1k-9600/n-1/mot_to_dnc](#1k_9600_dummy_100_2___1k_9600_n_1_mot_to_dnc_)
+        - [100-960       @ n-1/mot_to_dnc](#100_960___n_1_mot_to_dnc_)
     - [n-3       @ mot_to_dnc](#n_3___mot_to_dnc_)
         - [25-2000-f       @ n-3/mot_to_dnc](#25_2000_f___n_3_mot_to_dnc_)
             - [all       @ 25-2000-f/n-3/mot_to_dnc](#all___25_2000_f_n_3_mot_to_dnc_)
@@ -92,11 +93,10 @@ python3 gen_mnist_mot.py show_img=0 n_seq=25 n_frames=2e3 img_h=512 n_objs=1 vel
 python3 gen_mnist_mot.py show_img=0 n_seq=25 n_frames=2400 img_h=512 n_objs=1
 <a id="100_960___n_1_512_gen_mnist_mo_t_"></a>
 #### 100-960       @ n-1/512/gen_mnist_mot-->dnc_gen
-python3 gen_mnist_mot.py show_img=0 n_seq=100 n_frames=960 img_h=512 n_objs=1 n_proc=12
+python3 gen_mnist_mot.py show_img=0 n_seq=100 n_frames=960 img_h=512 n_objs=1 n_proc=10
 <a id="1k_9600___n_1_512_gen_mnist_mo_t_"></a>
 #### 1k-9600       @ n-1/512/gen_mnist_mot-->dnc_gen
-python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=9600 img_h=512 n_objs=1
-python3 gen_mnist_mot.py show_img=1 n_seq=100 n_frames=9600 img_h=512 n_objs=1
+python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=9600 img_h=512 n_objs=1 n_proc=10
 
 <a id="n_2___512_gen_mnist_mo_t_"></a>
 ### n-2       @ 512/gen_mnist_mot-->dnc_gen
@@ -212,6 +212,11 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var n_proc=12
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var start_seq=0,1000 end_seq=99,1099 @slide size=480 num=2 sample=1 @ fixed_traj_len=20
 
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var start_seq=1000 end_seq=1002 @slide size=480 num=2 sample=1 @ fixed_traj_len=20
+
+<a id="100_960___n_1_mot_to_dnc_"></a>
+### 100-960       @ n-1/mot_to_dnc-->dnc_gen
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=480 sample=1 @ fixed_traj_len=20
+
 
 <a id="n_3___mot_to_dnc_"></a>
 ## n-3       @ mot_to_dnc-->dnc_gen

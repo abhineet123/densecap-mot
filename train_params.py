@@ -130,9 +130,10 @@ class TrainParams:
 
         self.enable_flow = 0
 
+        self.vis = 0
         self.vocab_fmt = 0
         self.max_diff = 0
-        self.grid_res = []
+        self.grid_res = [32, 32]
 
         self.img_dir_name = 'Images'
         self.ext = 'mp4'
@@ -195,7 +196,8 @@ def get_args():
     # Model settings: General
     # parser.add_argument('--d_rgb', default=2048, type=int)
     # parser.add_argument('--d_flow', default=1024, type=int)
-    parser.add_argument('--d_model', default=1024, type=int, help='size of the rnn in number of hidden nodes in each layer')
+    parser.add_argument('--d_model', default=1024, type=int,
+                        help='size of the rnn in number of hidden nodes in each layer')
     parser.add_argument('--rgb_ch', default=4, type=int)
     parser.add_argument('--d_hidden', default=2048, type=int)
     parser.add_argument('--n_heads', default=8, type=int)
@@ -215,10 +217,14 @@ def get_args():
     parser.add_argument('--slide_window_stride', default=20, type=int, help='the step size of the sliding window')
     parser.add_argument('--fps', default=30.0, type=float)
     parser.add_argument('--sampled_frames', default=1.0, type=float)
-    parser.add_argument('--sampling_sec', default=0, help='sample frame (RGB and optical flow) with which time interval')
+    parser.add_argument('--sampling_sec', default=0,
+                        help='sample frame (RGB and optical flow) with which time interval')
 
     parser.add_argument('--kernel_list', default=[1, 2, 3, 4, 5, 7, 9, 11, 15, 21, 29, 41, 57, 71, 111, 161, 211, 251],
                         type=int, nargs='+')
+
+    parser.add_argument('--grid_res', default=[32, 32], type=int, nargs='+')
+
     parser.add_argument('--pos_thresh', default=0.7, type=float)
     parser.add_argument('--neg_thresh', default=0.3, type=float)
     parser.add_argument('--stride_factor', default=100, type=int,
@@ -228,6 +234,10 @@ def get_args():
 
     parser.add_argument('--img_dir_name', default='Images', type=str)
     parser.add_argument('--ext', default='mp4', type=str)
+
+    parser.add_argument('--vis', default=0, type=int)
+    parser.add_argument('--vocab_fmt', default=0, type=int)
+    parser.add_argument('--max_diff', default=0, type=int)
 
     parser.add_argument('--min_prop_before_nms', default=200, type=int)
     parser.add_argument('--min_prop_num', default=50, type=int)
