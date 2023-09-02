@@ -217,6 +217,8 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var start_seq=1000 e
 ### 100-960       @ n-1/mot_to_dnc-->dnc_gen
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=480 sample=1 @ fixed_traj_len=20
 
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=480 sample=1 @ fixed_traj_len=20 start_seq=0,100 end_seq=1,101
+
 
 <a id="n_3___mot_to_dnc_"></a>
 ## n-3       @ mot_to_dnc-->dnc_gen
