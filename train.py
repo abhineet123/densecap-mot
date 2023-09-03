@@ -684,8 +684,6 @@ def valid(epoch, model, loader,
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
 
-        pbar.set_description(f'validation epoch {epoch} (times: {load_t:.2f},{torch_t:.2f},{collate_t:.2f})')
-
         with torch.no_grad():
             # img_batch = Variable(img_batch)
             # tempo_seg_pos = Variable(tempo_seg_pos)
@@ -698,6 +696,7 @@ def valid(epoch, model, loader,
                 tempo_seg_pos = tempo_seg_pos.cuda()
                 sentence_batch = sentence_batch.cuda()
 
+            start_t = time.time()
             (pred_score, gt_score,
              pred_offsets, gt_offsets,
              pred_sentence, gt_sent,
@@ -705,6 +704,8 @@ def valid(epoch, model, loader,
                                    tempo_seg_neg, sentence_batch,
                                    stride_factor=params.stride_factor,
                                    gated_mask=params.gated_mask)
+            end_t = time.time()
+            forward_t = end_t - start_t
 
             all_proposal_results = model.module.inference(
                 img_batch,
@@ -716,6 +717,12 @@ def valid(epoch, model, loader,
                 params.pos_thresh,
                 params.stride_factor,
                 gated_mask=params.gated_mask)
+
+            inference_t = end_t - start_t
+
+            pbar.set_description(f'validation epoch {epoch} (data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
+                                 f'(model: {forward_t:.2f},{inference_t:.2f})')
+
 
             _input = None
 
