@@ -718,29 +718,27 @@ def valid(epoch, model, loader,
                 params.stride_factor,
                 gated_mask=params.gated_mask)
 
+            end_t = time.time()
             inference_t = end_t - start_t
 
-            pbar.set_description(f'validation epoch {epoch} (data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
-                                 f'(model: {forward_t:.2f},{inference_t:.2f})')
-
-
             _input = None
+            start_t = time.time()
 
             for b, video_prefix in enumerate(video_prefix_list):
                 annotations = []
                 for pred_start, pred_end, pred_s, sentence in all_proposal_results[b]:
-                    pred_start_t = pred_start * sampling_sec
-                    pred_end_t = pred_end * sampling_sec
-
-                    # pred_start_frame = pred_start_t * args.fps
-                    # pred_end_frame = pred_end_t * args.fps
-
                     words = sentence.upper().split(' ')
 
                     words = [word for word in words if word not in invalid_words]
 
                     if not words:
                         continue
+
+                    pred_start_t = pred_start * sampling_sec
+                    pred_end_t = pred_end * sampling_sec
+
+                    # pred_start_frame = pred_start_t * args.fps
+                    # pred_end_frame = pred_end_t * args.fps
 
                     annotations.append(
                         {
@@ -799,6 +797,12 @@ def valid(epoch, model, loader,
                     vis=params.vis,
                     params=None,
                 )
+            end_t = time.time()
+            vis_t = end_t - start_t
+
+            pbar.set_description(f'validation epoch {epoch} '
+                                 f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
+                                 f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})')
 
             cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
             reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
