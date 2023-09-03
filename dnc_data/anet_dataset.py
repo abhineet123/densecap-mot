@@ -26,6 +26,388 @@ from torch.utils.data import Dataset
 from dnc_data.utils import segment_iou
 
 
+def get_vocab_and_sentences(dataset_file, splits, save_path):
+    # train_sentences = []
+    all_sentences = []
+
+    print(f'loading dataset_file: {dataset_file}')
+    with open(dataset_file, 'r', encoding='utf-8') as data_file:
+        data_all = json.load(data_file)
+    raw_data = data_all['database']
+
+    # sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
+
+    n_sentences = {aplit: 0 for aplit in splits}
+    n_videos = {aplit: 0 for aplit in splits}
+
+    sentence_lengths = []
+    max_sentence_length = 0
+
+    for vid, val in tqdm(raw_data.items(), desc='getting all_sentences', ncols=100):
+        split = val['subset']
+
+        if split not in splits:
+            continue
+
+        anns = val['annotations']
+        n_videos[split] += 1
+
+        for ind, ann in enumerate(anns):
+            ann['sentence'] = ann['sentence'].strip()
+            sentence_length = len(ann['sentence'].split(' '))
+            sentence_lengths.append(sentence_length)
+
+            if sentence_length > max_sentence_length:
+                max_sentence_length = sentence_length
+            all_sentences.append(ann['sentence'])
+            n_sentences[split] += 1
+
+    print(f'max_sentence_length: {max_sentence_length}')
+
+    sentence_lengths_path = os.path.join(save_path, f"sentence_lengths.txt")
+    os.makedirs(save_path, exist_ok=1)
+
+    print(f'sentence_lengths_path: {sentence_lengths_path}')
+
+    sentence_lengths = list(map(str, sentence_lengths))
+    with open(sentence_lengths_path, 'w') as fid:
+        fid.write('\n'.join(sentence_lengths))
+
+    for split in splits:
+        print(f'# of {split} videos: {n_videos[split]}')
+        print(f'# of {split} sentences {n_sentences[split]}')
+
+    # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
+    #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
+    #     # with open(sentences_dict_path, 'rb') as f:
+    #     #     sentences_dict = pickle.load(f)
+    #     # train_sentences = sentences_dict['train_sentences']
+    #     # sentence_idx = sentences_dict['sentence_idx']
+    #     text_proc = None
+    # else:
+
+    # build vocab and tokenized sentences
+    import torchtext
+    try:
+        Field = torchtext.data.Field
+    except AttributeError:
+        Field = torchtext.legacy.data.Field
+
+    text_proc = Field(
+        sequential=True,
+        # init_token='<init>',
+        # eos_token='<eos>',
+        tokenize='spacy',
+        lower=True, batch_first=True,
+        fix_length=max_sentence_length)
+
+    """divide sentences into words to have a list of list of words or tokens as they're called"""
+    sentences_proc_path = os.path.join(save_path, f"sentences_proc.pkl")
+    if os.path.isfile(sentences_proc_path):
+        print(f'loading sentences_proc from {sentences_proc_path}')
+        with open(sentences_proc_path, 'rb') as f:
+            sentences_proc = pickle.load(f)
+    else:
+        print('text_proc.preprocess')
+        sentences_proc = list(map(text_proc.preprocess, all_sentences))
+        print(f'saving sentences_proc to {sentences_proc_path}')
+        with open(sentences_proc_path, 'wb') as f:
+            pickle.dump(sentences_proc, f)
+
+    print('building vocab')
+    text_proc.build_vocab(sentences_proc, min_freq=0)
+    print(f'# of words in the vocab: {len(text_proc.vocab)}')
+
+    return text_proc, raw_data, n_videos
+
+
+def _get_pos_neg(vid_info,
+                 n_vids, slide_window_size, anc_len_all,
+                 anc_cen_all, pos_thresh, neg_thresh,
+                 save_samplelist, sample_list_dir, out_txt_dir, is_parallel):
+    """
+    try to find a matching anchor for every single GT segment by choosing the anchor with the maximum temporal IOU
+    with each GT segment and hoping that each of the latter has at least one anchor with IOU > 0.7
+    also find anchor segments that can be classified as negative as being those whose temporal IOU
+    with every single GT segment  < 0.3
+
+    """
+    annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_frames, sampling_sec = vid_info
+
+    if is_parallel:
+        print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
+
+    window_start = 0
+    window_end = slide_window_size
+    window_start_t = window_start * sampling_sec
+    window_end_t = window_end * sampling_sec
+
+    """
+    indexed by GT seg - list of all matching anc seg for each GT seg
+    each GT segment has its own positive anchor segments but all of them have the same negative anchor segments
+    since the latter must be negative with respect to all the GT segments to qualify as negative
+
+    note that we do not train on the actual segments but only on the matching and nonmatching (and therefore positive 
+    and negative) anchors
+    however, we do consider the centre and length offsets of the actual segment from the corresponding anchor 
+    to make the output more precise
+    """
+    pos_seg = defaultdict(list)
+    n_annotations = len(annotations)
+    n_anc = anc_len_all.shape[0]
+
+    neg_overlap = [0] * n_anc
+    ann_overlap = [(0, None)] * n_annotations
+
+    anc_to_ann = [(0, None)] * n_anc
+
+    # pos_collected = [False] * n_anc
+    anc_iter = range(n_anc)
+
+    if is_parallel:
+        anc_iter = tqdm(anc_iter, ncols=100)
+
+    anc_len_to_n_pos = defaultdict(int)
+    gt_len_to_count = defaultdict(int)
+
+    total_n_pos = 0
+    max_seg_len = 0
+
+    for anc_idx in anc_iter:
+        """
+        anchor centres and length are in units of frames - sampled rather than original
+        """
+        anc_cen = anc_cen_all[anc_idx]
+        anc_len = anc_len_all[anc_idx]
+
+        # if not is_parallel:
+        # anc_iter.set_description(f'anc_len: {anc_len}: n_pos: {anc_len_to_n_pos[anc_len]} / {total_n_pos}')
+
+        potential_matches = []
+        for ann_idx, ann in enumerate(annotations):
+            seg = ann['segment']
+            seg_id = ann['id']
+
+            """
+            Something weird going on here since anchor centres and lengths are in units of frames but the raw
+            GT segments are definitely in units of seconds and dividing these by sampling_sec cannot convert these 
+            into frames as far as one can see
+            turns out that it can be done as long as the frames are sampled frames rather than the original as is 
+            indeed the case here
+            """
+            gt_start_raw, gt_end_raw = seg
+
+            gt_start = gt_start_raw / sampling_sec
+            gt_end = gt_end_raw / sampling_sec
+
+            if gt_start > gt_end:
+                gt_start, gt_end = gt_end, gt_start
+
+            gt_cen = (gt_end + gt_start) / 2.
+            gt_len = gt_end - gt_start
+
+            if anc_idx == 0:
+                gt_len_int = int(round(gt_len))
+                if gt_len_int > max_seg_len:
+                    max_seg_len = gt_len
+                    # print(f'\ngt_len: {gt_len} id: {seg_id}\n')
+
+                gt_len_to_count[gt_len_int] += 1
+
+            anc_end = anc_cen + anc_len / 2.
+
+            if anc_end > n_frames:
+                continue
+
+            anc_start = anc_cen - anc_len / 2.
+
+            if window_start_t > gt_start_raw or window_end_t + sampling_sec * 2 < gt_end_raw:
+                continue
+
+            """iou between anchor and GT"""
+            overlap = segment_iou(np.array([gt_start, gt_end]), np.array([[anc_start, anc_end]]))
+
+            if isinstance(overlap, np.ndarray):
+                overlap = float(overlap.item())
+
+            """maximum overlap between this anchor segment and any GT segment"""
+            neg_overlap[anc_idx] = max(overlap, neg_overlap[anc_idx])
+
+            """maximum overlap between this GT segment segment and any anchor segment"""
+            if overlap > ann_overlap[ann_idx][0]:
+                ann_overlap[ann_idx] = (overlap, anc_idx)
+
+            if overlap < pos_thresh:
+                """ineligible positive sample"""
+                continue
+
+            len_offset = float(math.log(gt_len / anc_len))
+            cen_offset = float((gt_cen - anc_cen) / anc_len)
+
+            potential_match = (ann_idx, anc_idx,
+                               overlap, len_offset, cen_offset,
+                               ann['sentence_idx'])
+
+            potential_matches.append(potential_match)
+
+            # pos_collected[anc_idx] = True
+
+        """sort the potential matches by overlap so that each anchor is matched to the maximum overlapping GT 
+        that has remained unmatched so far"""
+        potential_matches = sorted(potential_matches, key=lambda x: -x[2])
+
+        """only one pos anchor segment for each GT segment"""
+        filled = False
+        for item in potential_matches:
+
+            _ann_idx, _anc_idx, _overlap, _len_offset, _cen_offset, _sentence_idx = item
+
+            """find the first matching GT segment that is not already in the list of positive GT segments 
+            and add it there"""
+
+            if _ann_idx in pos_seg:
+                continue
+
+            filled = True
+            """
+            the only reason why pos_seg is a dictionary of lists instead of a simple dictionary of matching 
+            anchor infos seems to be that it is a defaultdict of lists which in turn seems to be entirely a convenience 
+            rather than any sort of design requirement
+            """
+            pos_seg[_ann_idx].append((_anc_idx, _overlap, _len_offset, _cen_offset, _sentence_idx))
+            anc_len_to_n_pos[anc_len] += 1
+
+            anc_to_ann[anc_idx] = (_overlap, _ann_idx)
+
+            total_n_pos += 1
+            break
+
+        if not filled and len(potential_matches) > 0:
+            """
+            if all the matching GT segments for this anchor are already in the list of 
+            positive GT segments (i.e. they also matched earlier anchors),
+            choose a single random segment from the matches and add it there as well;
+            seems to be a way to ensure that at least one and only one matching GT segment gets added for each anchor;
+            the problem of duplication is somewhat ameliorated by the fact that this one will have 
+            different offsets
+            """
+            shuffle(potential_matches)
+            item = potential_matches[0]
+            pos_seg[item[0]].append(tuple(item[1:]))
+
+    out_txt = ''
+    # print()
+    for anc_len, n_pos in anc_len_to_n_pos.items():
+        out_txt += f'anc_len: {anc_len} n_pos: {n_pos} ({float(n_pos) / total_n_pos * 100}%)\n'
+    # print()
+
+    # print()
+    for gt_len, count in gt_len_to_count.items():
+        out_txt += f'gt_len: {gt_len} count: {count} ({float(count) / len(annotations) * 100}%)\n'
+    # print()
+
+    n_miss_props = 0
+    matched_ann_idx = list(pos_seg.keys())
+    all_ann_ids = list(range(n_annotations))
+    n_matched_ann = len(matched_ann_idx)
+
+    unmatched_ann_idx = set(all_ann_ids) - set(matched_ann_idx)
+
+    if matched_ann_idx != n_annotations:
+        n_miss_props = n_annotations - n_matched_ann
+        pc_miss_props = (n_miss_props / n_annotations) * 100
+        out_txt += f'{n_miss_props} / {n_annotations} ({pc_miss_props}%) annotations in {vid} have no matching ' \
+            f'proposal\n'
+
+        # print()
+        for ann_idx in unmatched_ann_idx:
+            unmatched_ann = annotations[ann_idx]
+            gt_s, gt_e = unmatched_ann['segment']
+            seg_id = unmatched_ann['id']
+
+            overlap, anc_idx = ann_overlap[ann_idx]
+            anc_cen = anc_cen_all[anc_idx]
+            anc_len = anc_len_all[anc_idx]
+
+            txt = f'seg {seg_id}: {gt_s / sampling_sec:.2f} - {gt_e / sampling_sec:.2f}  ' \
+                f'ov: {overlap:.3f} ' \
+                f'anc cen: {anc_cen} len: {anc_len}'
+
+            if overlap > pos_thresh:
+                max_overlap, max_ann_idx = anc_to_ann[anc_idx]
+
+                assert max_overlap >= overlap, "max_overlap must exceed overlap"
+
+                max_ann = annotations[max_ann_idx]
+                max_gt_s, max_gt_e = max_ann['segment']
+                max_seg_id = max_ann['id']
+
+                txt += f' max_seg {max_seg_id}: {max_gt_s / sampling_sec:.2f} - {max_gt_e / sampling_sec:.2f} ' \
+                    f'max_ov: {max_overlap:.3f} '
+
+            out_txt += txt + '\n'
+            # print(txt)
+        # print()
+
+    """list of anchors having max overlap with any GT segment < neg_thresh"""
+    neg_seg = []
+    for oi, overlap in enumerate(neg_overlap):
+        if isinstance(overlap, np.ndarray):
+            overlap = float(overlap.item())
+
+        if overlap < neg_thresh:
+            neg_seg.append((oi, overlap))
+
+    npos_seg = 0
+    for k in pos_seg:
+        npos_seg += len(pos_seg[k])
+
+    out_txt += f'pos anc: {npos_seg}, neg anc: {len(neg_seg)}\n'
+
+    n_pos_seg = 0
+    sample_list = []
+    for k in pos_seg:
+        """
+        all neg_segs in each sequence are the same, since they need to be negative
+        for all samples
+        """
+        neg_anc_info = neg_seg
+
+        """
+        all_segs is a list of 5-tuples: anc_idx, overlap, len_offset, cen_offset, ann['sentence_idx']
+        however, each such list has only a single such tuple
+        """
+        all_segs = pos_seg[k]
+
+        """sentence_idx - same for all entries in all_segs"""
+        sentence_idx = all_segs[0][-1]  # [s[-1] for s in all_segs]
+
+        """anc_idx, overlap, len_offset, cen_offset"""
+        pos_anc_info = [s[:-1] for s in all_segs]
+
+        sample_list.append(
+            (video_prefix, vid_frame_ids, pos_anc_info, sentence_idx, neg_anc_info, n_frames))
+        n_pos_seg += len(pos_seg[k])
+
+    if save_samplelist:
+        sample_list_path = os.path.join(sample_list_dir, f'{vid}.pkl')
+
+        # sample_list_size = sys.getsizeof(sample_list)
+        # sample_list_size_mb = sample_list_size / 1e6
+        # print(f'\n{vid} : saving sample_list of size {sample_list_size_mb} MB to {sample_list_path}')
+        with open(sample_list_path, 'wb') as f:
+            pickle.dump(sample_list, f)
+        # print(f'\n{vid} : done')
+    out_txt_path = os.path.join(out_txt_dir, f'{vid}.log')
+
+    # print(f'\n{vid} : saving out_txt to {out_txt_path}')
+    with open(out_txt_path, 'w') as fid:
+        fid.write(out_txt)
+    # print(f'\n{vid} : done')
+
+    return sample_list, video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
+
+
 # dataloader for training
 class ANetDataset(Dataset):
     def __init__(
@@ -487,14 +869,17 @@ def anet_collate_fn(batch_lst):
     batch_load_t = 0
     batch_torch_t = 0
 
-    video_prefix = []
-    feat_frame_ids_all = []
+    video_prefix_list = []
+    feat_frame_ids_list = []
 
     frame_length = torch.zeros(batch_size, dtype=torch.int)
 
     for batch_idx in range(batch_size):
         img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t = batch_lst[batch_idx]
         pos_seg, neg_seg, sentence = sample
+
+        video_prefix_list.append(video_prefix)
+        feat_frame_ids_list.append(feat_frame_ids)
 
         batch_load_t += load_t
         batch_torch_t += torch_t
@@ -535,386 +920,5 @@ def anet_collate_fn(batch_lst):
 
     # return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
     samples = (tempo_seg_pos, tempo_seg_neg, sentence_batch)
-    return img_batch, frame_length, video_prefix, feat_frame_ids_all, samples, times
+    return img_batch, frame_length, video_prefix_list, feat_frame_ids_list, samples, times
 
-
-def get_vocab_and_sentences(dataset_file, splits, save_path):
-    # train_sentences = []
-    all_sentences = []
-
-    print(f'loading dataset_file: {dataset_file}')
-    with open(dataset_file, 'r', encoding='utf-8') as data_file:
-        data_all = json.load(data_file)
-    raw_data = data_all['database']
-
-    # sentences_dict_paths = [os.path.join(sample_list_dir, f"{split}_sentences_dict.pkl") for split in splits]
-
-    n_sentences = {aplit: 0 for aplit in splits}
-    n_videos = {aplit: 0 for aplit in splits}
-
-    sentence_lengths = []
-    max_sentence_length = 0
-
-    for vid, val in tqdm(raw_data.items(), desc='getting all_sentences', ncols=100):
-        split = val['subset']
-
-        if split not in splits:
-            continue
-
-        anns = val['annotations']
-        n_videos[split] += 1
-
-        for ind, ann in enumerate(anns):
-            ann['sentence'] = ann['sentence'].strip()
-            sentence_length = len(ann['sentence'].split(' '))
-            sentence_lengths.append(sentence_length)
-
-            if sentence_length > max_sentence_length:
-                max_sentence_length = sentence_length
-            all_sentences.append(ann['sentence'])
-            n_sentences[split] += 1
-
-    print(f'max_sentence_length: {max_sentence_length}')
-
-    sentence_lengths_path = os.path.join(save_path, f"sentence_lengths.txt")
-    os.makedirs(save_path, exist_ok=1)
-
-    print(f'sentence_lengths_path: {sentence_lengths_path}')
-
-    sentence_lengths = list(map(str, sentence_lengths))
-    with open(sentence_lengths_path, 'w') as fid:
-        fid.write('\n'.join(sentence_lengths))
-
-    for split in splits:
-        print(f'# of {split} videos: {n_videos[split]}')
-        print(f'# of {split} sentences {n_sentences[split]}')
-
-    # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
-    #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
-    #     # with open(sentences_dict_path, 'rb') as f:
-    #     #     sentences_dict = pickle.load(f)
-    #     # train_sentences = sentences_dict['train_sentences']
-    #     # sentence_idx = sentences_dict['sentence_idx']
-    #     text_proc = None
-    # else:
-
-    # build vocab and tokenized sentences
-    import torchtext
-    try:
-        Field = torchtext.data.Field
-    except AttributeError:
-        Field = torchtext.legacy.data.Field
-
-    text_proc = Field(
-        sequential=True,
-        # init_token='<init>',
-        # eos_token='<eos>',
-        tokenize='spacy',
-        lower=True, batch_first=True,
-        fix_length=max_sentence_length)
-
-    """divide sentences into words to have a list of list of words or tokens as they're called"""
-    sentences_proc_path = os.path.join(save_path, f"sentences_proc.pkl")
-    if os.path.isfile(sentences_proc_path):
-        print(f'loading sentences_proc from {sentences_proc_path}')
-        with open(sentences_proc_path, 'rb') as f:
-            sentences_proc = pickle.load(f)
-    else:
-        print('text_proc.preprocess')
-        sentences_proc = list(map(text_proc.preprocess, all_sentences))
-        print(f'saving sentences_proc to {sentences_proc_path}')
-        with open(sentences_proc_path, 'wb') as f:
-            pickle.dump(sentences_proc, f)
-
-    print('building vocab')
-    text_proc.build_vocab(sentences_proc, min_freq=0)
-    print(f'# of words in the vocab: {len(text_proc.vocab)}')
-
-    return text_proc, raw_data, n_videos
-
-
-def _get_pos_neg(vid_info,
-                 n_vids, slide_window_size, anc_len_all,
-                 anc_cen_all, pos_thresh, neg_thresh,
-                 save_samplelist, sample_list_dir, out_txt_dir, is_parallel):
-    """
-    try to find a matching anchor for every single GT segment by choosing the anchor with the maximum temporal IOU
-    with each GT segment and hoping that each of the latter has at least one anchor with IOU > 0.7
-    also find anchor segments that can be classified as negative as being those whose temporal IOU
-    with every single GT segment  < 0.3
-
-    """
-    annotations, vid, vid_idx, video_prefix, vid_frame_ids, n_frames, sampling_sec = vid_info
-
-    if is_parallel:
-        print(f'\nvideo {vid_idx + 1} / {n_vids}: {vid}\n')
-
-    window_start = 0
-    window_end = slide_window_size
-    window_start_t = window_start * sampling_sec
-    window_end_t = window_end * sampling_sec
-
-    """
-    indexed by GT seg - list of all matching anc seg for each GT seg
-    each GT segment has its own positive anchor segments but all of them have the same negative anchor segments
-    since the latter must be negative with respect to all the GT segments to qualify as negative
-     
-    note that we do not train on the actual segments but only on the matching and nonmatching (and therefore positive 
-    and negative) anchors
-    however, we do consider the centre and length offsets of the actual segment from the corresponding anchor 
-    to make the output more precise
-    """
-    pos_seg = defaultdict(list)
-    n_annotations = len(annotations)
-    n_anc = anc_len_all.shape[0]
-
-    neg_overlap = [0] * n_anc
-    ann_overlap = [(0, None)] * n_annotations
-
-    anc_to_ann = [(0, None)] * n_anc
-
-    # pos_collected = [False] * n_anc
-    anc_iter = range(n_anc)
-
-    if is_parallel:
-        anc_iter = tqdm(anc_iter, ncols=100)
-
-    anc_len_to_n_pos = defaultdict(int)
-    gt_len_to_count = defaultdict(int)
-
-    total_n_pos = 0
-    max_seg_len = 0
-
-    for anc_idx in anc_iter:
-        """
-        anchor centres and length are in units of frames - sampled rather than original
-        """
-        anc_cen = anc_cen_all[anc_idx]
-        anc_len = anc_len_all[anc_idx]
-
-        # if not is_parallel:
-        # anc_iter.set_description(f'anc_len: {anc_len}: n_pos: {anc_len_to_n_pos[anc_len]} / {total_n_pos}')
-
-        potential_matches = []
-        for ann_idx, ann in enumerate(annotations):
-            seg = ann['segment']
-            seg_id = ann['id']
-
-            """
-            Something weird going on here since anchor centres and lengths are in units of frames but the raw
-            GT segments are definitely in units of seconds and dividing these by sampling_sec cannot convert these 
-            into frames as far as one can see
-            turns out that it can be done as long as the frames are sampled frames rather than the original as is 
-            indeed the case here
-            """
-            gt_start_raw, gt_end_raw = seg
-
-            gt_start = gt_start_raw / sampling_sec
-            gt_end = gt_end_raw / sampling_sec
-
-            if gt_start > gt_end:
-                gt_start, gt_end = gt_end, gt_start
-
-            gt_cen = (gt_end + gt_start) / 2.
-            gt_len = gt_end - gt_start
-
-            if anc_idx == 0:
-                gt_len_int = int(round(gt_len))
-                if gt_len_int > max_seg_len:
-                    max_seg_len = gt_len
-                    # print(f'\ngt_len: {gt_len} id: {seg_id}\n')
-
-                gt_len_to_count[gt_len_int] += 1
-
-            anc_end = anc_cen + anc_len / 2.
-
-            if anc_end > n_frames:
-                continue
-
-            anc_start = anc_cen - anc_len / 2.
-
-            if window_start_t > gt_start_raw or window_end_t + sampling_sec * 2 < gt_end_raw:
-                continue
-
-            """iou between anchor and GT"""
-            overlap = segment_iou(np.array([gt_start, gt_end]), np.array([[anc_start, anc_end]]))
-
-            if isinstance(overlap, np.ndarray):
-                overlap = float(overlap.item())
-
-            """maximum overlap between this anchor segment and any GT segment"""
-            neg_overlap[anc_idx] = max(overlap, neg_overlap[anc_idx])
-
-            """maximum overlap between this GT segment segment and any anchor segment"""
-            if overlap > ann_overlap[ann_idx][0]:
-                ann_overlap[ann_idx] = (overlap, anc_idx)
-
-            if overlap < pos_thresh:
-                """ineligible positive sample"""
-                continue
-
-            len_offset = float(math.log(gt_len / anc_len))
-            cen_offset = float((gt_cen - anc_cen) / anc_len)
-
-            potential_match = (ann_idx, anc_idx,
-                               overlap, len_offset, cen_offset,
-                               ann['sentence_idx'])
-
-            potential_matches.append(potential_match)
-
-            # pos_collected[anc_idx] = True
-
-        """sort the potential matches by overlap so that each anchor is matched to the maximum overlapping GT 
-        that has remained unmatched so far"""
-        potential_matches = sorted(potential_matches, key=lambda x: -x[2])
-
-        """only one pos anchor segment for each GT segment"""
-        filled = False
-        for item in potential_matches:
-
-            _ann_idx, _anc_idx, _overlap, _len_offset, _cen_offset, _sentence_idx = item
-
-            """find the first matching GT segment that is not already in the list of positive GT segments 
-            and add it there"""
-
-            if _ann_idx in pos_seg:
-                continue
-
-            filled = True
-            """
-            the only reason why pos_seg is a dictionary of lists instead of a simple dictionary of matching 
-            anchor infos seems to be that it is a defaultdict of lists which in turn seems to be entirely a convenience 
-            rather than any sort of design requirement
-            """
-            pos_seg[_ann_idx].append((_anc_idx, _overlap, _len_offset, _cen_offset, _sentence_idx))
-            anc_len_to_n_pos[anc_len] += 1
-
-            anc_to_ann[anc_idx] = (_overlap, _ann_idx)
-
-            total_n_pos += 1
-            break
-
-        if not filled and len(potential_matches) > 0:
-            """
-            if all the matching GT segments for this anchor are already in the list of 
-            positive GT segments (i.e. they also matched earlier anchors),
-            choose a single random segment from the matches and add it there as well;
-            seems to be a way to ensure that at least one and only one matching GT segment gets added for each anchor;
-            the problem of duplication is somewhat ameliorated by the fact that this one will have 
-            different offsets
-            """
-            shuffle(potential_matches)
-            item = potential_matches[0]
-            pos_seg[item[0]].append(tuple(item[1:]))
-
-    out_txt = ''
-    # print()
-    for anc_len, n_pos in anc_len_to_n_pos.items():
-        out_txt += f'anc_len: {anc_len} n_pos: {n_pos} ({float(n_pos) / total_n_pos * 100}%)\n'
-    # print()
-
-    # print()
-    for gt_len, count in gt_len_to_count.items():
-        out_txt += f'gt_len: {gt_len} count: {count} ({float(count) / len(annotations) * 100}%)\n'
-    # print()
-
-    n_miss_props = 0
-    matched_ann_idx = list(pos_seg.keys())
-    all_ann_ids = list(range(n_annotations))
-    n_matched_ann = len(matched_ann_idx)
-
-    unmatched_ann_idx = set(all_ann_ids) - set(matched_ann_idx)
-
-    if matched_ann_idx != n_annotations:
-        n_miss_props = n_annotations - n_matched_ann
-        pc_miss_props = (n_miss_props / n_annotations) * 100
-        out_txt += f'{n_miss_props} / {n_annotations} ({pc_miss_props}%) annotations in {vid} have no matching ' \
-            f'proposal\n'
-
-        # print()
-        for ann_idx in unmatched_ann_idx:
-            unmatched_ann = annotations[ann_idx]
-            gt_s, gt_e = unmatched_ann['segment']
-            seg_id = unmatched_ann['id']
-
-            overlap, anc_idx = ann_overlap[ann_idx]
-            anc_cen = anc_cen_all[anc_idx]
-            anc_len = anc_len_all[anc_idx]
-
-            txt = f'seg {seg_id}: {gt_s / sampling_sec:.2f} - {gt_e / sampling_sec:.2f}  ' \
-                f'ov: {overlap:.3f} ' \
-                f'anc cen: {anc_cen} len: {anc_len}'
-
-            if overlap > pos_thresh:
-                max_overlap, max_ann_idx = anc_to_ann[anc_idx]
-
-                assert max_overlap >= overlap, "max_overlap must exceed overlap"
-
-                max_ann = annotations[max_ann_idx]
-                max_gt_s, max_gt_e = max_ann['segment']
-                max_seg_id = max_ann['id']
-
-                txt += f' max_seg {max_seg_id}: {max_gt_s / sampling_sec:.2f} - {max_gt_e / sampling_sec:.2f} ' \
-                    f'max_ov: {max_overlap:.3f} '
-
-            out_txt += txt + '\n'
-            # print(txt)
-        # print()
-
-    """list of anchors having max overlap with any GT segment < neg_thresh"""
-    neg_seg = []
-    for oi, overlap in enumerate(neg_overlap):
-        if isinstance(overlap, np.ndarray):
-            overlap = float(overlap.item())
-
-        if overlap < neg_thresh:
-            neg_seg.append((oi, overlap))
-
-    npos_seg = 0
-    for k in pos_seg:
-        npos_seg += len(pos_seg[k])
-
-    out_txt += f'pos anc: {npos_seg}, neg anc: {len(neg_seg)}\n'
-
-    n_pos_seg = 0
-    sample_list = []
-    for k in pos_seg:
-        """
-        all neg_segs in each sequence are the same, since they need to be negative
-        for all samples
-        """
-        neg_anc_info = neg_seg
-
-        """
-        all_segs is a list of 5-tuples: anc_idx, overlap, len_offset, cen_offset, ann['sentence_idx']
-        however, each such list has only a single such tuple
-        """
-        all_segs = pos_seg[k]
-
-        """sentence_idx - same for all entries in all_segs"""
-        sentence_idx = all_segs[0][-1]  # [s[-1] for s in all_segs]
-
-        """anc_idx, overlap, len_offset, cen_offset"""
-        pos_anc_info = [s[:-1] for s in all_segs]
-
-        sample_list.append(
-            (video_prefix, vid_frame_ids, pos_anc_info, sentence_idx, neg_anc_info, n_frames))
-        n_pos_seg += len(pos_seg[k])
-
-    if save_samplelist:
-        sample_list_path = os.path.join(sample_list_dir, f'{vid}.pkl')
-
-        # sample_list_size = sys.getsizeof(sample_list)
-        # sample_list_size_mb = sample_list_size / 1e6
-        # print(f'\n{vid} : saving sample_list of size {sample_list_size_mb} MB to {sample_list_path}')
-        with open(sample_list_path, 'wb') as f:
-            pickle.dump(sample_list, f)
-        # print(f'\n{vid} : done')
-    out_txt_path = os.path.join(out_txt_dir, f'{vid}.log')
-
-    # print(f'\n{vid} : saving out_txt to {out_txt_path}')
-    with open(out_txt_path, 'w') as fid:
-        fid.write(out_txt)
-    # print(f'\n{vid} : done')
-
-    return sample_list, video_prefix, vid_frame_ids, n_frames, pos_seg, neg_seg, n_miss_props, n_pos_seg
