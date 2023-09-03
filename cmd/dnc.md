@@ -70,7 +70,7 @@ python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_
 ## 100-960       @ n-1-->dnc
 <a id="seq_0_to_99_win_2_f0_max_16___100_960_n_1_"></a>
 ### seq_0_to_99_win_2-f0_max_16       @ 100-960/n-1-->dnc
-python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16.cfg --batch_size 32 --num_workers 0
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16.cfg --batch_size 20 --num_workers 0
 __dbg__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_fix_20-f0_max_16.cfg --batch_size 32 --num_workers 0
 
