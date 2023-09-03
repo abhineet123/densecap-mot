@@ -21,7 +21,6 @@ from random import shuffle
 from tqdm import tqdm
 
 import torch
-import torchtext
 from torch.utils.data import Dataset
 
 from dnc_data.utils import segment_iou
@@ -600,6 +599,7 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
     # else:
 
     # build vocab and tokenized sentences
+    import torchtext
     try:
         Field = torchtext.data.Field
     except AttributeError:
@@ -611,7 +611,6 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
         lower=True, batch_first=True,
         fix_length=max_sentence_length)
 
-    # sentences_proc = list(map(text_proc.preprocess, train_sentences)) # build vocab on train only
     """divide sentences into words to have a list of list of words or tokens as they're called"""
     sentences_proc_path = os.path.join(save_path, f"sentences_proc.pkl")
     if os.path.isfile(sentences_proc_path):
@@ -626,7 +625,7 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
             pickle.dump(sentences_proc, f)
 
     print('building vocab')
-    text_proc.build_vocab(sentences_proc, min_freq=5)
+    text_proc.build_vocab(sentences_proc, min_freq=0)
     print(f'# of words in the vocab: {len(text_proc.vocab)}')
 
     return text_proc, raw_data, n_videos

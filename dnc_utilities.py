@@ -14,6 +14,16 @@ from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_t
 
 from objects import Annotations
 
+class GridTokenizer:
+    def __init__(self, grid_res, vocab_fmt):
+        self.grid_res = grid_res
+        self.vocab_fmt = vocab_fmt
+
+        self.n_dig = len(str(self.grid_res[0]))
+
+    def preprocess(self, sentence):
+        return sentence.split(' ')
+
 
 def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
     ckpt_names = glob.glob(f'{dir_name}/{prefix}*.pth')
