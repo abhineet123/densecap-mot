@@ -526,7 +526,7 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
         img_batch, frame_length, video_prefix, feat_frame_ids_all, samples, times = data
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
-        pbar.set_description(f'training epoch {epoch} times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}')
+        pbar.set_description(f'training epoch {epoch} (times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f})')
 
         # img_batch = Variable(img_batch)
         # tempo_seg_pos = Variable(tempo_seg_pos)
@@ -680,7 +680,7 @@ def valid(epoch, model, loader,
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
 
-        pbar.set_description(f'validation epoch {epoch} times: {load_t:.3f},{torch_t:.3f},{collate_t:.3f}')
+        pbar.set_description(f'validation epoch {epoch} (times: {load_t:.2f},{torch_t:.2f},{collate_t:.2f})')
 
         with torch.no_grad():
             # img_batch = Variable(img_batch)
