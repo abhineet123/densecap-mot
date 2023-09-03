@@ -136,7 +136,6 @@ class TrainParams:
         self.grid_res = [32, 32]
 
         self.img_dir_name = 'Images'
-        self.ext = 'mp4'
 
         self.min_prop_before_nms = 200
         self.min_prop_num = 50

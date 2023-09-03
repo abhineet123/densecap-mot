@@ -734,8 +734,6 @@ def valid(epoch, model, loader,
                 if params.img_dir_name:
                     src_dir_path = linux_path(src_dir_path, params.img_dir_name)
                 vid_path = linux_path(src_dir_path, vid_name)
-                if params.ext:
-                    vid_path = f'{vid_path}.{params.ext}'
 
                 _input_params = Input.Params(source_type=-1,
                                              batch_mode=True,
