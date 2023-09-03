@@ -606,8 +606,10 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
         Field = torchtext.legacy.data.Field
 
     text_proc = Field(
-        sequential=True, init_token='<init>',
-        eos_token='<eos>', tokenize='spacy',
+        sequential=True,
+        # init_token='<init>',
+        # eos_token='<eos>',
+        tokenize='spacy',
         lower=True, batch_first=True,
         fix_length=max_sentence_length)
 
