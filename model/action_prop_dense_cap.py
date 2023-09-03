@@ -425,7 +425,7 @@ class ActionPropDenseCap(nn.Module):
             pred_mask = self.mask_model(in_pred_mask).view(batch_size, temporal_size, 1)
 
             if gated_mask:
-                gate_scores = F.sigmoid(gate_scores)
+                gate_scores = torch.sigmoid(gate_scores)
                 window_mask = (gate_scores * pred_bin_window_mask.view(batch_size, temporal_size, 1)
                                # window_mask = (gate_scores * batch_mask
                                + (1 - gate_scores) * pred_mask)
@@ -519,7 +519,7 @@ class ActionPropDenseCap(nn.Module):
         prop_all = torch.cat(prop_lst, 2)
 
         # assume 1st and 2nd are action prediction and overlap, respectively
-        prop_all[:, :2, :] = F.sigmoid(prop_all[:, :2, :])
+        prop_all[:, :2, :] = torch.sigmoid(prop_all[:, :2, :])
 
         pred_len = prop_all[:, 4, :] * torch.exp(prop_all[:, 2, :])
         pred_cen = prop_all[:, 5, :] + prop_all[:, 4, :] * prop_all[:, 3, :]

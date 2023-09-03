@@ -384,64 +384,80 @@ def main():
 
                 torch.save(model.state_dict(), ckpt)
 
-        (valid_loss, val_cls_loss,
-         val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, vis_path, args)
+        if train_epoch % args.validate_every == 0 or train_epoch == args.max_epochs:
 
-        writer.add_scalar('val/loss', valid_loss, train_epoch)
-        writer.add_scalar('val/cls_loss', val_cls_loss, train_epoch)
-        writer.add_scalar('val/reg_loss', val_reg_loss, train_epoch)
-        writer.add_scalar('val/sent_loss', val_sent_loss, train_epoch)
-        writer.add_scalar('val/mask_loss', val_mask_loss, train_epoch)
+            (valid_loss, val_cls_loss,
+             val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, vis_path, args)
 
-        all_eval_losses.append(valid_loss)
-        all_cls_losses.append(val_cls_loss)
-        all_reg_losses.append(val_reg_loss)
-        all_sent_losses.append(val_sent_loss)
-        all_mask_losses.append(val_mask_loss)
+            writer.add_scalar('val/loss', valid_loss, train_epoch)
+            writer.add_scalar('val/cls_loss', val_cls_loss, train_epoch)
+            writer.add_scalar('val/reg_loss', val_reg_loss, train_epoch)
+            writer.add_scalar('val/sent_loss', val_sent_loss, train_epoch)
+            writer.add_scalar('val/mask_loss', val_mask_loss, train_epoch)
 
-        if args.enable_visdom:
-            if vis_window['loss'] is None:
-                if not args.distributed or (args.distributed and dist.get_rank() == 0):
-                    vis_window['loss'] = vis.line(
-                        X=np.tile(np.arange(len(all_eval_losses)),
-                                  (6, 1)).T,
-                        Y=np.column_stack((np.asarray(all_training_losses),
-                                           np.asarray(all_eval_losses),
-                                           np.asarray(all_cls_losses),
-                                           np.asarray(all_reg_losses),
-                                           np.asarray(all_sent_losses),
-                                           np.asarray(all_mask_losses))),
-                        opts=dict(title='Loss',
-                                  xlabel='Validation Iter',
-                                  ylabel='Loss',
-                                  legend=['train',
-                                          'dev',
-                                          'dev_cls',
-                                          'dev_reg',
-                                          'dev_sentence',
-                                          'dev_mask']))
-            else:
-                if not args.distributed or (
-                        args.distributed and dist.get_rank() == 0):
-                    vis.line(
-                        X=np.tile(np.arange(len(all_eval_losses)),
-                                  (6, 1)).T,
-                        Y=np.column_stack((np.asarray(all_training_losses),
-                                           np.asarray(all_eval_losses),
-                                           np.asarray(all_cls_losses),
-                                           np.asarray(all_reg_losses),
-                                           np.asarray(all_sent_losses),
-                                           np.asarray(all_mask_losses))),
-                        win=vis_window['loss'],
-                        opts=dict(title='Loss',
-                                  xlabel='Validation Iter',
-                                  ylabel='Loss',
-                                  legend=['train',
-                                          'dev',
-                                          'dev_cls',
-                                          'dev_reg',
-                                          'dev_sentence',
-                                          'dev_mask']))
+            all_eval_losses.append(valid_loss)
+            all_cls_losses.append(val_cls_loss)
+            all_reg_losses.append(val_reg_loss)
+            all_sent_losses.append(val_sent_loss)
+            all_mask_losses.append(val_mask_loss)
+
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                best_valid_loss_epoch = train_epoch
+                if (args.distributed and dist.get_rank() == 0) or not args.distributed:
+                    checkpoint, epoch = get_latest_checkpoint(args.ckpt, 'best_val_model_', True)
+                    if checkpoint is not None:
+                        os.remove(checkpoint)
+                    ckpt_path = os.path.join(args.ckpt, f'best_val_model_{train_epoch}.pth')
+                    torch.save(model.state_dict(), ckpt_path)
+                print('*' * 5)
+                print('Better validation loss {:.4f} found, save model'.format(valid_loss))
+            # learning rate decay
+            scheduler.step(valid_loss)
+
+            # if args.enable_visdom:
+            #     if vis_window['loss'] is None:
+            #         if not args.distributed or (args.distributed and dist.get_rank() == 0):
+            #             vis_window['loss'] = vis.line(
+            #                 X=np.tile(np.arange(len(all_eval_losses)),
+            #                           (6, 1)).T,
+            #                 Y=np.column_stack((np.asarray(all_training_losses),
+            #                                    np.asarray(all_eval_losses),
+            #                                    np.asarray(all_cls_losses),
+            #                                    np.asarray(all_reg_losses),
+            #                                    np.asarray(all_sent_losses),
+            #                                    np.asarray(all_mask_losses))),
+            #                 opts=dict(title='Loss',
+            #                           xlabel='Validation Iter',
+            #                           ylabel='Loss',
+            #                           legend=['train',
+            #                                   'dev',
+            #                                   'dev_cls',
+            #                                   'dev_reg',
+            #                                   'dev_sentence',
+            #                                   'dev_mask']))
+            #     else:
+            #         if not args.distributed or (
+            #                 args.distributed and dist.get_rank() == 0):
+            #             vis.line(
+            #                 X=np.tile(np.arange(len(all_eval_losses)),
+            #                           (6, 1)).T,
+            #                 Y=np.column_stack((np.asarray(all_training_losses),
+            #                                    np.asarray(all_eval_losses),
+            #                                    np.asarray(all_cls_losses),
+            #                                    np.asarray(all_reg_losses),
+            #                                    np.asarray(all_sent_losses),
+            #                                    np.asarray(all_mask_losses))),
+            #                 win=vis_window['loss'],
+            #                 opts=dict(title='Loss',
+            #                           xlabel='Validation Iter',
+            #                           ylabel='Loss',
+            #                           legend=['train',
+            #                                   'dev',
+            #                                   'dev_cls',
+            #                                   'dev_reg',
+            #                                   'dev_sentence',
+            #                                   'dev_mask']))
 
         if epoch_loss < best_train_loss:
             best_train_loss = epoch_loss
@@ -455,52 +471,38 @@ def main():
             print('*' * 5)
             print(f'Better training loss {epoch_loss:.4f} found, save model')
 
-        if valid_loss < best_valid_loss:
-            best_valid_loss = valid_loss
-            best_valid_loss_epoch = train_epoch
-            if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-                checkpoint, epoch = get_latest_checkpoint(args.ckpt, 'best_val_model_', True)
-                if checkpoint is not None:
-                    os.remove(checkpoint)
-                ckpt_path = os.path.join(args.ckpt, f'best_val_model_{train_epoch}.pth')
-                torch.save(model.state_dict(), ckpt_path)
-            print('*' * 5)
-            print('Better validation loss {:.4f} found, save model'.format(valid_loss))
-
         # save eval and train losses
-        if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-            torch.save({'train_loss': all_training_losses,
-                        'eval_loss': all_eval_losses,
-                        'eval_cls_loss': all_cls_losses,
-                        'eval_reg_loss': all_reg_losses,
-                        'eval_sent_loss': all_sent_losses,
-                        'eval_mask_loss': all_mask_losses,
-                        }, os.path.join(args.ckpt, 'model_losses.pth'))
+        # if (args.distributed and dist.get_rank() == 0) or not args.distributed:
+        #     torch.save({'train_loss': all_training_losses,
+        #                 'eval_loss': all_eval_losses,
+        #                 'eval_cls_loss': all_cls_losses,
+        #                 'eval_reg_loss': all_reg_losses,
+        #                 'eval_sent_loss': all_sent_losses,
+        #                 'eval_mask_loss': all_mask_losses,
+        #                 }, os.path.join(args.ckpt, 'model_losses.pth'))
 
-        # learning rate decay
-        scheduler.step(valid_loss)
 
         # all other process wait for the 1st process to finish
         # if args.distributed:
         #     dist.barrier()
 
-        print('-' * 80)
-        print('Epoch {} summary'.format(train_epoch))
-        print('Train loss: {:.4f}, val loss: {:.4f}, Time: {:.4f}s'.format(
-            epoch_loss, valid_loss, time.time() - t_epoch_start
-        ))
-        print(f'best_train_loss: {best_train_loss:.4f} '
-              f'in epoch: {best_train_loss_epoch:.4f}')
-
-        print(f'val_cls: {val_cls_loss:.4f}, '
-              f'val_reg: {val_reg_loss:.4f}, '
-              f'val_sentence: {val_sent_loss:.4f}, '
-              f'val mask: {val_mask_loss:.4f}')
-
-        print(f'best_valid_loss: {best_valid_loss:.4f} '
-              f'in epoch: {best_valid_loss_epoch:.4f}')
-
-        print('-' * 80)
+        # print('-' * 80)
+        # print('Epoch {} summary'.format(train_epoch))
+        # print('Train loss: {:.4f}, val loss: {:.4f}, Time: {:.4f}s'.format(
+        #     epoch_loss, valid_loss, time.time() - t_epoch_start
+        # ))
+        # print(f'best_train_loss: {best_train_loss:.4f} '
+        #       f'in epoch: {best_train_loss_epoch:.4f}')
+        #
+        # print(f'val_cls: {val_cls_loss:.4f}, '
+        #       f'val_reg: {val_reg_loss:.4f}, '
+        #       f'val_sentence: {val_sent_loss:.4f}, '
+        #       f'val mask: {val_mask_loss:.4f}')
+        #
+        # print(f'best_valid_loss: {best_valid_loss:.4f} '
+        #       f'in epoch: {best_valid_loss_epoch:.4f}')
+        #
+        # print('-' * 80)
 
 
 def train(epoch, model, optimizer, train_loader, vis, vis_window,
@@ -718,22 +720,6 @@ def valid(epoch, model, loader,
             _input = None
 
             for b, video_prefix in enumerate(video_prefix_list):
-                vid = os.path.basename(video_prefix)
-
-                start_id = end_id = -1
-
-                if '--' in vid:
-                    vid_name, vid_frame_ids = vid.split('--')
-                    vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
-                    start_id, end_id = vid_frame_ids
-                else:
-                    vid_name = vid
-
-                    if feat_frame_ids_list[b] is not None:
-                        feat_start_id, feat_end_id = feat_frame_ids_list[b]
-                        start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
-                        vid = f'{vid}--{start_id}_{end_id}'
-
                 annotations = []
                 for pred_start, pred_end, pred_s, sentence in all_proposal_results[b]:
                     pred_start_t = pred_start * sampling_sec
@@ -757,6 +743,22 @@ def valid(epoch, model, loader,
 
                 if not annotations:
                     continue
+
+                vid = os.path.basename(video_prefix)
+
+                start_id = end_id = -1
+
+                if '--' in vid:
+                    vid_name, vid_frame_ids = vid.split('--')
+                    vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+                    start_id, end_id = vid_frame_ids
+                else:
+                    vid_name = vid
+
+                    if feat_frame_ids_list[b] is not None:
+                        feat_start_id, feat_end_id = feat_frame_ids_list[b]
+                        start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+                        vid = f'{vid}--{start_id}_{end_id}'
 
                 if _input is None:
                     src_dir_path = params.db_root
