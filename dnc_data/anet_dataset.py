@@ -838,7 +838,9 @@ class ANetDataset(Dataset):
             end2 = time.time()
         else:
             start = time.time()
-            img_feat_np = np.load(video_prefix + '.npy', mmap_mode='r')
+            img_feat_np = np.load(video_prefix + '.npy',
+                                  # mmap_mode='r'
+                                  )
             end = time.time()
 
             img_feat = torch.from_numpy(img_feat_np).float()
