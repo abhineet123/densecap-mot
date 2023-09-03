@@ -716,21 +716,31 @@ def valid(epoch, model, loader,
             for b, video_prefix in enumerate(video_prefix_list):
                 vid = os.path.basename(video_prefix)
 
+                start_id = end_id = -1
+
+                if '--' in vid:
+                    vid_name, vid_frame_ids = vid.split('--')
+                    vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+                    start_id, end_id = vid_frame_ids
+                else:
+                    vid_name = vid
+
+                    if feat_frame_ids_list[b] is not None:
+                        feat_start_id, feat_end_id = feat_frame_ids_list[b]
+                        start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+                        vid = f'{vid}--{start_id}_{end_id}'
+
                 src_dir_path = params.db_root
                 if params.img_dir_name:
                     src_dir_path = linux_path(src_dir_path, params.img_dir_name)
-                vid_path = linux_path(src_dir_path, vid)
+                vid_path = linux_path(src_dir_path, vid_name)
                 if params.ext:
                     vid_path = f'{vid_path}.{params.ext}'
 
-                _input_params = Input.Params(source_type=-1, batch_mode=True, path=vid_path)
-
-                if feat_frame_ids_list[0] is not None:
-                    feat_start_id, feat_end_id = feat_frame_ids_list[0]
-                    start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
-                    vid = f'{vid}--{start_id}_{end_id}'
-
-                    _input_params.frame_ids = (start_id, end_id - 1)
+                _input_params = Input.Params(source_type=-1,
+                                             batch_mode=True,
+                                             path=vid_path,
+                                             frame_ids=(start_id, end_id - 1))
 
                 _logger = CustomLogger.setup(__name__)
                 _input = Input(_input_params, _logger)
@@ -765,7 +775,7 @@ def valid(epoch, model, loader,
                     json_data=None,
                     n_seq=None,
                     out_dir=vis_path,
-                    out_name=vid,
+                    out_name=vid_name,
                     sentence_to_grid_cells=sentence_to_grid_cells,
                     grid_res=params.grid_res,
                     fps=params.fps,

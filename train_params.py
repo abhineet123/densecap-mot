@@ -130,7 +130,7 @@ class TrainParams:
 
         self.enable_flow = 0
 
-        self.vis = 2
+        self.vis = 3
         self.vocab_fmt = 0
         self.max_diff = 0
         self.grid_res = [32, 32]
