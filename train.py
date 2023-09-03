@@ -705,7 +705,7 @@ def valid(epoch, model, loader,
                                    stride_factor=params.stride_factor,
                                    gated_mask=params.gated_mask)
             end_t = time.time()
-            forward_t = end_t - start_t
+            forward_t = (end_t - start_t) * 1000
 
             all_proposal_results = model.module.inference(
                 img_batch,
@@ -719,7 +719,7 @@ def valid(epoch, model, loader,
                 gated_mask=params.gated_mask)
 
             end_t = time.time()
-            inference_t = end_t - start_t
+            inference_t = (end_t - start_t) * 1000
 
             _input = None
             start_t = time.time()
@@ -798,7 +798,7 @@ def valid(epoch, model, loader,
                     params=None,
                 )
             end_t = time.time()
-            vis_t = end_t - start_t
+            vis_t = (end_t - start_t) * 1000
 
             pbar.set_description(f'validation epoch {epoch} '
                                  f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
