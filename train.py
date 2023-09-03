@@ -744,7 +744,7 @@ def valid(epoch, model, loader,
 
                 vis_sample_id = random.randint(0, batch_size - 1)
 
-                img_batch_vis = img_batch[vis_sample_id, ...]
+                img_batch_vis = img_batch[vis_sample_id:vis_sample_id, ...]
 
                 all_proposal_results = model.module.inference(
                     img_batch_vis,
