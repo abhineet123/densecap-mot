@@ -213,6 +213,8 @@ def run(seq_info, dnc_data, frames, json_data,
         grid_res, fps, vis,
         params: Params
         ):
+    invalid_words = ['<UNK>', ]
+
     if frames is None:
         seq_id, seq_suffix, start_id, end_id = seq_info
 
@@ -294,6 +296,10 @@ def run(seq_info, dnc_data, frames, json_data,
         traj_n_frames = end_frame - start_frame + 1
 
         words = sentence.split(' ')
+        words = [word for word in words if word not in invalid_words]
+
+        if not words:
+            continue
 
         grid_cells = sentence_to_grid_cells(words)
 
@@ -321,12 +327,14 @@ def run(seq_info, dnc_data, frames, json_data,
             save_fmt = 'mp4'
             codec = 'mp4v'
             fps = 30
-            out_path = linux_path(out_dir, f'{out_name}--{traj_id}.{save_fmt}')
+            out_vis_path = linux_path(out_dir, f'{out_name}--{traj_id}.{save_fmt}')
+
+            print(f'saving visualization video to {out_vis_path}')
 
             codec = params.codec
             fourcc = cv2.VideoWriter_fourcc(*codec)
 
-            video_out = cv2.VideoWriter(out_path, fourcc, params.fps, (frame_w, frame_h))
+            video_out = cv2.VideoWriter(out_vis_path, fourcc, params.fps, (frame_w, frame_h))
 
         for frame_id in range(start_frame, end_frame + 1):
             if vis:
