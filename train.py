@@ -677,7 +677,7 @@ def valid(epoch, model, loader,
                                                    )
 
     vis_batch_id = random.randint(0, nbatches - 1)
-    print(f'visualizing batch {vis_batch_id}')
+    print(f'\nvisualizing batch {vis_batch_id}\n')
 
     for val_iter, data in enumerate(pbar):
         inference_t = vis_t = 0
@@ -741,8 +741,8 @@ def valid(epoch, model, loader,
             if vis_batch_id == val_iter:
 
                 batch_size = img_batch.size()[0]
-
                 vis_sample_id = random.randint(0, batch_size - 1)
+                print(f'\nvisualizing sample {vis_sample_id}\n')
 
                 img_batch_vis = img_batch[vis_sample_id:vis_sample_id+1, ...]
 
@@ -788,6 +788,7 @@ def valid(epoch, model, loader,
                         })
 
                 if not annotations:
+                    print('\nno valid annotations found for visualization\n')
                     continue
 
                 start_id = end_id = -1
