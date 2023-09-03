@@ -450,7 +450,7 @@ def generate_seq(
 ):
     random.seed(time.time_ns())
 
-    split, seq_id = seq_info
+    global_id, split, seq_id = seq_info
 
     n_dig = len(str(n_seq[split]))
     fmt = f'%0{n_dig}d'
@@ -608,7 +608,7 @@ def generate_seq(
     df = pd.DataFrame(csv_raw)
     df.to_csv(csv_file_path)
 
-    return seq_name, n_frames
+    return global_id, seq_name, n_frames
 
 
 def main():
@@ -778,6 +778,7 @@ def main():
     valid_frg_cols = None
 
     seq_info_list = [(split, seq_id) for split in ['train', 'test'] for seq_id in range(n_seq[split])]
+    seq_info_list = [(global_id, split, seq_id) for global_id, (split, seq_id) in enumerate(seq_info_list)]
 
     import functools
 
