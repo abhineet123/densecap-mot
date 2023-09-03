@@ -527,7 +527,7 @@ class ActionPropDenseCap(nn.Module):
         nms_thresh_set = np.arange(0.9, 0.95, 0.05).tolist()
         all_proposal_results = []
 
-        return all_proposal_results
+        # return all_proposal_results
 
         """
         store positional encodings, size of B x 4,

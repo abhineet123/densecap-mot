@@ -677,7 +677,13 @@ def valid(epoch, model, loader,
                                                    max_diff=params.max_diff,
                                                    )
 
+    vis_batch_id = random.randint(0, nbatches-1)
+    vis_sample_id = random.randint(0, params.valid_batch_size-1)
+    print(f'visualizing batch {vis_batch_id} sample {vis_sample_id}')
+
     for val_iter, data in enumerate(pbar):
+        inference_t = vis_t = 0
+
         global_iter = epoch * nbatches + val_iter
 
         img_batch, frame_length, video_prefix_list, feat_frame_ids_list, samples, times = data
@@ -707,29 +713,59 @@ def valid(epoch, model, loader,
             end_t = time.time()
             forward_t = (end_t - start_t) * 1000
 
-            all_proposal_results = model.module.inference(
-                img_batch,
-                frame_length,
-                sampling_sec,
-                params.min_prop_num,
-                params.max_prop_num,
-                params.min_prop_before_nms,
-                params.pos_thresh,
-                params.stride_factor,
-                gated_mask=params.gated_mask)
+            cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
+            reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+            sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
 
-            end_t = time.time()
-            inference_t = (end_t - start_t) * 1000
+            total_loss = cls_loss + reg_loss + sent_loss
 
-            _input = None
-            start_t = time.time()
+            if mask_loss is not None:
+                mask_loss = params.mask_weight * mask_loss
+                total_loss += mask_loss
+            else:
+                mask_loss = cls_loss.new(1).fill_(0)
 
-            for b, video_prefix in enumerate(video_prefix_list):
+            val_cls_loss.append(cls_loss.data.item())
+            # writer.add_scalar('val_iter/cls_loss', val_cls_loss[-1], global_iter)
+
+            val_reg_loss.append(reg_loss.data.item())
+            # writer.add_scalar('val_iter/reg_loss', val_reg_loss[-1], global_iter)
+
+            val_sent_loss.append(sent_loss.data.item())
+            # writer.add_scalar('val_iter/sent_loss', val_sent_loss[-1], global_iter)
+
+            val_mask_loss.append(mask_loss.data.item())
+            # writer.add_scalar('val_iter/mask_loss', val_sent_loss[-1], global_iter)
+
+            valid_loss.append(total_loss.data.item())
+            # writer.add_scalar('val_iter/loss', valid_loss[-1], global_iter)
+
+            if vis_batch_id == val_iter:
+
+                img_batch_vis = img_batch[vis_sample_id, ...]
+
+                all_proposal_results = model.module.inference(
+                    img_batch_vis,
+                    frame_length,
+                    sampling_sec,
+                    params.min_prop_num,
+                    params.max_prop_num,
+                    params.min_prop_before_nms,
+                    params.pos_thresh,
+                    params.stride_factor,
+                    gated_mask=params.gated_mask)
+
+                end_t = time.time()
+                inference_t = (end_t - start_t) * 1000
+
+                _input = None
+                start_t = time.time()
+
                 annotations = []
-                if not all_proposal_results:
-                    continue
-                    
-                for pred_start, pred_end, pred_s, sentence in all_proposal_results[b]:
+
+                assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
+
+                for pred_start, pred_end, pred_s, sentence in all_proposal_results[0]:
                     words = sentence.upper().split(' ')
 
                     words = [word for word in words if word not in invalid_words]
@@ -752,9 +788,10 @@ def valid(epoch, model, loader,
                 if not annotations:
                     continue
 
-                vid = os.path.basename(video_prefix)
-
                 start_id = end_id = -1
+                video_prefix = video_prefix_list(vis_sample_id)
+
+                vid = os.path.basename(video_prefix)
 
                 if '--' in vid:
                     vid_name, vid_frame_ids = vid.split('--')
@@ -800,39 +837,15 @@ def valid(epoch, model, loader,
                     vis=params.vis,
                     params=None,
                 )
-            end_t = time.time()
-            vis_t = (end_t - start_t) * 1000
+                end_t = time.time()
+
+                vis_t = (end_t - start_t) * 1000
 
             pbar.set_description(f'validation epoch {epoch} '
                                  f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
                                  f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})')
 
-            cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
-            reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
-            sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
 
-            total_loss = cls_loss + reg_loss + sent_loss
-
-            if mask_loss is not None:
-                mask_loss = params.mask_weight * mask_loss
-                total_loss += mask_loss
-            else:
-                mask_loss = cls_loss.new(1).fill_(0)
-
-            val_cls_loss.append(cls_loss.data.item())
-            # writer.add_scalar('val_iter/cls_loss', val_cls_loss[-1], global_iter)
-
-            val_reg_loss.append(reg_loss.data.item())
-            # writer.add_scalar('val_iter/reg_loss', val_reg_loss[-1], global_iter)
-
-            val_sent_loss.append(sent_loss.data.item())
-            # writer.add_scalar('val_iter/sent_loss', val_sent_loss[-1], global_iter)
-
-            val_mask_loss.append(mask_loss.data.item())
-            # writer.add_scalar('val_iter/mask_loss', val_sent_loss[-1], global_iter)
-
-            valid_loss.append(total_loss.data.item())
-            # writer.add_scalar('val_iter/loss', valid_loss[-1], global_iter)
 
     return (np.mean(valid_loss), np.mean(val_cls_loss),
             np.mean(val_reg_loss), np.mean(val_sent_loss), np.mean(val_mask_loss))
