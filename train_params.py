@@ -117,7 +117,7 @@ class TrainParams:
         self.sampling_sec = 0
         self.keep_checkpoints = 3
         self.save_checkpoint_every = 1
-        self.validate_every = 5
+        self.validate_every = 1
         self.save_train_samplelist = 1
         self.save_valid_samplelist = 1
         self.resume = 0
@@ -279,7 +279,7 @@ def get_args():
     parser.add_argument('--n_proc', default=1, type=int, help='number of processes to use while generating samples')
 
     # Evaluation/Checkpointing
-    parser.add_argument('--validate_every', default=5, type=int)
+    parser.add_argument('--validate_every', default=1, type=int)
 
     parser.add_argument('--save_checkpoint_every', default=1, type=int,
                         help='how many epochs to save a model checkpoint?')
