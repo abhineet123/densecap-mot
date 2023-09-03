@@ -676,7 +676,7 @@ def valid(epoch, model, loader,
     for val_iter, data in enumerate(pbar):
         global_iter = epoch * nbatches + val_iter
 
-        img_batch, frame_length, video_prefix, feat_frame_ids, samples, times = data
+        img_batch, frame_length, video_prefix_list, feat_frame_ids_list, samples, times = data
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
 
@@ -713,8 +713,8 @@ def valid(epoch, model, loader,
                 params.stride_factor,
                 gated_mask=params.gated_mask)
 
-            for b in range(len(video_prefix)):
-                vid = os.path.basename(video_prefix[b])
+            for b, video_prefix in enumerate(video_prefix_list):
+                vid = os.path.basename(video_prefix)
 
                 src_dir_path = params.db_root
                 if params.img_dir_name:
@@ -725,8 +725,8 @@ def valid(epoch, model, loader,
 
                 _input_params = Input.Params(source_type=-1, batch_mode=True, path=vid_path)
 
-                if feat_frame_ids[0] is not None:
-                    feat_start_id, feat_end_id = feat_frame_ids[0]
+                if feat_frame_ids_list[0] is not None:
+                    feat_start_id, feat_end_id = feat_frame_ids_list[0]
                     start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
                     vid = f'{vid}--{start_id}_{end_id}'
 
@@ -734,6 +734,10 @@ def valid(epoch, model, loader,
 
                 _logger = CustomLogger.setup(__name__)
                 _input = Input(_input_params, _logger)
+
+                if not _input.initialize(None):
+                    _logger.error('Input pipeline could not be initialized')
+                    return False
 
                 annotations = []
                 for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
