@@ -481,7 +481,6 @@ def main():
         #                 'eval_mask_loss': all_mask_losses,
         #                 }, os.path.join(args.ckpt, 'model_losses.pth'))
 
-
         # all other process wait for the 1st process to finish
         # if args.distributed:
         #     dist.barrier()
@@ -677,9 +676,8 @@ def valid(epoch, model, loader,
                                                    max_diff=params.max_diff,
                                                    )
 
-    vis_batch_id = random.randint(0, nbatches-1)
-    vis_sample_id = random.randint(0, params.valid_batch_size-1)
-    print(f'visualizing batch {vis_batch_id} sample {vis_sample_id}')
+    vis_batch_id = random.randint(0, nbatches - 1)
+    print(f'visualizing batch {vis_batch_id}')
 
     for val_iter, data in enumerate(pbar):
         inference_t = vis_t = 0
@@ -741,6 +739,10 @@ def valid(epoch, model, loader,
             # writer.add_scalar('val_iter/loss', valid_loss[-1], global_iter)
 
             if vis_batch_id == val_iter:
+
+                batch_size = img_batch.size()[0]
+
+                vis_sample_id = random.randint(0, batch_size - 1)
 
                 img_batch_vis = img_batch[vis_sample_id, ...]
 
@@ -844,8 +846,6 @@ def valid(epoch, model, loader,
             pbar.set_description(f'validation epoch {epoch} '
                                  f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
                                  f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})')
-
-
 
     return (np.mean(valid_loss), np.mean(val_cls_loss),
             np.mean(val_reg_loss), np.mean(val_sent_loss), np.mean(val_mask_loss))
