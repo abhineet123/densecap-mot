@@ -654,6 +654,8 @@ def valid(epoch, model, loader,
     val_sent_loss = []
     val_mask_loss = []
 
+    invalid_words = ['<UNK>', ]
+
     nbatches = len(loader)
     pbar = tqdm(loader, total=nbatches, ncols=120)
 
@@ -713,6 +715,8 @@ def valid(epoch, model, loader,
                 params.stride_factor,
                 gated_mask=params.gated_mask)
 
+            _input = None
+
             for b, video_prefix in enumerate(video_prefix_list):
                 vid = os.path.basename(video_prefix)
 
@@ -730,41 +734,47 @@ def valid(epoch, model, loader,
                         start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
                         vid = f'{vid}--{start_id}_{end_id}'
 
-                src_dir_path = params.db_root
-                if params.img_dir_name:
-                    src_dir_path = linux_path(src_dir_path, params.img_dir_name)
-                vid_path = linux_path(src_dir_path, vid_name)
-
-                _input_params = Input.Params(source_type=-1,
-                                             batch_mode=True,
-                                             path=vid_path,
-                                             frame_ids=(start_id, end_id - 1))
-
-                _logger = CustomLogger.setup(__name__)
-                _input = Input(_input_params, _logger)
-
-                if not _input.initialize(None):
-                    _logger.error('Input pipeline could not be initialized')
-                    return False
-
                 annotations = []
-                for pred_start, pred_end, pred_s, sent in all_proposal_results[b]:
+                for pred_start, pred_end, pred_s, sentence in all_proposal_results[b]:
                     pred_start_t = pred_start * sampling_sec
                     pred_end_t = pred_end * sampling_sec
 
                     # pred_start_frame = pred_start_t * args.fps
                     # pred_end_frame = pred_end_t * args.fps
 
+                    words = sentence.upper().split(' ')
+
+                    words = [word for word in words if word not in invalid_words]
+
+                    if not words:
+                        continue
+
                     annotations.append(
                         {
-                            'sentence': sent,
+                            'sentence': sentence,
                             'segment': [pred_start_t, pred_end_t]
                         })
 
-                # densecap_result[vid] = {
-                #     "subset": "validation",
-                #     "annotations": annotations
-                # }
+                if not annotations:
+                    continue
+
+                if _input is None:
+                    src_dir_path = params.db_root
+                    if params.img_dir_name:
+                        src_dir_path = linux_path(src_dir_path, params.img_dir_name)
+                    vid_path = linux_path(src_dir_path, vid_name)
+
+                    _input_params = Input.Params(source_type=-1,
+                                                 batch_mode=True,
+                                                 path=vid_path,
+                                                 frame_ids=(start_id, end_id - 1))
+
+                    _logger = CustomLogger.setup(__name__)
+                    _input = Input(_input_params, _logger)
+
+                    if not _input.initialize(None):
+                        _logger.error('Input pipeline could not be initialized')
+                        return False
 
                 dnc_to_mot.run(
                     dnc_data=annotations,

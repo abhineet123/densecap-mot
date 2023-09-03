@@ -213,8 +213,6 @@ def run(seq_info, dnc_data, frames, json_data,
         grid_res, fps, vis,
         params: Params
         ):
-    invalid_words = ['<UNK>', ]
-
     if frames is None:
         seq_id, seq_suffix, start_id, end_id = seq_info
 
@@ -296,10 +294,6 @@ def run(seq_info, dnc_data, frames, json_data,
         traj_n_frames = end_frame - start_frame + 1
 
         words = sentence.split(' ')
-        words = [word for word in words if word not in invalid_words]
-
-        if not words:
-            continue
 
         grid_cells = sentence_to_grid_cells(words)
 
