@@ -726,6 +726,9 @@ def valid(epoch, model, loader,
 
             for b, video_prefix in enumerate(video_prefix_list):
                 annotations = []
+                if not all_proposal_results:
+                    continue
+                    
                 for pred_start, pred_end, pred_s, sentence in all_proposal_results[b]:
                     words = sentence.upper().split(' ')
 
