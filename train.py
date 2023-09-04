@@ -529,6 +529,11 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
 
         img_batch, frame_length, video_prefix, feat_frame_ids_all, samples, times = data
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
+
+        tempo_seg_pos_ = tempo_seg_pos.cpu().numpy()
+        tempo_seg_neg_ = tempo_seg_neg.cpu().numpy()
+        sentence_batch_ = sentence_batch.cpu().numpy()
+
         load_t, torch_t, collate_t = times
         pbar.set_description(f'training epoch {epoch} (times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f})')
 
