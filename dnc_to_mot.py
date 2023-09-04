@@ -284,6 +284,20 @@ def run(seq_info, dnc_data, frames, json_data,
     if save_img:
         assert out_name, "out_name must be provided"
 
+    if save_img:
+        save_fmt = 'mp4'
+        codec = 'mp4v'
+        fps = 30
+        out_vis_path = linux_path(out_dir, f'{out_name}.{save_fmt}')
+
+        vis_w, vis_h = 1280, 720
+
+        print(f'saving visualization video to {out_vis_path}')
+
+        fourcc = cv2.VideoWriter_fourcc(*codec)
+
+        video_out = cv2.VideoWriter(out_vis_path, fourcc, fps, (vis_w, vis_h))
+
     for traj_id, traj_datum in enumerate(dnc_data):
         sentence = traj_datum["sentence"].upper()
         timestamp = traj_datum["segment"]
@@ -317,18 +331,6 @@ def run(seq_info, dnc_data, frames, json_data,
 
         # frame_disp_list = []
 
-        if save_img:
-            save_fmt = 'mp4'
-            codec = 'mp4v'
-            fps = 30
-            out_vis_path = linux_path(out_dir, f'{out_name}--{traj_id}.{save_fmt}')
-
-            print(f'saving visualization video to {out_vis_path}')
-
-            fourcc = cv2.VideoWriter_fourcc(*codec)
-
-            video_out = cv2.VideoWriter(out_vis_path, fourcc, fps, (frame_w, frame_h))
-
         for frame_id in range(start_frame, end_frame):
             if vis:
                 frame_disp = np.copy(frames[frame_id])
@@ -340,24 +342,25 @@ def run(seq_info, dnc_data, frames, json_data,
 
                 disp_fn(frame_disp, grid_cell, color='white', thickness=2)
 
+                header_txt = f'frame {frame_id} traj: {traj_id}: ({start_frame}, {end_frame}) {sentence}'
+
                 header_fmt = CVText()
                 location = (header_fmt.location + header_fmt.offset[0], header_fmt.location + header_fmt.offset[1])
                 color = col_bgr[header_fmt.color]
-                cv2.putText(frame_disp, f'frame {frame_id}', location, header_fmt.font,
-                            header_fmt.size, color, header_fmt.thickness, header_fmt.line_type)
 
-                # frame_disp = resize_ar(frame_disp, height=960)
+                frame_disp = annotate_and_show('vis_img', frame_disp,
+                                                 text=header_txt,
+                                                 n_modules=0,
+                                                 only_annotate=1)
+                frame_disp = resize_ar(frame_disp, width=vis_w, height=vis_h, only_border=1)
 
                 if show_img:
                     _pause = show('frame_disp', frame_disp, _pause=_pause)
 
                 if save_img:
                     video_out.write(frame_disp)
-        if save_img:
-            video_out.release()
-
-        # frame_disp_dict[traj_id] = frame_disp_list
-
+    if save_img:
+        video_out.release()
 
 def main():
     """
