@@ -302,7 +302,7 @@ def run(seq_info, dnc_data, frames, json_data,
 
     n_traj = len(dnc_data)
 
-    for traj_id, traj_datum in enumerate(dnc_data):
+    for traj_id, traj_datum in enumerate(tqdm(dnc_data, ncols=80)):
         sentence = traj_datum["sentence"].upper()
         timestamp = traj_datum["segment"]
 
