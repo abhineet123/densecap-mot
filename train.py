@@ -792,7 +792,7 @@ def valid(epoch, model, loader,
                     continue
 
                 start_id = end_id = -1
-                video_prefix = video_prefix_list(vis_sample_id)
+                video_prefix = video_prefix_list[vis_sample_id]
 
                 vid = os.path.basename(video_prefix)
 
