@@ -762,7 +762,7 @@ def visualize(
             feat_start_id, feat_end_id = feat_frame_ids
             start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
 
-    out_name = f'{vid_name}-{epoch}'
+    out_name = f'{epoch}-{vid_name}'
     if _input is None:
         src_dir_path = params.db_root
         if params.img_dir_name:
