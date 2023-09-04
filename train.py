@@ -208,6 +208,9 @@ def main():
     print(f'args.train_splits: {args.train_splits}')
     print(f'args.train_splits[0]: {args.train_splits[0]}')
 
+    if args.valid_batch_size <= 0:
+        args.valid_batch_size = args.batch_size
+
     # print(f'args.val_splits: {args.val_splits}')
     # print(f'args.val_splits[0]: {args.val_splits[0]}')
 
@@ -744,7 +747,7 @@ def valid(epoch, model, loader,
                 vis_sample_id = random.randint(0, batch_size - 1)
                 print(f'\nvisualizing sample {vis_sample_id}\n')
 
-                img_batch_vis = img_batch[vis_sample_id:vis_sample_id+1, ...]
+                img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
 
                 all_proposal_results = model.module.inference(
                     img_batch_vis,

@@ -150,7 +150,7 @@ class TrainParams:
         # self.train_sentence_dict_path = ''
 
         self.val_splits = ['validation', ]
-        self.valid_batch_size = 32
+        self.valid_batch_size = 0
         self.valid_samplelist_path = ''
         # self.valid_sentence_dict_path = ''
 
@@ -248,7 +248,7 @@ def get_args():
     parser.add_argument('--batch_size', default=32, type=int,
                         help='what is the batch size in number of images per batch? (there will be x seq_per_img '
                              'sentences)')
-    parser.add_argument('--valid_batch_size', default=32, type=int)
+    parser.add_argument('--valid_batch_size', default=0, type=int)
 
     parser.add_argument('--cls_weight', default=1.0, type=float)
     parser.add_argument('--reg_weight', default=10, type=float)
