@@ -357,7 +357,9 @@ def run(seq_info, dnc_data, frames, json_data,
                                                text=header_txt,
                                                n_modules=0,
                                                only_annotate=1)
-                frame_disp = resize_ar(frame_disp, width=vis_w, height=vis_h, only_border=1)
+                frame_disp = resize_ar(frame_disp, width=vis_w, height=vis_h, only_border=2)
+
+                assert frame_disp.shape[:2] == (vis_h, vis_w), f"unexpected frame_disp shape: {frame_disp.shape}"
 
                 if show_img:
                     _pause = show('frame_disp', frame_disp, _pause=_pause)
