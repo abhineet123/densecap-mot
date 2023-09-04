@@ -342,16 +342,16 @@ def run(seq_info, dnc_data, frames, json_data,
 
                 disp_fn(frame_disp, grid_cell, color='white', thickness=2)
 
-                header_txt = f'frame {frame_id} traj: {traj_id}: ({start_frame}, {end_frame}) {sentence}'
+                header_txt = f'frame {frame_id} traj: {traj_id}: ({start_frame}, {end_frame})\n{sentence}'
 
                 header_fmt = CVText()
                 location = (header_fmt.location + header_fmt.offset[0], header_fmt.location + header_fmt.offset[1])
                 color = col_bgr[header_fmt.color]
 
                 frame_disp = annotate_and_show('vis_img', frame_disp,
-                                                 text=header_txt,
-                                                 n_modules=0,
-                                                 only_annotate=1)
+                                               text=header_txt,
+                                               n_modules=0,
+                                               only_annotate=1)
                 frame_disp = resize_ar(frame_disp, width=vis_w, height=vis_h, only_border=1)
 
                 if show_img:
@@ -361,6 +361,7 @@ def run(seq_info, dnc_data, frames, json_data,
                     video_out.write(frame_disp)
     if save_img:
         video_out.release()
+
 
 def main():
     """
