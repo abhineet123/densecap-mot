@@ -460,7 +460,7 @@ def train(
         sampled_frames,
         sampling_sec,
         sentence_to_grid_cells,
-        params):
+        params: TrainParams):
     model.train()  # training mode
     train_loss = []
     train_cls_loss = []
@@ -538,7 +538,7 @@ def train(
         end_t = time.time()
         forward_t = (end_t - start_t) * 1000
 
-        if train_iter == vis_batch_id:
+        if epoch >= params.vis_from and train_iter == vis_batch_id:
             batch_size = img_batch.size()[0]
             vis_sample_id = random.randint(0, batch_size - 1)
             print(f'\nvisualizing sample {vis_sample_id}\n')
@@ -655,7 +655,7 @@ def valid(epoch,
         end_t = time.time()
         forward_t = (end_t - start_t) * 1000
 
-        if val_iter == vis_batch_id:
+        if epoch >= params.vis_from and val_iter == vis_batch_id:
             batch_size = img_batch.size()[0]
             vis_sample_id = random.randint(0, batch_size - 1)
             print(f'\nvisualizing sample {vis_sample_id}\n')
