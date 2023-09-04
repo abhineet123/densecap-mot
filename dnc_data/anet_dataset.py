@@ -375,24 +375,20 @@ def _get_pos_neg(vid_info,
 
         """
         all_segs is a list of 5-tuples: anc_idx, overlap, len_offset, cen_offset, ann['sentence_idx']
-        however, each such list has only a single such tuple
+        ann['sentence_idx'] is same for all tuples
         """
         all_segs = pos_seg[k]
 
-        assert len(all_segs) == 1, f"unexpected all_segs length: {len(all_segs)}"
-
-        all_segs = all_segs[0]
-
-        """sentence_idx - same for all entries in all_segs"""
-        sentence_idx = all_segs[-1]  # [s[-1] for s in all_segs]
+        """sentence_idx - same for all tuples in all_segs"""
+        sentence_idx = all_segs[0][-1]  # [s[-1] for s in all_segs]
 
         """anc_idx, overlap, len_offset, cen_offset"""
-        pos_anc_info = [all_segs[:-1], ]
+        pos_anc_info = [s[:-1] for s in all_segs]
 
         sample_list.append(
             (video_prefix, vid_frame_ids, pos_anc_info, sentence_idx, neg_anc_info, n_frames))
 
-        n_pos_seg += 1
+        n_pos_seg += len(all_segs)
 
     if save_samplelist:
         sample_list_path = os.path.join(sample_list_dir, f'{vid}.pkl')
