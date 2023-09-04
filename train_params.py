@@ -42,7 +42,6 @@ class TrainParams:
     :ivar reduce_factor: Factor of learning rate reduction
     :ivar reg_weight: None
     :ivar sample_prob: probability for use model samples during training
-    :ivar sampling_sec: sample frame (RGB and optical flow) with which time interval
     :ivar save_checkpoint_every: how many epochs to save a model checkpoint?
     :ivar save_train_samplelist: None
     :ivar save_valid_samplelist: None
@@ -114,7 +113,6 @@ class TrainParams:
         self.sample_prob = 0
         self.fps = 30.0
         self.sampled_frames = 1.0
-        self.sampling_sec = 0
         self.keep_checkpoints = 3
         self.save_checkpoint_every = 1
         self.validate_every = 1
@@ -217,8 +215,6 @@ def get_args():
     parser.add_argument('--slide_window_stride', default=20, type=int, help='the step size of the sliding window')
     parser.add_argument('--fps', default=30.0, type=float)
     parser.add_argument('--sampled_frames', default=1.0, type=float)
-    parser.add_argument('--sampling_sec', default=0,
-                        help='sample frame (RGB and optical flow) with which time interval')
 
     parser.add_argument('--kernel_list', default=[1, 2, 3, 4, 5, 7, 9, 11, 15, 21, 29, 41, 57, 71, 111, 161, 211, 251],
                         type=int, nargs='+')

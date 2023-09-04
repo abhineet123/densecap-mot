@@ -47,7 +47,7 @@ from objects import Annotations
 from utilities import linux_path, CustomLogger
 
 
-def get_dataset(args):
+def get_dataset(sampling_sec, args):
     """
 
     :param TrainParams args:
@@ -77,7 +77,7 @@ def get_dataset(args):
         stride_factor=args.stride_factor,
         enable_flow=args.enable_flow,
         dataset=args.dataset,
-        sampling_sec=args.sampling_sec,
+        sampling_sec=sampling_sec,
         save_samplelist=args.save_train_samplelist,
         load_samplelist=args.load_train_samplelist,
         sample_list_dir=args.train_samplelist_path,
@@ -97,7 +97,7 @@ def get_dataset(args):
         stride_factor=args.stride_factor,
         enable_flow=args.enable_flow,
         dataset=args.dataset,
-        sampling_sec=args.sampling_sec,
+        sampling_sec=sampling_sec,
         save_samplelist=args.save_valid_samplelist,
         load_samplelist=args.load_valid_samplelist,
         sample_list_dir=args.valid_samplelist_path,
@@ -189,30 +189,30 @@ def get_model(text_proc, dataset, args):
 
 
 def main():
-    args = get_args()  # type: TrainParams
+    params = get_args()  # type: TrainParams
 
-    print(f'args.resume: {args.resume}')
+    print(f'params.resume: {params.resume}')
 
-    if args.sampling_sec == 0:
-        args.sampling_sec = float(args.sampled_frames) / float(args.fps)
+    sampled_frames = params.sampled_frames
+    sampling_sec = float(sampled_frames) / float(params.fps)
 
     # dist parallel, optional
-    args.distributed = args.world_size > 1
-    # args.distributed = 1
+    params.distributed = params.world_size > 1
+    # params.distributed = 1
 
-    # args = TrainParams()
-    # paramparse.process(args)
+    # params = TrainParams()
+    # paramparse.process(params)
 
     # arguments inspection
 
-    print(f'args.train_splits: {args.train_splits}')
-    print(f'args.train_splits[0]: {args.train_splits[0]}')
+    print(f'params.train_splits: {params.train_splits}')
+    print(f'params.train_splits[0]: {params.train_splits[0]}')
 
-    if args.valid_batch_size <= 0:
-        args.valid_batch_size = args.batch_size
+    if params.valid_batch_size <= 0:
+        params.valid_batch_size = params.batch_size
 
-    # print(f'args.val_splits: {args.val_splits}')
-    # print(f'args.val_splits[0]: {args.val_splits[0]}')
+    # print(f'params.val_splits: {params.val_splits}')
+    # print(f'params.val_splits[0]: {params.val_splits[0]}')
 
     """
     slide_window_size is in units of SAMPLED frames rather than original ones
@@ -221,82 +221,82 @@ def main():
     training or testing videos exceed this length otherwise the excess part will be ignored rather than 
     any kind of actual sliding window operation happening to process the long video piecewise
     """
-    assert (args.slide_window_size >= args.slide_window_stride)
-    # assert (args.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
+    assert (params.slide_window_size >= params.slide_window_stride)
+    # assert (params.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
 
-    if not args.train_samplelist_path:
-        args.train_samplelist_path = linux_path(args.ckpt, f"{args.train_splits[0]}_samples")
-        # print(f'args.train_samplelist_path: {args.train_samplelist_path}')
+    if not params.train_samplelist_path:
+        params.train_samplelist_path = linux_path(params.ckpt, f"{params.train_splits[0]}_samples")
+        # print(f'params.train_samplelist_path: {params.train_samplelist_path}')
 
-    # if not args.train_sentence_dict_path:
-    #     args.train_sentence_dict_path = linux_path(args.ckpt, "train_sentence_dict.pkl")
+    # if not params.train_sentence_dict_path:
+    #     params.train_sentence_dict_path = linux_path(params.ckpt, "train_sentence_dict.pkl")
 
-    if not args.valid_samplelist_path:
-        args.valid_samplelist_path = linux_path(args.ckpt, f"{args.val_splits[0]}_samples")
-        # print(f'args.valid_samplelist_path: {args.valid_samplelist_path}')
+    if not params.valid_samplelist_path:
+        params.valid_samplelist_path = linux_path(params.ckpt, f"{params.val_splits[0]}_samples")
+        # print(f'params.valid_samplelist_path: {params.valid_samplelist_path}')
 
     # exit()
 
-    # if not args.valid_sentence_dict_path:
-    #     args.valid_sentence_dict_path = linux_path(args.ckpt, "valid_sentence_dict.pkl")
+    # if not params.valid_sentence_dict_path:
+    #     params.valid_sentence_dict_path = linux_path(params.ckpt, "valid_sentence_dict.pkl")
 
-    print(f'save_valid_samplelist: {args.save_valid_samplelist}')
-    print(f'save_train_samplelist: {args.save_train_samplelist}')
-    print(f'valid_samplelist_path: {args.valid_samplelist_path}')
-    print(f'train_samplelist_path: {args.train_samplelist_path}')
+    print(f'save_valid_samplelist: {params.save_valid_samplelist}')
+    print(f'save_train_samplelist: {params.save_train_samplelist}')
+    print(f'valid_samplelist_path: {params.valid_samplelist_path}')
+    print(f'train_samplelist_path: {params.train_samplelist_path}')
 
-    if args.db_root:
-        args.feature_root = linux_path(args.db_root, args.feature_root)
-        args.dataset_file = linux_path(args.db_root, args.dataset_file)
-        args.dur_file = linux_path(args.db_root, args.dur_file)
+    if params.db_root:
+        params.feature_root = linux_path(params.db_root, params.feature_root)
+        params.dataset_file = linux_path(params.db_root, params.dataset_file)
+        params.dur_file = linux_path(params.db_root, params.dur_file)
 
     print('loading dataset')
-    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(args)
+    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, params)
 
     train_loader = DataLoader(train_dataset,
-                              batch_size=args.batch_size,
+                              batch_size=params.batch_size,
                               shuffle=(train_sampler is None), sampler=train_sampler,
-                              num_workers=args.num_workers,
+                              num_workers=params.num_workers,
                               collate_fn=anet_collate_fn)
 
     valid_loader = DataLoader(valid_dataset,
-                              batch_size=args.valid_batch_size,
+                              batch_size=params.valid_batch_size,
                               shuffle=False,
-                              num_workers=args.num_workers,
+                              num_workers=params.num_workers,
                               collate_fn=anet_collate_fn)
 
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
+    torch.manual_seed(params.seed)
+    np.random.seed(params.seed)
+    random.seed(params.seed)
 
-    if args.cuda:
-        torch.cuda.manual_seed_all(args.seed)
+    if params.cuda:
+        torch.cuda.manual_seed_all(params.seed)
 
-    os.makedirs(args.ckpt, exist_ok=True)
+    os.makedirs(params.ckpt, exist_ok=True)
 
     print('building model')
-    model = get_model(text_proc, train_dataset, args)
+    model = get_model(text_proc, train_dataset, params)
 
     # filter params that don't require gradient (credit: PyTorch Forum issue 679)
     # smaller learning rate for the decoder
-    if args.optim == 'adam':
+    if params.optim == 'adam':
         optimizer = optim.Adam(
             filter(lambda p: p.requires_grad, model.parameters()),
-            args.learning_rate, betas=(args.alpha, args.beta), eps=args.epsilon)
-    elif args.optim == 'sgd':
+            params.learning_rate, betas=(params.alpha, params.beta), eps=params.epsilon)
+    elif params.optim == 'sgd':
         optimizer = optim.SGD(
             filter(lambda p: p.requires_grad, model.parameters()),
-            args.learning_rate,
+            params.learning_rate,
             weight_decay=1e-5,
-            momentum=args.alpha,
+            momentum=params.alpha,
             nesterov=True
         )
     else:
         raise NotImplementedError
 
     # learning rate decay every 1 epoch
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=args.reduce_factor,
-                                               patience=args.patience_epoch,
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=params.reduce_factor,
+                                               patience=params.patience_epoch,
                                                verbose=True)
     # scheduler = lr_scheduler.ExponentialLR(optimizer, 0.6)
 
@@ -309,7 +309,7 @@ def main():
     best_valid_loss = float('inf')
     best_valid_loss_epoch = None
 
-    if args.enable_visdom:
+    if params.enable_visdom:
         import visdom
         vis = visdom.Visdom()
         vis_window = {'iter': None,
@@ -324,8 +324,8 @@ def main():
     all_mask_losses = []
     all_training_losses = []
 
-    tb_path = linux_path(args.ckpt, 'tb')
-    vis_path = linux_path(args.ckpt, 'vis')
+    tb_path = linux_path(params.ckpt, 'tb')
+    vis_path = linux_path(params.ckpt, 'vis')
     os.makedirs(tb_path, exist_ok=1)
     os.makedirs(vis_path, exist_ok=1)
 
@@ -335,25 +335,44 @@ def main():
 
     writer = SummaryWriter(log_dir=tb_path)
 
+    if params.vocab_fmt == 0:
+        word_to_grid_cell = excel_ids_to_grid(params.grid_res)
+        sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
+    else:
+        import functools
+        sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
+                                                   fmt_type=params.vocab_fmt,
+                                                   max_diff=params.max_diff,
+                                                   )
+
     start_epoch = 0
 
-    if args.resume:
-        checkpoint, ckpt_epoch = get_latest_checkpoint(args.ckpt, ignore_missing=True)
+    if params.resume:
+        checkpoint, ckpt_epoch = get_latest_checkpoint(params.ckpt, ignore_missing=True)
         if checkpoint is not None:
             print(f"loading weights from {checkpoint}")
             state_dict = torch.load(checkpoint)
             model.load_state_dict(state_dict)
             start_epoch = ckpt_epoch + 1
 
-    for train_epoch in range(start_epoch, args.max_epochs):
+    for train_epoch in range(start_epoch, params.max_epochs):
         t_epoch_start = time.time()
         # print('Epoch: {}'.format(train_epoch))
 
-        if args.distributed:
+        if params.distributed:
             train_sampler.set_epoch(train_epoch)
 
-        train_loss_dict = train(train_epoch, model, optimizer, train_loader,
-                                vis, vis_window, args)
+        train_loss_dict = train(
+            train_epoch,
+            model,
+            optimizer,
+            train_loader,
+            vis,
+            vis_window,
+            sampled_frames,
+            sampling_sec,
+            sentence_to_grid_cells,
+            params)
 
         epoch_loss = np.mean(train_loss_dict['loss'])
         cls_loss = np.mean(train_loss_dict['cls_loss'])
@@ -375,22 +394,30 @@ def main():
 
         all_training_losses.append(epoch_loss)
 
-        if train_epoch % args.save_checkpoint_every == 0 or train_epoch == args.max_epochs:
-            if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-                del_epoch = train_epoch - args.keep_checkpoints
-                del_ckpt = os.path.join(args.ckpt, f'epoch_{del_epoch}.pth')
+        if train_epoch % params.save_checkpoint_every == 0 or train_epoch == params.max_epochs:
+            if (params.distributed and dist.get_rank() == 0) or not params.distributed:
+                del_epoch = train_epoch - params.keep_checkpoints
+                del_ckpt = os.path.join(params.ckpt, f'epoch_{del_epoch}.pth')
                 if del_epoch >= 0 and os.path.exists(del_ckpt):
                     os.remove(del_ckpt)
 
-                ckpt = os.path.join(args.ckpt, f'epoch_{train_epoch}.pth')
+                ckpt = os.path.join(params.ckpt, f'epoch_{train_epoch}.pth')
                 print(f'saving regular checkpoint: {ckpt}')
 
                 torch.save(model.state_dict(), ckpt)
 
-        if train_epoch % args.validate_every == 0 or train_epoch == args.max_epochs:
+        if train_epoch % params.validate_every == 0 or train_epoch == params.max_epochs:
 
             (valid_loss, val_cls_loss,
-             val_reg_loss, val_sent_loss, val_mask_loss) = valid(train_epoch, model, valid_loader, vis_path, args)
+             val_reg_loss, val_sent_loss, val_mask_loss) = valid(
+                train_epoch,
+                model,
+                valid_loader,
+                vis_path,
+                sampled_frames,
+                sampling_sec,
+                sentence_to_grid_cells,
+                params)
 
             writer.add_scalar('val/loss', valid_loss, train_epoch)
             writer.add_scalar('val/cls_loss', val_cls_loss, train_epoch)
@@ -407,20 +434,20 @@ def main():
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
                 best_valid_loss_epoch = train_epoch
-                if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-                    checkpoint, epoch = get_latest_checkpoint(args.ckpt, 'best_val_model_', True)
+                if (params.distributed and dist.get_rank() == 0) or not params.distributed:
+                    checkpoint, epoch = get_latest_checkpoint(params.ckpt, 'best_val_model_', True)
                     if checkpoint is not None:
                         os.remove(checkpoint)
-                    ckpt_path = os.path.join(args.ckpt, f'best_val_model_{train_epoch}.pth')
+                    ckpt_path = os.path.join(params.ckpt, f'best_val_model_{train_epoch}.pth')
                     torch.save(model.state_dict(), ckpt_path)
                 print('*' * 5)
                 print('Better validation loss {:.4f} found, save model'.format(valid_loss))
             # learning rate decay
             scheduler.step(valid_loss)
 
-            # if args.enable_visdom:
+            # if params.enable_visdom:
             #     if vis_window['loss'] is None:
-            #         if not args.distributed or (args.distributed and dist.get_rank() == 0):
+            #         if not params.distributed or (params.distributed and dist.get_rank() == 0):
             #             vis_window['loss'] = vis.line(
             #                 X=np.tile(np.arange(len(all_eval_losses)),
             #                           (6, 1)).T,
@@ -440,8 +467,8 @@ def main():
             #                                   'dev_sentence',
             #                                   'dev_mask']))
             #     else:
-            #         if not args.distributed or (
-            #                 args.distributed and dist.get_rank() == 0):
+            #         if not params.distributed or (
+            #                 params.distributed and dist.get_rank() == 0):
             #             vis.line(
             #                 X=np.tile(np.arange(len(all_eval_losses)),
             #                           (6, 1)).T,
@@ -465,27 +492,27 @@ def main():
         if epoch_loss < best_train_loss:
             best_train_loss = epoch_loss
             best_train_loss_epoch = train_epoch
-            if (args.distributed and dist.get_rank() == 0) or not args.distributed:
-                checkpoint, epoch = get_latest_checkpoint(args.ckpt, 'best_train_model_', True)
+            if (params.distributed and dist.get_rank() == 0) or not params.distributed:
+                checkpoint, epoch = get_latest_checkpoint(params.ckpt, 'best_train_model_', True)
                 if checkpoint is not None:
                     os.remove(checkpoint)
-                ckpt_path = os.path.join(args.ckpt, f'best_train_model_{train_epoch}.pth')
+                ckpt_path = os.path.join(params.ckpt, f'best_train_model_{train_epoch}.pth')
                 torch.save(model.state_dict(), ckpt_path)
             print('*' * 5)
             print(f'Better training loss {epoch_loss:.4f} found, save model')
 
         # save eval and train losses
-        # if (args.distributed and dist.get_rank() == 0) or not args.distributed:
+        # if (params.distributed and dist.get_rank() == 0) or not params.distributed:
         #     torch.save({'train_loss': all_training_losses,
         #                 'eval_loss': all_eval_losses,
         #                 'eval_cls_loss': all_cls_losses,
         #                 'eval_reg_loss': all_reg_losses,
         #                 'eval_sent_loss': all_sent_losses,
         #                 'eval_mask_loss': all_mask_losses,
-        #                 }, os.path.join(args.ckpt, 'model_losses.pth'))
+        #                 }, os.path.join(params.ckpt, 'model_losses.pth'))
 
         # all other process wait for the 1st process to finish
-        # if args.distributed:
+        # if params.distributed:
         #     dist.barrier()
 
         # print('-' * 80)
@@ -507,9 +534,16 @@ def main():
         # print('-' * 80)
 
 
-def train(epoch, model, optimizer, train_loader, vis, vis_window,
-          # writer,
-          args):
+def train(
+        epoch,
+        model,
+        optimizer,
+        train_loader,
+        vis_path,
+        sampled_frames,
+        sampling_sec,
+        sentence_to_grid_cells,
+        params):
     model.train()  # training mode
     train_loss = []
     train_cls_loss = []
@@ -523,11 +557,17 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
 
     pbar = tqdm(train_loader, total=nbatches, ncols=120)
 
-    sample_prob = min(args.sample_prob, int(epoch / 5) * 0.05)
+    vis_batch_id = random.randint(0, nbatches - 1)
+    print(f'\nvisualizing batch {vis_batch_id}\n')
+
+    sample_prob = min(params.sample_prob, int(epoch / 5) * 0.05)
+
+    inference_t = vis_t = 0
+
     for train_iter, data in enumerate(pbar):
         global_iter = epoch * nbatches + train_iter
 
-        img_batch, frame_length, video_prefix, feat_frame_ids_all, samples, times = data
+        img_batch, frame_length, video_prefix_list, feat_frame_ids_list, samples, times = data
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
 
         tempo_seg_pos_ = tempo_seg_pos.cpu().numpy()
@@ -535,44 +575,41 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
         sentence_batch_ = sentence_batch.cpu().numpy()
 
         load_t, torch_t, collate_t = times
-        pbar.set_description(f'training epoch {epoch} (times: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f})')
-
         # img_batch = Variable(img_batch)
         # tempo_seg_pos = Variable(tempo_seg_pos)
         # tempo_seg_neg = Variable(tempo_seg_neg)
         # sentence_batch = Variable(sentence_batch)
 
-        if args.cuda:
+        if params.cuda:
             img_batch = img_batch.cuda()
             tempo_seg_neg = tempo_seg_neg.cuda()
             tempo_seg_pos = tempo_seg_pos.cuda()
             sentence_batch = sentence_batch.cuda()
 
-        t_model_start = time.time()
+        start_t = time.time()
         (pred_score, gt_score,
          pred_offsets, gt_offsets,
          pred_sentence, gt_sent,
          scst_loss, mask_loss) = model(img_batch, tempo_seg_pos,
                                        tempo_seg_neg, sentence_batch,
-                                       sample_prob, args.stride_factor,
-                                       scst=args.scst_weight > 0,
-                                       gated_mask=args.gated_mask)
+                                       sample_prob, params.stride_factor,
+                                       scst=params.scst_weight > 0,
+                                       gated_mask=params.gated_mask)
 
-        cls_loss = model.module.bce_loss(pred_score, gt_score) * args.cls_weight
-        reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * args.reg_weight
-        sent_loss = F.cross_entropy(pred_sentence, gt_sent) * args.sent_weight
-
+        cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
+        reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+        sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
         total_loss = cls_loss + reg_loss + sent_loss
 
         if scst_loss is not None:
-            scst_loss *= args.scst_weight
+            scst_loss *= params.scst_weight
             total_loss += scst_loss
 
             train_scst_loss.append(scst_loss.data.item())
             # writer.add_scalar('train_iter/scst_loss', train_scst_loss[-1], global_iter)
 
         if mask_loss is not None:
-            mask_loss = args.mask_weight * mask_loss
+            mask_loss = params.mask_weight * mask_loss
             total_loss += mask_loss
 
             train_mask_loss.append(mask_loss.data.item())
@@ -581,66 +618,40 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
         else:
             mask_loss = cls_loss.new(1).fill_(0)
 
+        train_cls_loss.append(cls_loss.data.item())
+        train_reg_loss.append(reg_loss.data.item())
+        train_sent_loss.append(sent_loss.data.item())
+        train_loss.append(total_loss.data.item())
+
+        end_t = time.time()
+        forward_t = (end_t - start_t) * 1000
+
+        if train_iter == vis_batch_id:
+            batch_size = img_batch.size()[0]
+            vis_sample_id = random.randint(0, batch_size - 1)
+            print(f'\nvisualizing sample {vis_sample_id}\n')
+
+            img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
+            video_prefix = video_prefix_list[vis_sample_id]
+            feat_frame_ids = feat_frame_ids_list[vis_sample_id]
+            inference_t, vis_t = visualize(
+                model, img_batch_vis, video_prefix, feat_frame_ids, sampled_frames,
+                frame_length, sampling_sec,
+                vis_path, sentence_to_grid_cells,
+                params)
+
         optimizer.zero_grad()
         total_loss.backward()
 
-        # enable the clipping for zero mask loss training
         total_grad_norm = clip_grad_norm_(filter(lambda p: p.requires_grad, model.parameters()),
-                                          args.grad_norm)
-        # writer.add_scalar('train_iter/grad_norm', float(total_grad_norm), global_iter)
+                                          params.grad_norm)
 
         optimizer.step()
 
-        train_cls_loss.append(cls_loss.data.item())
-        # writer.add_scalar('train_iter/cls_loss', train_cls_loss[-1], global_iter)
-
-        train_reg_loss.append(reg_loss.data.item())
-        # writer.add_scalar('train_iter/reg_loss', train_reg_loss[-1], global_iter)
-
-        train_sent_loss.append(sent_loss.data.item())
-        # writer.add_scalar('train_iter/sent_loss', train_sent_loss[-1], global_iter)
-
-        train_loss.append(total_loss.data.item())
-        # writer.add_scalar('train_iter/oss', train_loss[-1], global_iter)
-
-        if args.enable_visdom:
-            if vis_window['iter'] is None:
-                if not args.distributed or (
-                        args.distributed and dist.get_rank() == 0):
-                    vis_window['iter'] = vis.line(
-                        X=np.arange(epoch * nbatches + train_iter, epoch * nbatches + train_iter + 1),
-                        Y=np.asarray(train_loss),
-                        opts=dict(title='Training Loss',
-                                  xlabel='Training Iteration',
-                                  ylabel='Loss')
-                    )
-            else:
-                if not args.distributed or (
-                        args.distributed and dist.get_rank() == 0):
-                    vis.line(
-                        X=np.arange(epoch * nbatches + train_iter, epoch * nbatches + train_iter + 1),
-                        Y=np.asarray([np.mean(train_loss)]),
-                        win=vis_window['iter'],
-                        opts=dict(title='Training Loss',
-                                  xlabel='Training Iteration',
-                                  ylabel='Loss'),
-                        update='append'
-                    )
-
-        # t_model_end = time.time()
-        # print('iter: [{}/{}], training loss: {:.4f}, '
-        #       'class: {:.4f}, '
-        #       'reg: {:.4f}, sentence: {:.4f}, '
-        #       'mask: {:.4f}, '
-        #       'grad norm: {:.4f} '
-        #       'data time: {:.4f}s, total time: {:.4f}s'.format(
-        #     train_iter, nbatches, total_loss.data.item(), cls_loss.data.item(),
-        #     reg_loss.data.item(), sent_loss.data.item(), mask_loss.data.item(),
-        #     total_grad_norm,
-        #     t_model_start - t_iter_start,
-        #     t_model_end - t_iter_start
-        # ), end='\r')
-        # t_iter_start = time.time()
+        pbar.set_description(f'training epoch {epoch} '
+                             f'(data: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}) '
+                             f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})'
+                             )
 
     loss_dict = {
         'loss': train_loss,
@@ -653,8 +664,13 @@ def train(epoch, model, optimizer, train_loader, vis, vis_window,
     return loss_dict
 
 
-def valid(epoch, model, loader,
+def valid(epoch,
+          model,
+          loader,
           vis_path,
+          sampled_frames,
+          sampling_sec,
+          sentence_to_grid_cells,
           params: TrainParams):
     model.eval()
     valid_loss = []
@@ -663,26 +679,8 @@ def valid(epoch, model, loader,
     val_sent_loss = []
     val_mask_loss = []
 
-    invalid_words = ['<UNK>', ]
-
     nbatches = len(loader)
     pbar = tqdm(loader, total=nbatches, ncols=120)
-
-    sampled_frames = params.sampled_frames
-
-    sampling_sec = params.sampled_frames / params.fps
-
-    densecap_result = {}
-
-    if params.vocab_fmt == 0:
-        word_to_grid_cell = excel_ids_to_grid(params.grid_res)
-        sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
-    else:
-        import functools
-        sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
-                                                   fmt_type=params.vocab_fmt,
-                                                   max_diff=params.max_diff,
-                                                   )
 
     vis_batch_id = random.randint(0, nbatches - 1)
     print(f'\nvisualizing batch {vis_batch_id}\n')
@@ -696,18 +694,18 @@ def valid(epoch, model, loader,
         tempo_seg_pos, tempo_seg_neg, sentence_batch = samples
         load_t, torch_t, collate_t = times
 
+        # img_batch = Variable(img_batch)
+        # tempo_seg_pos = Variable(tempo_seg_pos)
+        # tempo_seg_neg = Variable(tempo_seg_neg)
+        # sentence_batch = Variable(sentence_batch)
+
+        if params.cuda:
+            img_batch = img_batch.cuda()
+            tempo_seg_neg = tempo_seg_neg.cuda()
+            tempo_seg_pos = tempo_seg_pos.cuda()
+            sentence_batch = sentence_batch.cuda()
+
         with torch.no_grad():
-            # img_batch = Variable(img_batch)
-            # tempo_seg_pos = Variable(tempo_seg_pos)
-            # tempo_seg_neg = Variable(tempo_seg_neg)
-            # sentence_batch = Variable(sentence_batch)
-
-            if params.cuda:
-                img_batch = img_batch.cuda()
-                tempo_seg_neg = tempo_seg_neg.cuda()
-                tempo_seg_pos = tempo_seg_pos.cuda()
-                sentence_batch = sentence_batch.cuda()
-
             start_t = time.time()
             (pred_score, gt_score,
              pred_offsets, gt_offsets,
@@ -716,8 +714,6 @@ def valid(epoch, model, loader,
                                    tempo_seg_neg, sentence_batch,
                                    stride_factor=params.stride_factor,
                                    gated_mask=params.gated_mask)
-            end_t = time.time()
-            forward_t = (end_t - start_t) * 1000
 
             cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
             reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
@@ -732,134 +728,148 @@ def valid(epoch, model, loader,
                 mask_loss = cls_loss.new(1).fill_(0)
 
             val_cls_loss.append(cls_loss.data.item())
-            # writer.add_scalar('val_iter/cls_loss', val_cls_loss[-1], global_iter)
-
             val_reg_loss.append(reg_loss.data.item())
-            # writer.add_scalar('val_iter/reg_loss', val_reg_loss[-1], global_iter)
-
             val_sent_loss.append(sent_loss.data.item())
-            # writer.add_scalar('val_iter/sent_loss', val_sent_loss[-1], global_iter)
-
             val_mask_loss.append(mask_loss.data.item())
-            # writer.add_scalar('val_iter/mask_loss', val_sent_loss[-1], global_iter)
-
             valid_loss.append(total_loss.data.item())
-            # writer.add_scalar('val_iter/loss', valid_loss[-1], global_iter)
 
-            if vis_batch_id == val_iter:
+        end_t = time.time()
+        forward_t = (end_t - start_t) * 1000
 
-                batch_size = img_batch.size()[0]
-                vis_sample_id = random.randint(0, batch_size - 1)
-                print(f'\nvisualizing sample {vis_sample_id}\n')
+        if val_iter == vis_batch_id:
+            batch_size = img_batch.size()[0]
+            vis_sample_id = random.randint(0, batch_size - 1)
+            print(f'\nvisualizing sample {vis_sample_id}\n')
 
-                img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
+            img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
+            video_prefix = video_prefix_list[vis_sample_id]
+            feat_frame_ids = feat_frame_ids_list[vis_sample_id]
 
-                all_proposal_results = model.module.inference(
-                    img_batch_vis,
-                    frame_length,
-                    sampling_sec,
-                    params.min_prop_num,
-                    params.max_prop_num,
-                    params.min_prop_before_nms,
-                    params.pos_thresh,
-                    params.stride_factor,
-                    gated_mask=params.gated_mask)
+            inference_t, vis_t = visualize(
+                model, img_batch_vis, video_prefix, feat_frame_ids,
+                sampled_frames,
+                sampling_sec,
+                sentence_to_grid_cells,
+                frame_length,
+                vis_path,
+                params)
 
-                end_t = time.time()
-                inference_t = (end_t - start_t) * 1000
-
-                _input = None
-                start_t = time.time()
-
-                annotations = []
-
-                assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
-
-                for pred_start, pred_end, pred_s, sentence in all_proposal_results[0]:
-                    words = sentence.upper().split(' ')
-
-                    words = [word for word in words if word not in invalid_words]
-
-                    if not words:
-                        continue
-
-                    pred_start_t = pred_start * sampling_sec
-                    pred_end_t = pred_end * sampling_sec
-
-                    # pred_start_frame = pred_start_t * args.fps
-                    # pred_end_frame = pred_end_t * args.fps
-
-                    sentence = ' '.join(words)
-
-                    annotations.append(
-                        {
-                            'sentence': sentence,
-                            'segment': [pred_start_t, pred_end_t]
-                        })
-
-                if not annotations:
-                    print('\nno valid annotations found for visualization\n')
-                    continue
-
-                start_id = end_id = -1
-                video_prefix = video_prefix_list[vis_sample_id]
-
-                vid = os.path.basename(video_prefix)
-
-                if '--' in vid:
-                    vid_name, vid_frame_ids = vid.split('--')
-                    vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
-                    start_id, end_id = vid_frame_ids
-                else:
-                    vid_name = vid
-
-                    if feat_frame_ids_list[b] is not None:
-                        feat_start_id, feat_end_id = feat_frame_ids_list[b]
-                        start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
-                        vid = f'{vid}--{start_id}_{end_id}'
-
-                if _input is None:
-                    src_dir_path = params.db_root
-                    if params.img_dir_name:
-                        src_dir_path = linux_path(src_dir_path, params.img_dir_name)
-                    vid_path = linux_path(src_dir_path, vid_name)
-
-                    _input_params = Input.Params(source_type=-1,
-                                                 batch_mode=True,
-                                                 path=vid_path,
-                                                 frame_ids=(start_id, end_id - 1))
-
-                    _logger = CustomLogger.setup(__name__)
-                    _input = Input(_input_params, _logger)
-
-                    if not _input.initialize(None):
-                        _logger.error('Input pipeline could not be initialized')
-                        return False
-
-                dnc_to_mot.run(
-                    dnc_data=annotations,
-                    frames=_input.all_frames,
-                    seq_info=None,
-                    json_data=None,
-                    n_seq=None,
-                    out_dir=vis_path,
-                    out_name=vid_name,
-                    sentence_to_grid_cells=sentence_to_grid_cells,
-                    grid_res=params.grid_res,
-                    fps=params.fps,
-                    vis=params.vis,
-                    params=None,
-                )
-                end_t = time.time()
-
-                vis_t = (end_t - start_t) * 1000
-
-            pbar.set_description(f'validation epoch {epoch} '
-                                 f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
-                                 f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})')
+        pbar.set_description(f'validation epoch {epoch} '
+                             f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
+                             f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})'
+                             )
 
     return (np.mean(valid_loss), np.mean(val_cls_loss),
             np.mean(val_reg_loss), np.mean(val_sent_loss), np.mean(val_mask_loss))
+
+
+def visualize(model, img_batch_vis, video_prefix, feat_frame_ids, sampled_frames,
+              frame_length, sampling_sec,
+              vis_path, sentence_to_grid_cells,
+              params: TrainParams):
+    invalid_words = ['<UNK>', ]
+
+    start_t = time.time()
+    with torch.no_grad():
+        all_proposal_results = model.module.inference(
+            x=img_batch_vis,
+            actual_frame_length=frame_length,
+            sampling_sec=sampling_sec,
+            min_prop_num=params.min_prop_num,
+            max_prop_num=params.max_prop_num,
+            min_prop_num_before_nms=params.min_prop_before_nms,
+            pos_thresh=params.pos_thresh,
+            stride_factor=params.stride_factor,
+            gated_mask=params.gated_mask)
+
+    end_t = time.time()
+    inference_t = (end_t - start_t) * 1000
+
+    _input = None
+    start_t = time.time()
+
+    annotations = []
+
+    assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
+
+    for pred_start, pred_end, pred_s, sentence in all_proposal_results[0]:
+        words = sentence.upper().split(' ')
+
+        words = [word for word in words if word not in invalid_words]
+
+        if not words:
+            continue
+
+        pred_start_t = pred_start * sampling_sec
+        pred_end_t = pred_end * sampling_sec
+
+        # pred_start_frame = pred_start_t * args.fps
+        # pred_end_frame = pred_end_t * args.fps
+
+        sentence = ' '.join(words)
+
+        annotations.append(
+            {
+                'sentence': sentence,
+                'segment': [pred_start_t, pred_end_t]
+            })
+
+    if not annotations:
+        print('\nno valid annotations found for visualization\n')
+        return inference_t, 0
+
+    start_id = end_id = -1
+
+    vid = os.path.basename(video_prefix)
+
+    if '--' in vid:
+        vid_name, vid_frame_ids = vid.split('--')
+        vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+        start_id, end_id = vid_frame_ids
+    else:
+        vid_name = vid
+
+        if feat_frame_ids is not None:
+            feat_start_id, feat_end_id = feat_frame_ids
+            start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
+
+    if _input is None:
+        src_dir_path = params.db_root
+        if params.img_dir_name:
+            src_dir_path = linux_path(src_dir_path, params.img_dir_name)
+        vid_path = linux_path(src_dir_path, vid_name)
+
+        _input_params = Input.Params(source_type=-1,
+                                     batch_mode=True,
+                                     path=vid_path,
+                                     frame_ids=(start_id, end_id - 1))
+
+        _logger = CustomLogger.setup(__name__)
+        _input = Input(_input_params, _logger)
+
+        if not _input.initialize(None):
+            _logger.error('Input pipeline could not be initialized')
+            return False
+
+    dnc_to_mot.run(
+        dnc_data=annotations,
+        frames=_input.all_frames,
+        seq_info=None,
+        json_data=None,
+        n_seq=None,
+        out_dir=vis_path,
+        out_name=vid_name,
+        sentence_to_grid_cells=sentence_to_grid_cells,
+        grid_res=params.grid_res,
+        fps=params.fps,
+        vis=params.vis,
+        params=None,
+    )
+    end_t = time.time()
+
+    vis_t = (end_t - start_t) * 1000
+
+    return inference_t, vis_t
 
 
 if __name__ == "__main__":

@@ -451,9 +451,15 @@ class ActionPropDenseCap(nn.Module):
                 pred_sentence, gt_cent,
                 scst_loss, mask_loss)
 
-    def inference(self, x, actual_frame_length, sampling_sec,
-                  min_prop_num, max_prop_num,
-                  min_prop_num_before_nms, pos_thresh, stride_factor,
+    def inference(self,
+                  x,
+                  actual_frame_length,
+                  sampling_sec,
+                  min_prop_num,
+                  max_prop_num,
+                  min_prop_num_before_nms,
+                  pos_thresh,
+                  stride_factor,
                   gated_mask=False):
 
         batch_size, temporal_size = x.size()[:2]
