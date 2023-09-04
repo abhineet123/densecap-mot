@@ -726,7 +726,7 @@ def visualize(
 
     assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
 
-    trajs = all_proposal_results[0]
+    trajs = list(all_proposal_results[0])
 
     n_traj = len(trajs)
 
