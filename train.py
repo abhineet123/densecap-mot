@@ -474,8 +474,9 @@ def train(
 
     pbar = tqdm(train_loader, total=nbatches, ncols=120)
 
-    vis_batch_id = random.randint(0, nbatches - 1)
-    print(f'\nvisualizing batch {vis_batch_id}\n')
+    if epoch >= params.vis_from:
+        vis_batch_id = random.randint(0, nbatches - 1)
+        print(f'\nvisualizing batch {vis_batch_id}\n')
 
     sample_prob = min(params.sample_prob, int(epoch / 5) * 0.05)
 
@@ -601,8 +602,9 @@ def valid(epoch,
     nbatches = len(loader)
     pbar = tqdm(loader, total=nbatches, ncols=120)
 
-    vis_batch_id = random.randint(0, nbatches - 1)
-    print(f'\nvisualizing batch {vis_batch_id}\n')
+    if epoch >= params.vis_from:
+        vis_batch_id = random.randint(0, nbatches - 1)
+        print(f'\nvisualizing batch {vis_batch_id}\n')
 
     for val_iter, data in enumerate(pbar):
         inference_t = vis_t = 0
