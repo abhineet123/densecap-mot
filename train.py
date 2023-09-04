@@ -693,8 +693,10 @@ def visualize(
         video_prefix,
         feat_frame_ids,
         sampled_frames,
-        frame_length, sampling_sec,
-        vis_path, sentence_to_grid_cells,
+        frame_length,
+        sampling_sec,
+        vis_path,
+        sentence_to_grid_cells,
         params: TrainParams):
     invalid_words = ['<UNK>', ]
 

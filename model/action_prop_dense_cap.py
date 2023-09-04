@@ -464,6 +464,9 @@ class ActionPropDenseCap(nn.Module):
 
         batch_size, temporal_size = x.size()[:2]
 
+        # if not isinstance(actual_frame_length, (list, tuple)):
+        #     actual_frame_length = [actual_frame_length, ]
+
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
 
