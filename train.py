@@ -189,6 +189,8 @@ def get_model(text_proc, dataset, args):
 
 
 def main():
+    random.seed(time.time())
+
     params = get_args()  # type: TrainParams
 
     print(f'params.resume: {params.resume}')
@@ -436,50 +438,6 @@ def main():
             # learning rate decay
             scheduler.step(valid_loss)
 
-            # if params.enable_visdom:
-            #     if vis_window['loss'] is None:
-            #         if not params.distributed or (params.distributed and dist.get_rank() == 0):
-            #             vis_window['loss'] = vis.line(
-            #                 X=np.tile(np.arange(len(all_eval_losses)),
-            #                           (6, 1)).T,
-            #                 Y=np.column_stack((np.asarray(all_training_losses),
-            #                                    np.asarray(all_eval_losses),
-            #                                    np.asarray(all_cls_losses),
-            #                                    np.asarray(all_reg_losses),
-            #                                    np.asarray(all_sent_losses),
-            #                                    np.asarray(all_mask_losses))),
-            #                 opts=dict(title='Loss',
-            #                           xlabel='Validation Iter',
-            #                           ylabel='Loss',
-            #                           legend=['train',
-            #                                   'dev',
-            #                                   'dev_cls',
-            #                                   'dev_reg',
-            #                                   'dev_sentence',
-            #                                   'dev_mask']))
-            #     else:
-            #         if not params.distributed or (
-            #                 params.distributed and dist.get_rank() == 0):
-            #             vis.line(
-            #                 X=np.tile(np.arange(len(all_eval_losses)),
-            #                           (6, 1)).T,
-            #                 Y=np.column_stack((np.asarray(all_training_losses),
-            #                                    np.asarray(all_eval_losses),
-            #                                    np.asarray(all_cls_losses),
-            #                                    np.asarray(all_reg_losses),
-            #                                    np.asarray(all_sent_losses),
-            #                                    np.asarray(all_mask_losses))),
-            #                 win=vis_window['loss'],
-            #                 opts=dict(title='Loss',
-            #                           xlabel='Validation Iter',
-            #                           ylabel='Loss',
-            #                           legend=['train',
-            #                                   'dev',
-            #                                   'dev_cls',
-            #                                   'dev_reg',
-            #                                   'dev_sentence',
-            #                                   'dev_mask']))
-
         if epoch_loss < best_train_loss:
             best_train_loss = epoch_loss
             best_train_loss_epoch = train_epoch
@@ -491,38 +449,6 @@ def main():
                 torch.save(model.state_dict(), ckpt_path)
             print('*' * 5)
             print(f'Better training loss {epoch_loss:.4f} found, save model')
-
-        # save eval and train losses
-        # if (params.distributed and dist.get_rank() == 0) or not params.distributed:
-        #     torch.save({'train_loss': all_training_losses,
-        #                 'eval_loss': all_eval_losses,
-        #                 'eval_cls_loss': all_cls_losses,
-        #                 'eval_reg_loss': all_reg_losses,
-        #                 'eval_sent_loss': all_sent_losses,
-        #                 'eval_mask_loss': all_mask_losses,
-        #                 }, os.path.join(params.ckpt, 'model_losses.pth'))
-
-        # all other process wait for the 1st process to finish
-        # if params.distributed:
-        #     dist.barrier()
-
-        # print('-' * 80)
-        # print('Epoch {} summary'.format(train_epoch))
-        # print('Train loss: {:.4f}, val loss: {:.4f}, Time: {:.4f}s'.format(
-        #     epoch_loss, valid_loss, time.time() - t_epoch_start
-        # ))
-        # print(f'best_train_loss: {best_train_loss:.4f} '
-        #       f'in epoch: {best_train_loss_epoch:.4f}')
-        #
-        # print(f'val_cls: {val_cls_loss:.4f}, '
-        #       f'val_reg: {val_reg_loss:.4f}, '
-        #       f'val_sentence: {val_sent_loss:.4f}, '
-        #       f'val mask: {val_mask_loss:.4f}')
-        #
-        # print(f'best_valid_loss: {best_valid_loss:.4f} '
-        #       f'in epoch: {best_valid_loss_epoch:.4f}')
-        #
-        # print('-' * 80)
 
 
 def train(
@@ -621,9 +547,16 @@ def train(
             video_prefix = video_prefix_list[vis_sample_id]
             feat_frame_ids = feat_frame_ids_list[vis_sample_id]
             inference_t, vis_t = visualize(
-                model, img_batch_vis, video_prefix, feat_frame_ids, sampled_frames,
-                frame_length, sampling_sec,
-                vis_path, sentence_to_grid_cells,
+                epoch,
+                model,
+                img_batch_vis,
+                video_prefix,
+                feat_frame_ids,
+                sampled_frames,
+                frame_length,
+                sampling_sec,
+                vis_path,
+                sentence_to_grid_cells,
                 params)
 
         optimizer.zero_grad()
@@ -732,7 +665,11 @@ def valid(epoch,
             feat_frame_ids = feat_frame_ids_list[vis_sample_id]
 
             inference_t, vis_t = visualize(
-                model, img_batch_vis, video_prefix, feat_frame_ids,
+                epoch,
+                model,
+                img_batch_vis,
+                video_prefix,
+                feat_frame_ids,
                 sampled_frames,
                 sampling_sec,
                 sentence_to_grid_cells,
@@ -749,10 +686,16 @@ def valid(epoch,
             np.mean(val_reg_loss), np.mean(val_sent_loss), np.mean(val_mask_loss))
 
 
-def visualize(model, img_batch_vis, video_prefix, feat_frame_ids, sampled_frames,
-              frame_length, sampling_sec,
-              vis_path, sentence_to_grid_cells,
-              params: TrainParams):
+def visualize(
+        epoch,
+        model,
+        img_batch_vis,
+        video_prefix,
+        feat_frame_ids,
+        sampled_frames,
+        frame_length, sampling_sec,
+        vis_path, sentence_to_grid_cells,
+        params: TrainParams):
     invalid_words = ['<UNK>', ]
 
     start_t = time.time()
@@ -819,6 +762,7 @@ def visualize(model, img_batch_vis, video_prefix, feat_frame_ids, sampled_frames
             feat_start_id, feat_end_id = feat_frame_ids
             start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
 
+    out_name = f'{vid_name}-{epoch}'
     if _input is None:
         src_dir_path = params.db_root
         if params.img_dir_name:
@@ -844,7 +788,7 @@ def visualize(model, img_batch_vis, video_prefix, feat_frame_ids, sampled_frames
         json_data=None,
         n_seq=None,
         out_dir=vis_path,
-        out_name=vid_name,
+        out_name=out_name,
         sentence_to_grid_cells=sentence_to_grid_cells,
         grid_res=params.grid_res,
         fps=params.fps,
