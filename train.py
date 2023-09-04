@@ -547,17 +547,17 @@ def train(
             video_prefix = video_prefix_list[vis_sample_id]
             feat_frame_ids = feat_frame_ids_list[vis_sample_id]
             inference_t, vis_t = visualize(
-                epoch,
-                model,
-                img_batch_vis,
-                video_prefix,
-                feat_frame_ids,
-                sampled_frames,
-                frame_length,
-                sampling_sec,
-                vis_path,
-                sentence_to_grid_cells,
-                params)
+                epoch=epoch,
+                model=model,
+                img_batch_vis=img_batch_vis,
+                video_prefix=video_prefix,
+                feat_frame_ids=feat_frame_ids,
+                sampled_frames=sampled_frames,
+                frame_length=frame_length,
+                sampling_sec=sampling_sec,
+                vis_path=vis_path,
+                sentence_to_grid_cells=sentence_to_grid_cells,
+                params=params)
 
         optimizer.zero_grad()
         total_loss.backward()
