@@ -235,7 +235,7 @@ def get_args():
     parser.add_argument('--img_dir_name', default='Images', type=str)
     parser.add_argument('--ext', default='mp4', type=str)
 
-    parser.add_argument('--vis', default=0, type=int)
+    parser.add_argument('--vis', default=3, type=int)
     parser.add_argument('--vocab_fmt', default=0, type=int)
     parser.add_argument('--max_diff', default=0, type=int)
 
