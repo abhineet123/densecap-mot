@@ -104,7 +104,7 @@ def compress_traj(grid_ids, start_frame, end_frame):
 
     assert n_grid_ids > n_frames, "trajectory size must exceed n_frames for compression"
 
-    print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
+    # print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_ids[0],
@@ -129,7 +129,7 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
     assert n_grid_ids < n_frames, "trajectory size must not exceed n_frames for expansion"
 
-    print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
+    # print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_cells[0],
