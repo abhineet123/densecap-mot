@@ -665,17 +665,18 @@ def valid(epoch,
             feat_frame_ids = feat_frame_ids_list[vis_sample_id]
 
             inference_t, vis_t = visualize(
-                epoch,
-                model,
-                img_batch_vis,
-                video_prefix,
-                feat_frame_ids,
-                sampled_frames,
-                sampling_sec,
-                sentence_to_grid_cells,
-                frame_length,
-                vis_path,
-                params)
+                epoch=epoch,
+                model=model,
+                img_batch_vis=img_batch_vis,
+                video_prefix=video_prefix,
+                feat_frame_ids=feat_frame_ids,
+                sampled_frames=sampled_frames,
+                frame_length=frame_length,
+                sampling_sec=sampling_sec,
+                vis_path=vis_path,
+                sentence_to_grid_cells=sentence_to_grid_cells,
+                params=params,
+            )
 
         pbar.set_description(f'validation epoch {epoch} '
                              f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
