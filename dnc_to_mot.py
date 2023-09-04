@@ -286,7 +286,7 @@ def run(seq_info, dnc_data, frames, json_data,
     if save_img:
         assert out_name, "out_name must be provided"
 
-    vis_w, vis_h = 1920, 1080
+    vis_w, vis_h = 1280, 720
 
     if save_img:
         save_fmt = 'mp4'
@@ -299,6 +299,8 @@ def run(seq_info, dnc_data, frames, json_data,
         fourcc = cv2.VideoWriter_fourcc(*codec)
 
         video_out = cv2.VideoWriter(out_vis_path, fourcc, fps, (vis_w, vis_h))
+
+    n_traj = len(dnc_data)
 
     for traj_id, traj_datum in enumerate(dnc_data):
         sentence = traj_datum["sentence"].upper()
@@ -348,7 +350,7 @@ def run(seq_info, dnc_data, frames, json_data,
                 disp_fn(frame_disp, grid_cell, color='white', thickness=2)
 
                 header_txt = f'frame {frame_id} ' \
-                    f'traj: {traj_id}: ({start_frame}, {end_frame})\n' \
+                    f'traj: {traj_id + 1} / {n_traj}: ({start_frame}, {end_frame})\n' \
                     f'{sentence_disp}'
 
                 header_fmt = CVText()
