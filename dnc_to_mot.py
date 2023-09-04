@@ -323,9 +323,9 @@ def run(seq_info, dnc_data, frames, json_data,
 
         # frame = _input.all_frames[start_frame]
         if n_grid_cells > traj_n_frames:
-            frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame)
+            frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame - 1)
         elif n_grid_cells < traj_n_frames:
-            grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn)
+            grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame - 1, frames, disp_fn)
         else:
             frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
