@@ -310,7 +310,7 @@ def run(seq_info, dnc_data, frames, json_data,
         words = sentence.split(' ')
 
         words_disp = list(divide_chunks(words, 10))
-        sentence_disp = '\n'.join(' '.join(chunk for chunk in words_disp))
+        sentence_disp = '\n'.join(' '.join(chunk) for chunk in words_disp)
 
         grid_cells = sentence_to_grid_cells(words)
 
