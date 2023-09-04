@@ -284,7 +284,7 @@ def run(seq_info, dnc_data, frames, json_data,
     if save_img:
         assert out_name, "out_name must be provided"
 
-    vis_w, vis_h = 1280, 720
+    vis_w, vis_h = 1920, 1080
 
     if save_img:
         save_fmt = 'mp4'
