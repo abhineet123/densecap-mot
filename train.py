@@ -726,15 +726,7 @@ def visualize(
 
     assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
 
-    trajs = list(all_proposal_results[0])
-
-    n_traj = len(trajs)
-
-    if n_traj > params.max_vis_traj:
-        random.shuffle(trajs)
-        trajs = trajs[:params.max_vis_traj]
-
-    for pred_start, pred_end, pred_s, sentence in trajs:
+    for pred_start, pred_end, pred_s, sentence in all_proposal_results[0]:
         traj_n_frames = pred_end - pred_start
 
         if traj_n_frames <= 2:
@@ -765,6 +757,12 @@ def visualize(
     if not annotations:
         print('\nno valid annotations found for visualization\n')
         return inference_t, 0
+
+    n_traj = len(annotations)
+
+    if n_traj > params.max_vis_traj:
+        random.shuffle(annotations)
+        annotations = annotations[:params.max_vis_traj]
 
     start_id = end_id = -1
 
