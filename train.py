@@ -722,6 +722,12 @@ def visualize(
     assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
 
     for pred_start, pred_end, pred_s, sentence in all_proposal_results[0]:
+        traj_n_frames = pred_end - pred_start
+
+        if traj_n_frames <= 2:
+            # print(f'skipping trajextory with too few frames')
+            continue
+
         words = sentence.upper().split(' ')
 
         words = [word for word in words if word not in invalid_words]

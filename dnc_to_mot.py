@@ -100,6 +100,8 @@ def compress_traj(grid_ids, start_frame, end_frame):
     n_frames = end_frame - start_frame + 1
     n_grid_ids = len(grid_ids)
 
+    assert n_frames > 2, f"too few n_frames: {n_frames}"
+
     assert n_grid_ids > n_frames, "trajectory size must exceed n_frames for compression"
 
     print(f'compressing trajectory from {n_grid_ids} to {n_frames}')

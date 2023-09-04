@@ -10,9 +10,9 @@
     - [seq_0_to_99_win_2-f0_max_16       @ 1k-9600/n-1](#seq_0_to_99_win_2_f0_max_16___1k_9600_n_1_)
       - [best_val_model_178       @ seq_0_to_99_win_2-f0_max_16/1k-9600/n-1](#best_val_model_178___seq_0_to_99_win_2_f0_max_16_1k_9600_n_1_)
   - [100-960       @ n-1](#100_960___n_1_)
-    - [seq_0_to_99_win_2-f0_max_4       @ 100-960/n-1](#seq_0_to_99_win_2_f0_max_4___100_960_n_1_)
-    - [seq_0_to_99_win_2-f0_max_16       @ 100-960/n-1](#seq_0_to_99_win_2_f0_max_16___100_960_n_1_)
-      - [dnc_to_mot       @ seq_0_to_99_win_2-f0_max_16/100-960/n-1](#dnc_to_mot___seq_0_to_99_win_2_f0_max_16_100_960_n_1_)
+    - [f0_max_4       @ 100-960/n-1](#f0_max_4___100_960_n_1_)
+    - [f0_max_16       @ 100-960/n-1](#f0_max_16___100_960_n_1_)
+      - [dnc_to_mot       @ f0_max_16/100-960/n-1](#dnc_to_mot___f0_max_16_100_960_n_1_)
 - [n-3](#n_3_)
   - [1k-9600       @ n-3](#1k_9600___n_3_)
     - [all_seq__6_15       @ 1k-9600/n-3](#all_seq_6_15___1k_9600_n_3_)
@@ -69,17 +69,17 @@ python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_
 
 <a id="100_960___n_1_"></a>
 ## 100-960       @ n-1-->dnc
-<a id="seq_0_to_99_win_2_f0_max_4___100_960_n_1_"></a>
-### seq_0_to_99_win_2-f0_max_4       @ 100-960/n-1-->dnc
+<a id="f0_max_4___100_960_n_1_"></a>
+### f0_max_4       @ 100-960/n-1-->dnc
 CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_4.cfg --batch_size 16 --num_workers 0
-<a id="seq_0_to_99_win_2_f0_max_16___100_960_n_1_"></a>
-### seq_0_to_99_win_2-f0_max_16       @ 100-960/n-1-->dnc
+<a id="f0_max_16___100_960_n_1_"></a>
+### f0_max_16       @ 100-960/n-1-->dnc
 CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16.cfg --batch_size 20 --num_workers 0
 __dbg__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_fix_20-f0_max_16.cfg --batch_size 32 --num_workers 0
 
-<a id="dnc_to_mot___seq_0_to_99_win_2_f0_max_16_100_960_n_1_"></a>
-#### dnc_to_mot       @ seq_0_to_99_win_2-f0_max_16/100-960/n-1-->dnc
+<a id="dnc_to_mot___f0_max_16_100_960_n_1_"></a>
+#### dnc_to_mot       @ f0_max_16/100-960/n-1-->dnc
 python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20.json set=MNIST_MOT_RGB_512x512_1_100_960_var seq=100 @slide size=480 sample=1
 
 
