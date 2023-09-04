@@ -245,9 +245,7 @@ def get_args():
 
     # Optimization: General
     parser.add_argument('--max_epochs', default=1000, type=int, help='max number of epochs to run for')
-    parser.add_argument('--batch_size', default=32, type=int,
-                        help='what is the batch size in number of images per batch? (there will be x seq_per_img '
-                             'sentences)')
+    parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--valid_batch_size', default=0, type=int)
 
     parser.add_argument('--cls_weight', default=1.0, type=float)
