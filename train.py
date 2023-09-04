@@ -309,14 +309,6 @@ def main():
     best_valid_loss = float('inf')
     best_valid_loss_epoch = None
 
-    if params.enable_visdom:
-        import visdom
-        vis = visdom.Visdom()
-        vis_window = {'iter': None,
-                      'loss': None}
-    else:
-        vis, vis_window = None, None
-
     all_eval_losses = []
     all_cls_losses = []
     all_reg_losses = []
@@ -367,8 +359,7 @@ def main():
             model,
             optimizer,
             train_loader,
-            vis,
-            vis_window,
+            vis_path,
             sampled_frames,
             sampling_sec,
             sentence_to_grid_cells,
@@ -575,11 +566,6 @@ def train(
         sentence_batch_ = sentence_batch.cpu().numpy()
 
         load_t, torch_t, collate_t = times
-        # img_batch = Variable(img_batch)
-        # tempo_seg_pos = Variable(tempo_seg_pos)
-        # tempo_seg_neg = Variable(tempo_seg_neg)
-        # sentence_batch = Variable(sentence_batch)
-
         if params.cuda:
             img_batch = img_batch.cuda()
             tempo_seg_neg = tempo_seg_neg.cuda()
