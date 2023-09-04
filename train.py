@@ -726,7 +726,15 @@ def visualize(
 
     assert len(all_proposal_results) == 1, "annoying invalid all_proposal_results"
 
-    for pred_start, pred_end, pred_s, sentence in all_proposal_results[0]:
+    trajs = all_proposal_results[0]
+
+    n_traj = len(trajs)
+
+    if n_traj > params.max_vis_traj:
+        random.shuffle(trajs)
+        trajs = trajs[:params.max_vis_traj]
+
+    for pred_start, pred_end, pred_s, sentence in trajs:
         traj_n_frames = pred_end - pred_start
 
         if traj_n_frames <= 2:
