@@ -34,7 +34,7 @@ from data import Data
 from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show, annotate_and_show
 from utilities import CVText, col_bgr
 
-from dnc_utilities import excel_ids_to_grid, diff_sentence_to_grid_cells
+from dnc_utilities import excel_ids_to_grid, diff_sentence_to_grid_cells, divide_chunks
 
 
 class Params:
@@ -284,13 +284,13 @@ def run(seq_info, dnc_data, frames, json_data,
     if save_img:
         assert out_name, "out_name must be provided"
 
+    vis_w, vis_h = 1280, 720
+
     if save_img:
         save_fmt = 'mp4'
         codec = 'mp4v'
         fps = 30
         out_vis_path = linux_path(out_dir, f'{out_name}.{save_fmt}')
-
-        vis_w, vis_h = 1280, 720
 
         print(f'saving visualization video to {out_vis_path}')
 
@@ -308,6 +308,9 @@ def run(seq_info, dnc_data, frames, json_data,
         traj_n_frames = end_frame - start_frame
 
         words = sentence.split(' ')
+
+        words_disp = list(divide_chunks(words, 10))
+        sentence_disp = '\n'.join(' '.join(chunk for chunk in words_disp))
 
         grid_cells = sentence_to_grid_cells(words)
 
@@ -342,7 +345,9 @@ def run(seq_info, dnc_data, frames, json_data,
 
                 disp_fn(frame_disp, grid_cell, color='white', thickness=2)
 
-                header_txt = f'frame {frame_id} traj: {traj_id}: ({start_frame}, {end_frame})\n{sentence}'
+                header_txt = f'frame {frame_id} ' \
+                    f'traj: {traj_id}: ({start_frame}, {end_frame})\n' \
+                    f'{sentence_disp}'
 
                 header_fmt = CVText()
                 location = (header_fmt.location + header_fmt.offset[0], header_fmt.location + header_fmt.offset[1])

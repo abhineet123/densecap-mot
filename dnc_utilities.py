@@ -506,6 +506,9 @@ def grid_to_direction(prev_grid_ids, curr_grid_ids, max_diff=1):
         if grid_idx < prev_grid_idx:
             return 'NW' if unit_diff else f'N{fmt_diff_y}W{fmt_diff_x}'
 
+def divide_chunks(l, n):
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 def excel_ids_to_grid(grid_res):
     excel_id_dict = {}
