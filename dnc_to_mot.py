@@ -325,10 +325,9 @@ def run(seq_info, dnc_data, frames, json_data,
 
             print(f'saving visualization video to {out_vis_path}')
 
-            codec = params.codec
             fourcc = cv2.VideoWriter_fourcc(*codec)
 
-            video_out = cv2.VideoWriter(out_vis_path, fourcc, params.fps, (frame_w, frame_h))
+            video_out = cv2.VideoWriter(out_vis_path, fourcc, fps, (frame_w, frame_h))
 
         for frame_id in range(start_frame, end_frame + 1):
             if vis:
