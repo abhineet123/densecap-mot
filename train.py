@@ -781,6 +781,8 @@ def valid(epoch, model, loader,
                     # pred_start_frame = pred_start_t * args.fps
                     # pred_end_frame = pred_end_t * args.fps
 
+                    sentence = ' '.join(words)
+
                     annotations.append(
                         {
                             'sentence': sentence,
