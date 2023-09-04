@@ -87,7 +87,7 @@ class TrainParams:
         self.epsilon = 1e-08
         self.db_root = ''
         self.feature_root = ''
-        self.gated_mask = False
+        self.gated_mask = 0
         self.grad_norm = 1
         self.image_feat_size = 3072
         self.in_emb_dropout = 0.1
@@ -291,7 +291,7 @@ def get_args():
     parser.add_argument('--resume', default=1, type=int, help='resume training')
     parser.add_argument('--enable_visdom', default=0, type=int, help='enable_visdom')
     parser.add_argument('--cuda', default=1, type=int, help='use cuda')
-    parser.add_argument('--gated_mask', default=0, type=int, help=' gated_mask')
+    parser.add_argument('--gated_mask', default=0, type=int)
 
     args = parser.parse_args()
 
