@@ -291,7 +291,7 @@ def run(seq_info, dnc_data, frames, json_data,
         start_t, end_t = timestamp
 
         start_frame, end_frame = int(start_t * fps), int(end_t * fps)
-        traj_n_frames = end_frame - start_frame + 1
+        traj_n_frames = end_frame - start_frame
 
         words = sentence.split(' ')
 
@@ -310,7 +310,7 @@ def run(seq_info, dnc_data, frames, json_data,
         else:
             frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
-                for frame_id in range(start_frame, end_frame + 1)
+                for frame_id in range(start_frame, end_frame)
             }
 
         _pause = 1
@@ -329,7 +329,7 @@ def run(seq_info, dnc_data, frames, json_data,
 
             video_out = cv2.VideoWriter(out_vis_path, fourcc, fps, (frame_w, frame_h))
 
-        for frame_id in range(start_frame, end_frame + 1):
+        for frame_id in range(start_frame, end_frame):
             if vis:
                 frame_disp = np.copy(frames[frame_id])
 
