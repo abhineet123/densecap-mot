@@ -195,10 +195,10 @@ def _get_pos_neg(vid_info,
             turns out that it can be done as long as the frames are sampled frames rather than the original as is 
             indeed the case here
             """
-            gt_start_raw, gt_end_raw = seg
+            gt_start_t, gt_end_t = seg
 
-            gt_start = gt_start_raw / sampling_sec
-            gt_end = gt_end_raw / sampling_sec
+            gt_start = gt_start_t / sampling_sec
+            gt_end = gt_end_t / sampling_sec
 
             if gt_start > gt_end:
                 gt_start, gt_end = gt_end, gt_start
@@ -221,7 +221,7 @@ def _get_pos_neg(vid_info,
 
             anc_start = anc_cen - anc_len / 2.
 
-            if window_start_t > gt_start_raw or window_end_t + sampling_sec * 2 < gt_end_raw:
+            if window_start_t > gt_start_t or window_end_t + sampling_sec * 2 < gt_end_t:
                 continue
 
             """iou between anchor and GT"""
@@ -379,15 +379,20 @@ def _get_pos_neg(vid_info,
         """
         all_segs = pos_seg[k]
 
+        assert len(all_segs) == 1, f"unexpected all_segs length: {len(all_segs)}"
+
+        all_segs = all_segs[0]
+
         """sentence_idx - same for all entries in all_segs"""
-        sentence_idx = all_segs[0][-1]  # [s[-1] for s in all_segs]
+        sentence_idx = all_segs[-1]  # [s[-1] for s in all_segs]
 
         """anc_idx, overlap, len_offset, cen_offset"""
-        pos_anc_info = [s[:-1] for s in all_segs]
+        pos_anc_info = [all_segs[:-1], ]
 
         sample_list.append(
             (video_prefix, vid_frame_ids, pos_anc_info, sentence_idx, neg_anc_info, n_frames))
-        n_pos_seg += len(pos_seg[k])
+
+        n_pos_seg += 1
 
     if save_samplelist:
         sample_list_path = os.path.join(sample_list_dir, f'{vid}.pkl')
@@ -467,7 +472,7 @@ class ANetDataset(Dataset):
                     attr_name = os.path.splitext(os.path.basename(pkl_file))[0]
                     with open(pkl_file, 'rb') as f:
                         attr = pickle.load(f)
-                        setattr(self,  attr_name, attr)
+                        setattr(self, attr_name, attr)
 
                 print(f'loading samples from: {sample_list_dir}')
                 pkl_files = glob.glob(os.path.join(sample_list_dir, '*.pkl'), recursive=False)
@@ -851,6 +856,7 @@ class ANetDataset(Dataset):
 
         return img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t
 
+
 def anet_collate_fn(batch_lst):
     start = time.time()
 
@@ -862,7 +868,7 @@ def anet_collate_fn(batch_lst):
     batch_size = len(batch_lst)
 
     sentence_batch = torch.from_numpy(np.ones((batch_size, sentence.size(0)), dtype='int64')).long()
-    batch_shape = (batch_size, ) + img_feat.shape
+    batch_shape = (batch_size,) + img_feat.shape
 
     img_batch = torch.zeros(batch_shape).float()
     tempo_seg_pos = torch.from_numpy(np.zeros((batch_size, sample_each, 4))).float()
@@ -923,4 +929,3 @@ def anet_collate_fn(batch_lst):
     # return img_batch, tempo_seg_pos, tempo_seg_neg, sentence_batch, times
     samples = (tempo_seg_pos, tempo_seg_neg, sentence_batch)
     return img_batch, frame_length, video_prefix_list, feat_frame_ids_list, samples, times
-
