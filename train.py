@@ -198,7 +198,7 @@ def main():
     sampling_sec = float(sampled_frames) / float(params.fps)
 
     # dist parallel, optional
-    params.distributed = params.world_size > 1
+    # params.distributed = params.world_size > 1
     # params.distributed = 1
 
     # params = TrainParams()
@@ -261,6 +261,7 @@ def main():
     model = get_model(text_proc, params)
 
     print('initializing weights')
+
     def weights_init(m):
         if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
             torch.nn.init.xavier_uniform_(m.weight)
@@ -302,7 +303,6 @@ def main():
                 weights_init(_m)
         else:
             raise AssertionError('unknown layer type')
-
 
     try:
         module = model.module
@@ -662,7 +662,6 @@ def validate(epoch,
              sampling_sec,
              sentence_to_grid_cells,
              params: TrainParams):
-
     if hasattr(model, 'module'):
         module = model.module
     else:

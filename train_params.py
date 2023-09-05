@@ -81,6 +81,7 @@ class TrainParams:
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''
+        self.distributed = 1
         self.dist_backend = 'nccl'
         self.dist_url = 'file:///home/abhineet/dnc_nonexistent_file'
         self.dur_file = ''
@@ -274,6 +275,7 @@ def get_args():
                         type=str,
                         help='url used to set up distributed training')
     parser.add_argument('--dist_backend', default='nccl', type=str, help='distributed backend')
+    parser.add_argument('--distributed', default=1, type=int)
     parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
 
     parser.add_argument('--n_proc', default=1, type=int, help='number of processes to use while generating samples')
