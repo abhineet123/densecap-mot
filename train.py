@@ -472,7 +472,7 @@ def train(
     nbatches = len(train_loader)
     # t_iter_start = time.time()
 
-    pbar = tqdm(train_loader, total=nbatches, ncols=120)
+    pbar = tqdm(train_loader, total=nbatches, ncols=140)
 
     if epoch >= params.vis_from:
         vis_batch_id = random.randint(0, nbatches - 1)
@@ -601,7 +601,7 @@ def valid(epoch,
     val_mask_loss = []
 
     nbatches = len(loader)
-    pbar = tqdm(loader, total=nbatches, ncols=120)
+    pbar = tqdm(loader, total=nbatches, ncols=140)
 
     if epoch >= params.vis_from:
         vis_batch_id = random.randint(0, nbatches - 1)
