@@ -13,6 +13,7 @@
     - [f0_max_4       @ 100-960/n-1](#f0_max_4___100_960_n_1_)
       - [mask       @ f0_max_4/100-960/n-1](#mask___f0_max_4_100_960_n_1_)
     - [f0_max_16       @ 100-960/n-1](#f0_max_16___100_960_n_1_)
+      - [mask       @ f0_max_16/100-960/n-1](#mask___f0_max_16_100_960_n_1_)
       - [dnc_to_mot       @ f0_max_16/100-960/n-1](#dnc_to_mot___f0_max_16_100_960_n_1_)
 - [n-3](#n_3_)
   - [1k-9600       @ n-3](#1k_9600___n_3_)
@@ -82,6 +83,10 @@ CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16.cfg --batch_size 24 --num_workers 4
 __dbg__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_fix_20-f0_max_16.cfg --batch_size 32 --num_workers 0
+<a id="mask___f0_max_16_100_960_n_1_"></a>
+#### mask       @ f0_max_16/100-960/n-1-->dnc
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16-mask.cfg --batch_size 24 --num_workers 4
+
 
 <a id="dnc_to_mot___f0_max_16_100_960_n_1_"></a>
 #### dnc_to_mot       @ f0_max_16/100-960/n-1-->dnc
