@@ -128,7 +128,7 @@ def get_dataset(sampling_sec, args):
             print(f'removing existing dist_url path: {k.path}')
             os.remove(k.path)
         dist.init_process_group(backend=args.dist_backend,
-                                init_method=args.dist_url,
+                                init_method="env://",
                                 world_size=args.world_size,
                                 rank=0,
                                 timeout=timedelta(seconds=10)
@@ -181,7 +181,11 @@ def get_model(text_proc, args):
         model.cuda()
         if args.distributed:
             model.cuda()
-            model = torch.nn.parallel.DistributedDataParallel(model)
+            model = torch.nn.parallel.DistributedDataParallel(
+                model,
+                device_ids=[args.local_rank],
+                output_device=args.local_rank,
+            )
         elif torch.cuda.device_count() > 1:
             model = torch.nn.DataParallel(model).cuda()
         else:
@@ -200,6 +204,9 @@ def main():
     # dist parallel, optional
     # params.distributed = params.world_size > 1
     # params.distributed = 1
+
+    if params.distributed and params.cuda:
+        torch.cuda.set_device(params.local_rank)
 
     # params = TrainParams()
     # paramparse.process(params)

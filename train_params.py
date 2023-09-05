@@ -1,3 +1,6 @@
+import os
+
+
 class TrainParams:
     """
     :ivar alpha: alpha for adagrad/rmsprop/momentum/adam
@@ -305,5 +308,8 @@ def get_args():
         options_yaml = yaml.safe_load(handle)
     update_values(options_yaml, vars(args))
     # print(args)
+
+    if 'LOCAL_RANK' not in os.environ:
+        os.environ['LOCAL_RANK'] = str(args.local_rank)
 
     return args
