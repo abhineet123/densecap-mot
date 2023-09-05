@@ -741,7 +741,7 @@ def visualize(
 
         words = [word for word in words if word not in invalid_words]
 
-        if not words:
+        if len(words) < 2:
             continue
 
         pred_start_t = pred_start * sampling_sec
