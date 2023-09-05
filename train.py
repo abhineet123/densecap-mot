@@ -200,16 +200,14 @@ def main():
             print(f'removing existing dist_url path: {k.path}')
             os.remove(k.path)
         dist.init_process_group(
-            backend=params.dist_backend,
-            # init_method="env://",
-            init_method=params.dist_url,
-            world_size=params.world_size,
-            rank=params.local_rank,
-            timeout=timedelta(seconds=100)
+            backend='nccl',
+            init_method="env://",
+            # backend=params.dist_backend,
+            # init_method=params.dist_url,
+            # world_size=params.world_size,
+            # rank=params.local_rank,
+            # timeout=timedelta(seconds=100),
         )
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-    else:
-        train_sampler = None
 
     # params = TrainParams()
     # paramparse.process(params)
