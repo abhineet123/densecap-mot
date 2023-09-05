@@ -452,7 +452,7 @@ def main():
         if train_epoch % params.validate_every == 0 or train_epoch == params.max_epochs:
 
             (valid_loss, val_cls_loss,
-             val_reg_loss, val_sent_loss, val_mask_loss) = valid(
+             val_reg_loss, val_sent_loss, val_mask_loss) = validate(
                 train_epoch,
                 model,
                 valid_loader,
@@ -512,6 +512,12 @@ def train(
         sentence_to_grid_cells,
         params: TrainParams):
     model.train()  # training mode
+
+    if hasattr(model, 'module'):
+        module = model.module
+    else:
+        module = model
+
     train_loss = []
     train_cls_loss = []
     train_reg_loss = []
@@ -563,8 +569,8 @@ def train(
 
         pred_score, gt_score, pred_offsets, gt_offsets, pred_sentence, gt_sent, scst_loss, mask_loss = result
 
-        cls_loss = model.bce_loss(pred_score, gt_score) * params.cls_weight
-        reg_loss = model.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+        cls_loss = module.bce_loss(pred_score, gt_score) * params.cls_weight
+        reg_loss = module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
         sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
         total_loss = cls_loss + reg_loss + sent_loss
 
@@ -601,9 +607,11 @@ def train(
             img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
             video_prefix = video_prefix_list[vis_sample_id]
             feat_frame_ids = feat_frame_ids_list[vis_sample_id]
+
+            model.eval()
             inference_t, vis_t = visualize(
                 epoch=epoch,
-                model=model,
+                module=module,
                 img_batch_vis=img_batch_vis,
                 video_prefix=video_prefix,
                 feat_frame_ids=feat_frame_ids,
@@ -640,14 +648,20 @@ def train(
     return loss_dict
 
 
-def valid(epoch,
-          model,
-          loader,
-          vis_path,
-          sampled_frames,
-          sampling_sec,
-          sentence_to_grid_cells,
-          params: TrainParams):
+def validate(epoch,
+             model,
+             loader,
+             vis_path,
+             sampled_frames,
+             sampling_sec,
+             sentence_to_grid_cells,
+             params: TrainParams):
+
+    if hasattr(model, 'module'):
+        module = model.module
+    else:
+        module = model
+
     model.eval()
     valid_loss = []
     val_cls_loss = []
@@ -692,8 +706,8 @@ def valid(epoch,
                                    stride_factor=params.stride_factor,
                                    gated_mask=params.gated_mask)
 
-            cls_loss = model.bce_loss(pred_score, gt_score) * params.cls_weight
-            reg_loss = model.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+            cls_loss = module.bce_loss(pred_score, gt_score) * params.cls_weight
+            reg_loss = module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
             sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
 
             total_loss = cls_loss + reg_loss + sent_loss
@@ -724,7 +738,7 @@ def valid(epoch,
 
             inference_t, vis_t = visualize(
                 epoch=epoch,
-                model=model,
+                module=module,
                 img_batch_vis=img_batch_vis,
                 video_prefix=video_prefix,
                 feat_frame_ids=feat_frame_ids,
@@ -747,7 +761,7 @@ def valid(epoch,
 
 def visualize(
         epoch,
-        model,
+        module: ActionPropDenseCap,
         img_batch_vis,
         video_prefix,
         feat_frame_ids,
@@ -758,13 +772,10 @@ def visualize(
         sentence_to_grid_cells,
         params: TrainParams):
     invalid_words = ['<UNK>', ]
-
-    model.eval()
-
     start_t = time.time()
 
     with torch.no_grad():
-        all_proposal_results = model.inference(
+        all_proposal_results = module.inference(
             x=img_batch_vis,
             actual_frame_length=frame_length,
             sampling_sec=sampling_sec,
