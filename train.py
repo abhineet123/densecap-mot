@@ -131,7 +131,7 @@ def get_dataset(sampling_sec, args):
             os.remove(k.path)
         dist.init_process_group(
             backend=args.dist_backend,
-            init_method="env://",
+            # init_method="env://",
             init_method=args.dist_url,
             world_size=args.world_size,
             rank=0,
