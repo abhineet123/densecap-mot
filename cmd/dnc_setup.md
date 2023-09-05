@@ -280,7 +280,7 @@ add
 `torch.multiprocessing.set_sharing_strategy('file_system')`
 at the beginning of the script
 
-turns out that you shoul not pass stuff like `world_size` and `rank` to `init_process_group` at all as suggested here:
+turns out that you should not pass stuff like `world_size` and `rank` to `init_process_group` at all as suggested here:
 https://pytorch.org/docs/stable/distributed.html#distributed-launch
 
 
