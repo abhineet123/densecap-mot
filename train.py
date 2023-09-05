@@ -326,12 +326,12 @@ def main():
                               num_workers=params.num_workers,
                               collate_fn=anet_collate_fn)
 
-    torch.manual_seed(time.time())
-    np.random.seed(time.time())
-    random.seed(time.time())
+    torch.manual_seed(int(time.time()))
+    np.random.seed(int(time.time()))
+    random.seed(int(time.time()))
 
     if params.cuda:
-        torch.cuda.manual_seed_all(time.time())
+        torch.cuda.manual_seed_all(int(time.time()))
 
     os.makedirs(params.ckpt, exist_ok=True)
 
