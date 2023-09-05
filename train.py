@@ -514,8 +514,8 @@ def train(
 
         pred_score, gt_score, pred_offsets, gt_offsets, pred_sentence, gt_sent, scst_loss, mask_loss = result
 
-        cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
-        reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+        cls_loss = model.bce_loss(pred_score, gt_score) * params.cls_weight
+        reg_loss = model.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
         sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
         total_loss = cls_loss + reg_loss + sent_loss
 
@@ -643,8 +643,8 @@ def valid(epoch,
                                    stride_factor=params.stride_factor,
                                    gated_mask=params.gated_mask)
 
-            cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
-            reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
+            cls_loss = model.bce_loss(pred_score, gt_score) * params.cls_weight
+            reg_loss = model.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
             sent_loss = F.cross_entropy(pred_sentence, gt_sent) * params.sent_weight
 
             total_loss = cls_loss + reg_loss + sent_loss
@@ -715,7 +715,7 @@ def visualize(
     start_t = time.time()
 
     with torch.no_grad():
-        all_proposal_results = model.module.inference(
+        all_proposal_results = model.inference(
             x=img_batch_vis,
             actual_frame_length=frame_length,
             sampling_sec=sampling_sec,
