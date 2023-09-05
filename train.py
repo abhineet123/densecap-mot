@@ -179,15 +179,13 @@ def get_model(text_proc, args):
     # Ship the model to GPU, maybe
     if args.cuda:
         model.cuda()
-        # if args.distributed:
-        #     model.cuda()
-        #     model = torch.nn.parallel.DistributedDataParallel(model)
-        # else:
-        #     model = torch.nn.DataParallel(model).cuda()
-        # elif torch.cuda.device_count() > 1:
-        #     model = torch.nn.DataParallel(model).cuda()
-        # else:
-        #     model.cuda()
+        if args.distributed:
+            model.cuda()
+            model = torch.nn.parallel.DistributedDataParallel(model)
+        elif torch.cuda.device_count() > 1:
+            model = torch.nn.DataParallel(model).cuda()
+        else:
+            model.cuda()
     return model
 
 
