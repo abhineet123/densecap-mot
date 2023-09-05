@@ -118,7 +118,7 @@ def get_dataset(sampling_sec, args):
     if args.distributed and args.cuda:
         from urllib.parse import urlparse
 
-        args.dist_url = f'{args.dist_url}-{int(time.time())}'
+        args.dist_url = f'{args.dist_url}-{int(time.time_ns())}'
 
         k = urlparse(args.dist_url)
         print()
