@@ -307,8 +307,8 @@ def main():
 
     model.apply(weights_init)
 
-    for _p in model.parameters():
-        print(_p)
+    # for _p in model.parameters():
+    #     print(_p)
 
     train_loader = DataLoader(train_dataset,
                               batch_size=params.batch_size,
