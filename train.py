@@ -49,69 +49,69 @@ from objects import Annotations
 from utilities import linux_path, CustomLogger
 
 
-def get_dataset(sampling_sec, args):
-    """
-
-    :param TrainParams args:
-    :return:
-    """
+def get_dataset(sampling_sec, params: TrainParams):
     # process text
-    train_val_splits = [args.train_splits[0], args.val_splits[0]]
-    sample_list_dir = os.path.dirname(args.train_samplelist_path)
+    train_val_splits = [params.train_splits[0], params.val_splits[0]]
+    sample_list_dir = os.path.dirname(params.train_samplelist_path)
     text_proc, raw_data, n_videos = get_vocab_and_sentences(
-        args.dataset_file,
+        params.dataset_file,
         train_val_splits,
         # args.max_sentence_len,
         save_path=sample_list_dir)
 
     # Create the dataset and data loader instance
     train_dataset = ANetDataset(
-        image_path=args.feature_root,
+        image_path=params.feature_root,
         n_vids=n_videos['training'],
-        splits=args.train_splits,
-        slide_window_size=args.slide_window_size,
-        dur_file=args.dur_file,
-        kernel_list=args.kernel_list,
+        splits=params.train_splits,
+        slide_window_size=params.slide_window_size,
+        dur_file=params.dur_file,
+        kernel_list=params.kernel_list,
         text_proc=text_proc,
         raw_data=raw_data,
-        pos_thresh=args.pos_thresh,
-        neg_thresh=args.neg_thresh,
-        stride_factor=args.stride_factor,
-        enable_flow=args.enable_flow,
-        dataset=args.dataset,
+        pos_thresh=params.pos_thresh,
+        neg_thresh=params.neg_thresh,
+        stride_factor=params.stride_factor,
+        enable_flow=params.enable_flow,
+        dataset=params.dataset,
         sampling_sec=sampling_sec,
-        save_samplelist=args.save_train_samplelist,
-        load_samplelist=args.load_train_samplelist,
-        sample_list_dir=args.train_samplelist_path,
+        save_samplelist=params.save_train_samplelist,
+        load_samplelist=params.load_train_samplelist,
+        sample_list_dir=params.train_samplelist_path,
     )
 
     valid_dataset = ANetDataset(
-        image_path=args.feature_root,
+        image_path=params.feature_root,
         n_vids=n_videos['validation'],
-        splits=args.val_splits,
-        slide_window_size=args.slide_window_size,
-        dur_file=args.dur_file,
-        kernel_list=args.kernel_list,
+        splits=params.val_splits,
+        slide_window_size=params.slide_window_size,
+        dur_file=params.dur_file,
+        kernel_list=params.kernel_list,
         text_proc=text_proc,
         raw_data=raw_data,
-        pos_thresh=args.pos_thresh,
-        neg_thresh=args.neg_thresh,
-        stride_factor=args.stride_factor,
-        enable_flow=args.enable_flow,
-        dataset=args.dataset,
+        pos_thresh=params.pos_thresh,
+        neg_thresh=params.neg_thresh,
+        stride_factor=params.stride_factor,
+        enable_flow=params.enable_flow,
+        dataset=params.dataset,
         sampling_sec=sampling_sec,
-        save_samplelist=args.save_valid_samplelist,
-        load_samplelist=args.load_valid_samplelist,
-        sample_list_dir=args.valid_samplelist_path,
+        save_samplelist=params.save_valid_samplelist,
+        load_samplelist=params.load_valid_samplelist,
+        sample_list_dir=params.valid_samplelist_path,
     )
 
     # if text_proc is not None:
     #     exit()
 
+    if params.distributed and params.cuda:
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+    else:
+        train_sampler = None
+
     if not train_dataset.samples_loaded:
-        train_dataset.get_samples(args.n_proc)
+        train_dataset.get_samples(params.n_proc)
     if not valid_dataset.samples_loaded:
-        valid_dataset.get_samples(args.n_proc)
+        valid_dataset.get_samples(params.n_proc)
 
     return train_dataset, valid_dataset, text_proc, train_sampler
 
