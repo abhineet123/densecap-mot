@@ -128,7 +128,7 @@ def get_dataset(sampling_sec, args):
             print(f'removing existing dist_url path: {k.path}')
             os.remove(k.path)
         dist.init_process_group(backend=args.dist_backend,
-                                init_method=args.dist_url,
+                                init_method="env://",
                                 world_size=args.world_size,
                                 rank=0,
                                 timeout=timedelta(seconds=10)
