@@ -682,7 +682,7 @@ class ANetDataset(Dataset):
                     video_prefix = os.path.join(split_path, vid)
 
                     feat_path = video_prefix + '.npy'
-                    assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
+                    # assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
 
                     if n_feat_frames is None:
                         feat = np.load(feat_path)

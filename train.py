@@ -190,8 +190,6 @@ def get_model(text_proc, args):
 
 
 def main():
-    random.seed(time.time())
-
     params = get_args()  # type: TrainParams
 
     print(f'params.resume: {params.resume}')
@@ -256,6 +254,9 @@ def main():
     print('loading dataset')
     train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, params)
 
+    assert train_dataset.feat_shape == params.feat_shape, "train_dataset feat_shape mismatch"
+    assert valid_dataset.feat_shape == params.feat_shape, "valid_dataset feat_shape mismatch"
+
     train_loader = DataLoader(train_dataset,
                               batch_size=params.batch_size,
                               shuffle=(train_sampler is None), sampler=train_sampler,
@@ -268,17 +269,17 @@ def main():
                               num_workers=params.num_workers,
                               collate_fn=anet_collate_fn)
 
-    torch.manual_seed(params.seed)
-    np.random.seed(params.seed)
-    random.seed(params.seed)
+    torch.manual_seed(time.time())
+    np.random.seed(time.time())
+    random.seed(time.time())
 
     if params.cuda:
-        torch.cuda.manual_seed_all(params.seed)
+        torch.cuda.manual_seed_all(time.time())
 
     os.makedirs(params.ckpt, exist_ok=True)
 
     print('building model')
-    model = get_model(text_proc, train_dataset, params)
+    model = get_model(text_proc, params)
 
     # filter params that don't require gradient (credit: PyTorch Forum issue 679)
     # smaller learning rate for the decoder
