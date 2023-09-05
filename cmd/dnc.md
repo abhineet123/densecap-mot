@@ -73,7 +73,7 @@ python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_
 ### f0_max_4       @ 100-960/n-1-->dnc
 CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_4.cfg --batch_size 16 --num_workers 0
 
-CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_4-mask.cfg --batch_size 16 --num_workers 0
+CUDA_VISIBLE_DEVICES=1 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_4-mask.cfg --batch_size 8 --num_workers 0
 
 
 <a id="f0_max_16___100_960_n_1_"></a>

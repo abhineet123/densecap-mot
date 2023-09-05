@@ -176,11 +176,12 @@ def get_model(text_proc, dataset, args):
 
     # Ship the model to GPU, maybe
     if args.cuda:
-        if args.distributed:
-            model.cuda()
-            model = torch.nn.parallel.DistributedDataParallel(model)
-        else:
-            model = torch.nn.DataParallel(model).cuda()
+        model.cuda()
+        # if args.distributed:
+        #     model.cuda()
+        #     model = torch.nn.parallel.DistributedDataParallel(model)
+        # else:
+        #     model = torch.nn.DataParallel(model).cuda()
         # elif torch.cuda.device_count() > 1:
         #     model = torch.nn.DataParallel(model).cuda()
         # else:
@@ -563,6 +564,7 @@ def train(
                 vis_path=vis_path,
                 sentence_to_grid_cells=sentence_to_grid_cells,
                 params=params)
+
             model.train()
 
         optimizer.zero_grad()
