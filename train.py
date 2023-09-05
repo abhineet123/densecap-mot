@@ -135,7 +135,7 @@ def get_dataset(sampling_sec, args):
             init_method=args.dist_url,
             world_size=args.world_size,
             rank=0,
-            timeout=timedelta(seconds=10)
+            timeout=timedelta(seconds=100)
         )
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
     else:
