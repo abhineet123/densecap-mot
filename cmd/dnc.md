@@ -85,7 +85,7 @@ __dbg__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_fix_20-f0_max_16.cfg --batch_size 32 --num_workers 0
 <a id="mask___f0_max_16_100_960_n_1_"></a>
 #### mask       @ f0_max_16/100-960/n-1-->dnc
-python -m torch.distributed.launch --nproc-per-node=2 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16-mask.cfg --batch_size 40 --num_workers 4 --world_size 2 --distributed 1 
+python -m torch.distributed.launch --nproc_per_node=2 --master_port=29500 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16-mask.cfg --batch_size 40 --num_workers 4 --world_size 2 --distributed 1 
 
 
 <a id="dnc_to_mot___f0_max_16_100_960_n_1_"></a>

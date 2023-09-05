@@ -81,6 +81,7 @@ class TrainParams:
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''
+        self.local_rank = 0
         self.distributed = 1
         self.dist_backend = 'nccl'
         self.dist_url = 'file:///home/abhineet/dnc_nonexistent_file'
@@ -268,6 +269,7 @@ def get_args():
     parser.add_argument('--patience_epoch', default=1, type=int, help='Epoch to wait to determine a pateau')
     parser.add_argument('--reduce_factor', default=0.5, type=float, help='Factor of learning rate reduction')
     parser.add_argument('--grad_norm', default=1, type=float, help='Gradient clipping norm')
+    parser.add_argument('--local_rank', type=int, default=0)
 
     # Data parallel
     parser.add_argument('--dist_url',
