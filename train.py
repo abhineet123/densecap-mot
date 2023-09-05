@@ -500,14 +500,18 @@ def train(
             sentence_batch = sentence_batch.cuda()
 
         start_t = time.time()
-        (pred_score, gt_score,
-         pred_offsets, gt_offsets,
-         pred_sentence, gt_sent,
-         scst_loss, mask_loss) = model(img_batch, tempo_seg_pos,
-                                       tempo_seg_neg, sentence_batch,
-                                       sample_prob, params.stride_factor,
-                                       scst=params.scst_weight > 0,
-                                       gated_mask=params.gated_mask)
+        result = model(
+            img_batch,
+            tempo_seg_pos,
+            tempo_seg_neg,
+            sentence_batch,
+            sample_prob,
+            params.stride_factor,
+            scst=params.scst_weight > 0,
+            gated_mask=params.gated_mask
+        )
+
+        pred_score, gt_score, pred_offsets, gt_offsets, pred_sentence, gt_sent, scst_loss, mask_loss = result
 
         cls_loss = model.module.bce_loss(pred_score, gt_score) * params.cls_weight
         reg_loss = model.module.reg_loss(pred_offsets, gt_offsets) * params.reg_weight
