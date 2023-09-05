@@ -303,7 +303,13 @@ def main():
         else:
             raise AssertionError('unknown layer type')
 
-    model.apply(weights_init)
+
+    try:
+        module = model.module
+    except AttributeError:
+        module = model
+
+    module.apply(weights_init)
 
     # for _p in model.parameters():
     #     print(_p)
