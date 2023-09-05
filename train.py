@@ -138,7 +138,7 @@ def get_dataset(sampling_sec, args):
     return train_dataset, valid_dataset, text_proc, train_sampler
 
 
-def get_model(text_proc, dataset, args):
+def get_model(text_proc, args):
     """
 
     :param text_proc:
@@ -148,7 +148,7 @@ def get_model(text_proc, dataset, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        feat_shape=dataset.feat_shape,
+        feat_shape=args.image_feat_size,
         enable_flow=args.enable_flow,
         rgb_ch=args.rgb_ch,
         dim_model=args.d_model,
@@ -296,6 +296,10 @@ def main():
         )
     else:
         raise NotImplementedError
+
+    for _p in model.parameters():
+        print(_p)
+
 
     # learning rate decay every 1 epoch
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=params.reduce_factor,

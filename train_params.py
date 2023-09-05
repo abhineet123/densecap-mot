@@ -77,6 +77,7 @@ class TrainParams:
         # self.d_rgb = 2048
         # self.d_flow = 1024
         self.rgb_ch = 4
+        self.feat_shape = []
         self.d_model = 1024
         self.dataset = ''
         self.dataset_file = ''
@@ -198,6 +199,7 @@ def get_args():
     # parser.add_argument('--d_flow', default=1024, type=int)
     parser.add_argument('--d_model', default=1024, type=int,
                         help='size of the rnn in number of hidden nodes in each layer')
+    parser.add_argument('--feat_shape', default=[], type=int, nargs='+')
     parser.add_argument('--rgb_ch', default=4, type=int)
     parser.add_argument('--d_hidden', default=2048, type=int)
     parser.add_argument('--n_heads', default=8, type=int)
