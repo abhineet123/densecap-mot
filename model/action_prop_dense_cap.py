@@ -432,8 +432,8 @@ class ActionPropDenseCap(nn.Module):
             else:
                 window_mask = pred_mask
 
-            mask_loss = F.binary_cross_entropy_with_logits(pred_mask,
-                                                           pred_bin_window_mask.view(batch_size, temporal_size, 1))
+            temp = pred_bin_window_mask.view(batch_size, temporal_size, 1)
+            mask_loss = F.binary_cross_entropy_with_logits(pred_mask, temp)
             # mask_loss = F.binary_cross_entropy_with_logits(window_mask, batch_mask)
         else:
             window_mask = pred_bin_window_mask.view(batch_size, temporal_size, 1)
