@@ -34,7 +34,9 @@ from train_params import TrainParams, get_args
 
 # misc
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
-from model.action_prop_dense_cap import ActionPropDenseCap
+from model.action_prop_dense_cap import ActionPropDenseCap, DropoutTime1D
+from model.transformer import Attention, MultiHead, LayerNorm, ResidualBlock, FeedForward, \
+    EncoderLayer, Encoder, Transformer, DecoderLayer, Decoder, RealTransformer
 from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells
 
 import dnc_to_mot
@@ -148,7 +150,7 @@ def get_model(text_proc, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        feat_shape=args.image_feat_size,
+        feat_shape=args.feat_shape,
         enable_flow=args.enable_flow,
         rgb_ch=args.rgb_ch,
         dim_model=args.d_model,
@@ -254,8 +256,59 @@ def main():
     print('loading dataset')
     train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, params)
 
-    assert train_dataset.feat_shape == params.feat_shape, "train_dataset feat_shape mismatch"
-    assert valid_dataset.feat_shape == params.feat_shape, "valid_dataset feat_shape mismatch"
+    assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
+    assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
+
+    print('building model')
+    model = get_model(text_proc, params)
+
+    print('initializing weights')
+    def weights_init(m):
+        if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.nn.init.zeros_(m.bias)
+        elif isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
+            torch.nn.init.normal_(m.weight, 1.0, 0.02)
+            torch.nn.init.constant_(m.bias, 0)
+        elif isinstance(m, (
+                DropoutTime1D,
+                torch.nn.ReLU,
+                torch.nn.Flatten,
+                torch.nn.Dropout,
+                torch.nn.BCEWithLogitsLoss,
+                torch.nn.SmoothL1Loss,
+                torch.nn.MSELoss,
+        )):
+            pass
+        elif isinstance(m, (
+                ActionPropDenseCap,
+                Attention,
+                MultiHead,
+                LayerNorm,
+                ResidualBlock,
+                FeedForward,
+                EncoderLayer,
+                Encoder,
+                Transformer,
+                DecoderLayer,
+                Decoder,
+                RealTransformer,
+        )):
+            for _m in m.children():
+                weights_init(_m)
+        elif isinstance(m, (
+                torch.nn.Sequential,
+                torch.nn.ModuleList,)):
+            for _m in m:
+                weights_init(_m)
+        else:
+            raise AssertionError('unknown layer type')
+
+    model.apply(weights_init)
+
+    for _p in model.parameters():
+        print(_p)
 
     train_loader = DataLoader(train_dataset,
                               batch_size=params.batch_size,
@@ -278,9 +331,6 @@ def main():
 
     os.makedirs(params.ckpt, exist_ok=True)
 
-    print('building model')
-    model = get_model(text_proc, params)
-
     # filter params that don't require gradient (credit: PyTorch Forum issue 679)
     # smaller learning rate for the decoder
     if params.optim == 'adam':
@@ -297,10 +347,6 @@ def main():
         )
     else:
         raise NotImplementedError
-
-    for _p in model.parameters():
-        print(_p)
-
 
     # learning rate decay every 1 epoch
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=params.reduce_factor,

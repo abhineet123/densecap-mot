@@ -732,6 +732,8 @@ class ANetDataset(Dataset):
         print('matching anchors to ground truth segments')
         print(f'out_txt_dir: {out_txt_dir}')
 
+        # return
+
         if n_proc > 1:
             print(f'running in parallel over {n_proc} processes')
             func = functools.partial(
