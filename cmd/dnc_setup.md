@@ -280,6 +280,23 @@ add
 `torch.multiprocessing.set_sharing_strategy('file_system')`
 at the beginning of the script
 
+turns out that you shoul not pass stuff like `world_size` and `rank` to `init_process_group` at all as suggested here:
+https://pytorch.org/docs/stable/distributed.html#distributed-launch
+
+
+`ERROR: Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm).`
+`RuntimeError: unable to write to file </torch_1446540_2397425596>`
+https://landoflinux.com/linux_shared_memory_configure.html#:~:text=To%20change%20the%20size%20of,%2Fdev%2Fshm%22%20command.
+sudo nano /etc/fstab
+tmpfs /dev/shm tmpfs defaults,size=64G,nodev,nosuid 0 0
+sudo mount -o remount /dev/shm
+df -h /dev/shm
+
+
+
+
+
+
 
 
 
