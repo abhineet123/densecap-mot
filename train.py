@@ -559,6 +559,7 @@ def train(
                 vis_path=vis_path,
                 sentence_to_grid_cells=sentence_to_grid_cells,
                 params=params)
+            model.train()
 
         optimizer.zero_grad()
         total_loss.backward()
@@ -703,7 +704,10 @@ def visualize(
         params: TrainParams):
     invalid_words = ['<UNK>', ]
 
+    model.eval()
+
     start_t = time.time()
+
     with torch.no_grad():
         all_proposal_results = model.module.inference(
             x=img_batch_vis,
