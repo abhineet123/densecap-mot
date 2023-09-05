@@ -501,7 +501,7 @@ def train(
             sentence_batch = sentence_batch.cuda()
 
         start_t = time.time()
-        result = model.module.forward(
+        result = model(
             img_batch,
             tempo_seg_pos,
             tempo_seg_neg,
