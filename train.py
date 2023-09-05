@@ -113,34 +113,6 @@ def get_dataset(sampling_sec, args):
     if not valid_dataset.samples_loaded:
         valid_dataset.get_samples(args.n_proc)
 
-    from datetime import timedelta
-
-    if args.distributed and args.cuda:
-        from urllib.parse import urlparse
-
-        args.dist_url = f'{args.dist_url}-{int(time.time_ns())}'
-
-        k = urlparse(args.dist_url)
-        print()
-        print(f'dist_url scheme: {k.scheme}')
-        print(f'dist_url path: {k.path}')
-        print()
-
-        if k.scheme == 'file' and os.path.exists(k.path):
-            print(f'removing existing dist_url path: {k.path}')
-            os.remove(k.path)
-        dist.init_process_group(
-            backend=args.dist_backend,
-            # init_method="env://",
-            init_method=args.dist_url,
-            world_size=args.world_size,
-            rank=0,
-            timeout=timedelta(seconds=100)
-        )
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-    else:
-        train_sampler = None
-
     return train_dataset, valid_dataset, text_proc, train_sampler
 
 
@@ -211,6 +183,33 @@ def main():
 
     if params.distributed and params.cuda:
         torch.cuda.set_device(params.local_rank)
+
+        from datetime import timedelta
+
+        from urllib.parse import urlparse
+
+        params.dist_url = f'{params.dist_url}-{int(time.time_ns())}'
+
+        k = urlparse(params.dist_url)
+        print()
+        print(f'dist_url scheme: {k.scheme}')
+        print(f'dist_url path: {k.path}')
+        print()
+
+        if k.scheme == 'file' and os.path.exists(k.path):
+            print(f'removing existing dist_url path: {k.path}')
+            os.remove(k.path)
+        dist.init_process_group(
+            backend=params.dist_backend,
+            # init_method="env://",
+            init_method=params.dist_url,
+            world_size=params.world_size,
+            rank=params.local_rank,
+            timeout=timedelta(seconds=100)
+        )
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+    else:
+        train_sampler = None
 
     # params = TrainParams()
     # paramparse.process(params)
