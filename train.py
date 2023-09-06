@@ -41,7 +41,22 @@ from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentenc
 
 import dnc_to_mot
 
-sys.path.append('../isl_labeling_tool/deep_mdp')
+
+home_path = os.path.expanduser('~')
+
+swi_path = os.path.join(home_path, 'ipsc', 'ipsc_static_segmentation', 'swin_detection')
+sys.path.append(swi_path)
+
+import mmcv
+from mmcv import Config
+from mmcv.cnn import fuse_conv_bn
+from mmcv.runner import load_checkpoint, wrap_fp16_model
+
+from mmdet.models import build_detector
+from mmdet.utils.misc import read_class_info, linux_path
+
+dmdp_path = os.path.join(home_path, 'isl_labeling_tool', 'deep_mdp')
+sys.path.append(dmdp_path)
 
 from input import Input
 from objects import Annotations
@@ -116,7 +131,7 @@ def get_dataset(sampling_sec, params: TrainParams):
     return train_dataset, valid_dataset, text_proc, train_sampler
 
 
-def get_model(text_proc, args):
+def get_model(text_proc, feat_model, args):
     """
 
     :param text_proc:
@@ -126,6 +141,7 @@ def get_model(text_proc, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
+        feat_model=feat_model,
         feat_shape=args.feat_shape,
         enable_flow=args.enable_flow,
         rgb_ch=args.rgb_ch,
@@ -170,6 +186,40 @@ def get_model(text_proc, args):
     return model
 
 
+def get_feat_extractor(feat_cfg, ckpt, fuse_conv_bn):
+    cfg_dict = Config.fromfile(feat_cfg)
+    # if params.cfg_options is not None:
+    #     cfg_dict.merge_from_dict(params.cfg_options)
+    # import modules from string list.
+    if cfg_dict.get('custom_imports', None):
+        from mmcv.utils import import_modules_from_strings
+        import_modules_from_strings(**cfg_dict['custom_imports'])
+    # set cudnn_benchmark
+    if cfg_dict.get('cudnn_benchmark', False):
+        torch.backends.cudnn.benchmark = True
+    cfg_dict.model.pretrained = None
+    if cfg_dict.model.get('neck'):
+        if isinstance(cfg_dict.model.neck, list):
+            for neck_cfg in cfg_dict.model.neck:
+                if neck_cfg.get('rfp_backbone'):
+                    if neck_cfg.rfp_backbone.get('pretrained'):
+                        neck_cfg.rfp_backbone.pretrained = None
+        elif cfg_dict.model.neck.get('rfp_backbone'):
+            if cfg_dict.model.neck.rfp_backbone.get('pretrained'):
+                cfg_dict.model.neck.rfp_backbone.pretrained = None
+
+    # build the model and load checkpoint
+    cfg_dict.model.train_cfg = None
+    model = build_detector(cfg_dict.model, test_cfg=cfg_dict.get('test_cfg'))
+    fp16_cfg = cfg_dict.get('fp16', None)
+    if fp16_cfg is not None:
+        wrap_fp16_model(model)
+    checkpoint = load_checkpoint(model, ckpt, map_location='cpu')
+    if fuse_conv_bn:
+        model = fuse_conv_bn(model)
+    return model
+
+
 def main():
     params = get_args()  # type: TrainParams
 
@@ -177,6 +227,14 @@ def main():
 
     sampled_frames = params.sampled_frames
     sampling_sec = float(sampled_frames) / float(params.fps)
+
+    feat_model = None
+
+    if params.feat_cfg:
+        feat_model = get_feat_extractor(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
+
+        if params.cuda:
+            feat_model = feat_model.cuda()
 
     # dist parallel, optional
     # params.distributed = params.world_size > 1
@@ -267,7 +325,7 @@ def main():
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
 
     print('building model')
-    model = get_model(text_proc, params)
+    model = get_model(text_proc, feat_model, params)
 
     print('initializing weights')
 

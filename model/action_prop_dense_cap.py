@@ -62,6 +62,7 @@ class DropoutTime1D(nn.Module):
 class ActionPropDenseCap(nn.Module):
     def __init__(
             self,
+            feat_model,
             feat_shape,
             enable_flow,
             rgb_ch,
@@ -81,6 +82,8 @@ class ActionPropDenseCap(nn.Module):
             window_length,
             max_sentence_len):
         super(ActionPropDenseCap, self).__init__()
+
+        self.feat_model = feat_model
 
         self.kernel_list = kernel_list
         self.nsamples = nsamples
@@ -105,7 +108,6 @@ class ActionPropDenseCap(nn.Module):
             nn.ReLU(),
             nn.Linear(dim_model, window_length),
         )
-
         """emb --> embedding"""
         if self.enable_flow:
             self.dim_rgb, self.dim_flow = self.feat_shape
@@ -196,6 +198,10 @@ class ActionPropDenseCap(nn.Module):
         """4 x 480 x 3072"""
         dtype = x.data.type()
         batch_size, temporal_size = x.size()[:2]
+
+        if self.feat_model is not None:
+            """live feature extraction"""
+            x = self.feat_model.extract_feat(x)
 
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
