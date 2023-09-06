@@ -543,7 +543,7 @@ def train(
     nbatches = len(train_loader)
     # t_iter_start = time.time()
 
-    pbar = tqdm(train_loader, total=nbatches, ncols=140)
+    pbar = tqdm(train_loader, total=nbatches, ncols=140, desc=f'training epoch {epoch}')
 
     if epoch >= params.vis_from:
         vis_batch_id = random.randint(0, nbatches - 1)
@@ -647,10 +647,10 @@ def train(
 
         optimizer.step()
 
-        pbar.set_description(f'training epoch {epoch} '
-                             f'(data: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}) '
-                             f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})'
-                             )
+        # pbar.set_description(f'training epoch {epoch} '
+        #                      f'(data: {load_t:.2f}, {torch_t:.2f}, {collate_t:.2f}) '
+        #                      f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})'
+        #                      )
 
     loss_dict = {
         'loss': train_loss,
@@ -684,7 +684,7 @@ def validate(epoch,
     val_mask_loss = []
 
     nbatches = len(loader)
-    pbar = tqdm(loader, total=nbatches, ncols=140)
+    pbar = tqdm(loader, total=nbatches, ncols=140, desc=f'validation epoch {epoch}')
 
     if epoch >= params.vis_from:
         vis_batch_id = random.randint(0, nbatches - 1)
@@ -764,10 +764,10 @@ def validate(epoch,
                 params=params,
             )
 
-        pbar.set_description(f'validation epoch {epoch} '
-                             f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
-                             f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})'
-                             )
+        # pbar.set_description(f'validation epoch {epoch} '
+        #                      f'(data: {load_t:.2f},{torch_t:.2f},{collate_t:.2f}) '
+        #                      f'(model: {forward_t:.2f},{inference_t:.2f},{vis_t:.2f})'
+        #                      )
 
     return (np.mean(valid_loss), np.mean(val_cls_loss),
             np.mean(val_reg_loss), np.mean(val_sent_loss), np.mean(val_mask_loss))
