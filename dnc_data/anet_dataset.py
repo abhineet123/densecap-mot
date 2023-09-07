@@ -647,12 +647,21 @@ class ANetDataset(Dataset):
                 feat_frame_ids = None
 
                 if self.feat_model is not None:
-                    video_prefix = os.path.join(split_path, vid)
+                    if '--' in vid:
+                        vid_name, vid_frame_ids = vid.split('--')
+                        vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
 
+                        start_id, end_id = vid_frame_ids
+                    else:
+                        vid_name = vid
+                        start_id = 0
+                        end_id = -1
+
+                    video_prefix = os.path.join(split_path, vid_name)
                     video_path = video_prefix + '.mp4'
 
                     if n_feat_frames is None:
-                        img_tensor = read_frames(video_path, start_id, end_id, norm)
+                        img_tensor = read_frames(video_path, start_id, end_id, self.norm)
                         feat = self.feat_model.extract_feat(img_tensor)
 
                         n_feat_frames = feat.shape[0]
