@@ -98,6 +98,9 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
     )
 
     valid_dataset = ANetDataset(
+        norm=(params.mean, params.std),
+        feat_model=feat_model,
+        feat_shape=params.feat_shape,
         image_path=params.feature_root,
         n_vids=n_videos['validation'],
         splits=params.val_splits,
