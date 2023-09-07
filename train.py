@@ -240,10 +240,9 @@ def main():
         if not params.feat_ckpt:
             params.feat_ckpt = 'latest.pth'
 
-        if params.feat_ckpt:
-            ckpt_dir = linux_path(swi_path, 'work_dirs', feat_cfg_name)
-            params.feat_ckpt = linux_path(ckpt_dir, params.feat_ckpt)
-            
+        ckpt_dir = linux_path(swi_path, 'work_dirs', feat_cfg_name)
+        params.feat_ckpt = linux_path(ckpt_dir, params.feat_ckpt)
+
         feat_model = get_feat_extractor(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
 
         if params.cuda:
