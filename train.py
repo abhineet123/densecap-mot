@@ -235,6 +235,8 @@ def main():
     if params.feat_cfg:
         feat_cfg_name = os.path.splitext(os.path.basename(params.feat_cfg))[0]
 
+        print(f'loading feature extractor from {feat_cfg_name}')
+
         params.feat_cfg = linux_path(swi_path, params.feat_cfg)
 
         if not params.feat_ckpt:
