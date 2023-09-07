@@ -7,7 +7,11 @@ from tqdm import tqdm
 import math
 import glob
 
-sys.path.append('../isl_labeling_tool/deep_mdp')
+import mmcv
+
+home_path = os.path.expanduser('~')
+dmdp_path = os.path.join(home_path, 'isl_labeling_tool', 'deep_mdp')
+sys.path.append(dmdp_path)
 
 from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_to_rgb2, draw_traj2, resize_ar, \
     linux_path, CVText
@@ -24,6 +28,47 @@ class GridTokenizer:
     def preprocess(self, sentence):
         return sentence.split(' ')
 
+def read_frames(video_path, start_id, end_id, norm):
+    """
+
+    :param video_path:
+    :param start_id:
+    :param end_id: exclusive
+    :param norm:
+    :return:
+    """
+    _cap = cv2.VideoCapture()
+    if not _cap.open(video_path):
+        raise AssertionError(f'Failed to open video file for reading: {video_path}')
+
+    if start_id > 0:
+        cv_prop = cv2.CAP_PROP_POS_FRAMES
+        _cap.set(cv_prop, start_id)
+        next_frame_id = _cap.get(cv_prop)
+        if next_frame_id != start_id:
+            for frame_id in range(start_id):
+                ret, _ = _cap.read()
+                if not ret:
+                    raise AssertionError(f'Frame {frame_id:d} could not be read')
+        imgs = []
+        for frame_id in range(start_id, end_id):
+            ret, img = _cap.read()
+            if not ret:
+                raise AssertionError(f'Frame {frame_id:d} could not be read')
+
+            if norm is not None:
+                mean, std = norm
+
+                img = mmcv.imnormalize(img, np.asarray(mean), np.asarray(std), to_rgb=True)
+
+            imgs.append(img)
+
+        imgs = np.stack(imgs, axis=0)
+        """bring channel to front"""
+        imgs_reshaped = imgs.transpose([0, 3, 1, 2])
+        imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32).cuda()
+
+        return imgs_tensor
 
 def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
     ckpt_names = glob.glob(f'{dir_name}/{prefix}*.pth')

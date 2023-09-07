@@ -64,7 +64,7 @@ from objects import Annotations
 from utilities import linux_path, CustomLogger
 
 
-def get_dataset(sampling_sec, params: TrainParams):
+def get_dataset(sampling_sec, feat_model, params: TrainParams):
     # process text
     train_val_splits = [params.train_splits[0], params.val_splits[0]]
     sample_list_dir = os.path.dirname(params.train_samplelist_path)
@@ -76,6 +76,7 @@ def get_dataset(sampling_sec, params: TrainParams):
 
     # Create the dataset and data loader instance
     train_dataset = ANetDataset(
+        feat_model=feat_model,
         image_path=params.feature_root,
         n_vids=n_videos['training'],
         splits=params.train_splits,
@@ -319,7 +320,7 @@ def main():
         params.dur_file = linux_path(params.db_root, params.dur_file)
 
     print('loading dataset')
-    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, params)
+    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, feat_model, params)
 
     assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
