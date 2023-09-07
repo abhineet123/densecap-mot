@@ -41,7 +41,6 @@ from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentenc
 
 import dnc_to_mot
 
-
 home_path = os.path.expanduser('~')
 
 swi_path = os.path.join(home_path, 'ipsc', 'ipsc_static_segmentation', 'swin_detection')
@@ -234,8 +233,17 @@ def main():
     feat_model = None
 
     if params.feat_cfg:
+        feat_cfg_name = os.path.splitext(os.path.basename(params.feat_cfg))[0]
+
         params.feat_cfg = linux_path(swi_path, params.feat_cfg)
-        
+
+        if not params.feat_ckpt:
+            params.feat_ckpt = 'latest.pth'
+
+        if params.feat_ckpt:
+            ckpt_dir = linux_path(swi_path, 'work_dirs', feat_cfg_name)
+            params.feat_ckpt = linux_path(ckpt_dir, params.feat_ckpt)
+            
         feat_model = get_feat_extractor(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
 
         if params.cuda:
