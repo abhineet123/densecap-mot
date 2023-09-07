@@ -234,6 +234,8 @@ def main():
     feat_model = None
 
     if params.feat_cfg:
+        params.feat_cfg = linux_path(swi_path, params.feat_cfg)
+        
         feat_model = get_feat_extractor(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
 
         if params.cuda:
