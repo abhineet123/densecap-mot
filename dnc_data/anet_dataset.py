@@ -415,6 +415,8 @@ def _get_pos_neg(vid_info,
 class ANetDataset(Dataset):
     def __init__(
             self,
+            norm,
+            feat_shape,
             feat_model,
             image_path,
             n_vids,
@@ -441,6 +443,8 @@ class ANetDataset(Dataset):
         for split_dev in splits:
             split_paths.append(os.path.join(image_path, split_dev))
 
+        self.norm = norm
+        self.feat_shape = feat_shape
         self.feat_model = feat_model
         self.slide_window_size = slide_window_size
         self.pos_thresh = pos_thresh
@@ -642,79 +646,67 @@ class ANetDataset(Dataset):
                 if val['subset'] != split:
                     continue
 
-                # n_feat_frames = int(9600 / 15)
-                feat_name = vid
                 feat_frame_ids = None
 
-                if self.feat_model is not None:
+                if self.enable_flow:
+                    """assume that each npy file contains features for entire sequence"""
+                    feat_name = vid
+
                     if '--' in vid:
-                        vid_name, vid_frame_ids = vid.split('--')
-                        vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
+                        feat_name, vid_frame_ids = vid.split('--')
+                        start_id, end_id = tuple(map(int, vid_frame_ids.split('_')))
 
-                        start_id, end_id = vid_frame_ids
-                    else:
-                        vid_name = vid
-                        start_id = 0
-                        end_id = -1
+                        n_subseq_frames = end_id - start_id
+                        assert n_subseq_frames == self.vid_frame[vid], \
+                            f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
 
-                    video_prefix = os.path.join(split_path, vid_name)
-                    video_path = video_prefix + '.mp4'
+                        feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
+                            end_id / self.sampled_frames[vid])
 
-                    if n_feat_frames is None:
-                        img_tensor = read_frames(video_path, start_id, end_id, self.norm)
-                        feat = self.feat_model.extract_feat(img_tensor)
+                        feat_frame_ids = (feat_start_id, feat_end_id)
 
-                        n_feat_frames = feat.shape[0]
+                    video_prefix = os.path.join(split_path, feat_name)
 
-                        if len(feat.shape) == 4:
-                            ch, h, w = feat.shape[1:]
-                            self.feat_shape = (ch, h, w)
-                        elif len(feat.shape) == 2:
-                            feat_dim = feat.shape[1]
-                            self.feat_shape = (feat_dim,)
-                        else:
-                            raise AssertionError(f'invalid feat.shape: {feat.shape}')
+                    resnet_feat_path = video_prefix + '_resnet.npy'
+                    assert os.path.isfile(resnet_feat_path), f"nonexistent resnet_feat_path: {resnet_feat_path}"
 
+                    bn_feat_path = video_prefix + '_bn.npy'
+                    assert os.path.isfile(bn_feat_path), f"nonexistent bn_feat_path: {bn_feat_path}"
 
+                    resnet_feat = np.load(resnet_feat_path)
+                    resnet_feat_dim = resnet_feat.shape[1]
 
+                    bn_feat = np.load(bn_feat_path)
+
+                    n_feat_frames = bn_feat.shape[0]
+                    bn_feat_dim = bn_feat.shape[1]
+
+                    self.feat_shape = (resnet_feat_dim, bn_feat_dim)
+
+                    assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
                 else:
-                    if self.enable_flow:
-                        """assume that each npy file contains features for entire sequence"""
 
+                    feat = None
+
+                    if self.feat_model is not None:
                         if '--' in vid:
-                            feat_name, vid_frame_ids = vid.split('--')
-                            vid_frame_ids = tuple(map(int, vid_frame_ids.split('_')))
-
-                            start_id, end_id = vid_frame_ids
-
+                            vid_name, vid_frame_ids = vid.split('--')
+                            start_id, end_id = tuple(map(int, vid_frame_ids.split('_')))
+                            feat_frame_ids = (start_id, end_id)
                             n_subseq_frames = end_id - start_id
                             assert n_subseq_frames == self.vid_frame[vid], \
                                 f'n_subseq_frames mismatch: {n_subseq_frames}, {self.vid_frame[vid]}'
+                        else:
+                            vid_name = vid
+                            start_id = 0
+                            end_id = -1
 
-                            feat_start_id, feat_end_id = int(start_id / self.sampled_frames[vid]), int(
-                                end_id / self.sampled_frames[vid])
+                        video_prefix = os.path.join(split_path, vid_name)
 
-                            feat_frame_ids = (feat_start_id, feat_end_id)
-
-                        video_prefix = os.path.join(split_path, feat_name)
-
-                        resnet_feat_path = video_prefix + '_resnet.npy'
-                        assert os.path.isfile(resnet_feat_path), f"nonexistent resnet_feat_path: {resnet_feat_path}"
-
-                        bn_feat_path = video_prefix + '_bn.npy'
-                        assert os.path.isfile(bn_feat_path), f"nonexistent bn_feat_path: {bn_feat_path}"
-
-                        resnet_feat = np.load(resnet_feat_path)
-                        resnet_feat_dim = resnet_feat.shape[1]
-
-                        bn_feat = np.load(bn_feat_path)
-
-                        n_feat_frames = bn_feat.shape[0]
-                        bn_feat_dim = bn_feat.shape[1]
-
-                        self.feat_shape = (resnet_feat_dim, bn_feat_dim)
-
-                        assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
+                        if n_feat_frames is None:
+                            video_path = video_prefix + '.mp4'
+                            img_tensor = read_frames(video_path, start_id, end_id, self.norm)
+                            feat = self.feat_model.extract_feat(img_tensor)
                     else:
                         """assume that each npy file contains features only for one subsequence"""
                         video_prefix = os.path.join(split_path, vid)
@@ -725,22 +717,19 @@ class ANetDataset(Dataset):
                         if n_feat_frames is None:
                             feat = np.load(feat_path)
 
-                            n_feat_frames = feat.shape[0]
+                    if n_feat_frames is None:
+                        n_feat_frames = feat.shape[0]
 
-                            if len(feat.shape) == 4:
-                                ch, h, w = feat.shape[1:]
-                                self.feat_shape = (ch, h, w)
-                            elif len(feat.shape) == 2:
-                                feat_dim = feat.shape[1]
-                                self.feat_shape = (feat_dim,)
-                            else:
-                                raise AssertionError(f'invalid feat.shape: {feat.shape}')
-                        # else:
-                        #     assert feat.shape[0] == n_feat_frames, \
-                        #         f"n_feat_frames mismatch: {n_feat_frames}, {feat.shape[0]}"
-                        #     assert feat.shape[1:] == self.feat_shape, "self.feat_shape mismatch"
+                        if len(feat.shape) == 4:
+                            ch, h, w = feat.shape[1:]
+                            feat_shape = (ch, h, w)
+                        elif len(feat.shape) == 2:
+                            feat_dim = feat.shape[1]
+                            feat_shape = (feat_dim,)
+                        else:
+                            raise AssertionError(f'invalid feat.shape: {feat.shape}')
 
-                        # print()
+                        assert feat_shape == self.feat_shape, "feat_shape mismatch"
 
                 if feat_frame_ids is None:
                     feat_frame_ids = (0, n_feat_frames)
@@ -879,13 +868,28 @@ class ANetDataset(Dataset):
             end2 = time.time()
         else:
             start = time.time()
-            img_feat_np = np.load(video_prefix + '.npy',
-                                  # mmap_mode='r'
-                                  )
-            end = time.time()
 
-            img_feat = torch.from_numpy(img_feat_np).float()
-            end2 = time.time()
+            if self.feat_model is not None:
+                if feat_frame_ids is not None:
+                    start_id, end_id = feat_frame_ids
+                else:
+                    start_id, end_id = 0, -1
+
+                video_path = video_prefix + '.mp4'
+
+                img_tensor = read_frames(video_path, start_id, end_id, self.norm)
+                end = time.time()
+
+                img_feat = self.feat_model.extract_feat(img_tensor)
+                end2 = time.time()
+            else:
+                img_feat_np = np.load(video_prefix + '.npy',
+                                      # mmap_mode='r'
+                                      )
+                end = time.time()
+
+                img_feat = torch.from_numpy(img_feat_np).float()
+                end2 = time.time()
 
         load_t = (end - start) * 1000
         torch_t = (end2 - end) * 1000

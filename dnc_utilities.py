@@ -44,7 +44,7 @@ def read_frames(video_path, start_id, end_id, norm):
     if end_id < 0:
         n_frames = int(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FRAME_COUNT))
         end_id = n_frames
-        
+
     if start_id > 0:
         cv_prop = cv2.CAP_PROP_POS_FRAMES
         _cap.set(cv_prop, start_id)
