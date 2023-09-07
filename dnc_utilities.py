@@ -7,6 +7,7 @@ from tqdm import tqdm
 import math
 import glob
 
+import torch
 import mmcv
 
 home_path = os.path.expanduser('~')
@@ -54,25 +55,25 @@ def read_frames(video_path, start_id, end_id, norm):
                 ret, _ = _cap.read()
                 if not ret:
                     raise AssertionError(f'Frame {frame_id:d} could not be read')
-        imgs = []
-        for frame_id in range(start_id, end_id):
-            ret, img = _cap.read()
-            if not ret:
-                raise AssertionError(f'Frame {frame_id:d} could not be read')
+    imgs = []
+    for frame_id in range(start_id, end_id):
+        ret, img = _cap.read()
+        if not ret:
+            raise AssertionError(f'Frame {frame_id:d} could not be read')
 
-            if norm is not None:
-                mean, std = norm
+        if norm is not None:
+            mean, std = norm
 
-                img = mmcv.imnormalize(img, np.asarray(mean), np.asarray(std), to_rgb=True)
+            img = mmcv.imnormalize(img, np.asarray(mean), np.asarray(std), to_rgb=True)
 
-            imgs.append(img)
+        imgs.append(img)
 
-        imgs = np.stack(imgs, axis=0)
-        """bring channel to front"""
-        imgs_reshaped = imgs.transpose([0, 3, 1, 2])
-        imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32).cuda()
+    imgs = np.stack(imgs, axis=0)
+    """bring channel to front"""
+    imgs_reshaped = imgs.transpose([0, 3, 1, 2])
+    imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32).cuda()
 
-        return imgs_tensor
+    return imgs_tensor
 
 def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
     ckpt_names = glob.glob(f'{dir_name}/{prefix}*.pth')
