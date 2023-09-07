@@ -443,6 +443,7 @@ class ANetDataset(Dataset):
         for split_dev in splits:
             split_paths.append(os.path.join(image_path, split_dev))
 
+        self.image_path = image_path
         self.norm = norm
         self.feat_shape = feat_shape
         self.feat_model = feat_model
@@ -701,7 +702,7 @@ class ANetDataset(Dataset):
                             start_id = 0
                             end_id = -1
 
-                        video_prefix = os.path.join(split_path, vid_name)
+                        video_prefix = os.path.join(self.image_path, vid_name)
 
                         if n_feat_frames is None:
                             video_path = video_prefix + '.mp4'
