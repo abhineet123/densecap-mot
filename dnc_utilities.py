@@ -121,7 +121,7 @@ class FeatureExtractor:
         read_t = (read_end_t - start_t) * 1000
         feat_t = (feat_end_t - read_end_t) * 1000
 
-        return all_feats, (read_t,feat_t )
+        return all_feats, (read_t, feat_t)
 
     def __call__(self, *args, **kwargs):
         pass

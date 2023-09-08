@@ -444,7 +444,7 @@ class ANetDataset(Dataset):
 
         self.image_path = image_path
         self.feat_shape = feat_shape
-        self.feat_model = feat_model
+        self.feat_model = feat_model  # type: FeatureExtractor
         self.slide_window_size = slide_window_size
         self.pos_thresh = pos_thresh
         self.neg_thresh = neg_thresh
@@ -622,7 +622,6 @@ class ANetDataset(Dataset):
 
             print(f'total number of annotations: {len(train_sentences)}')
 
-
     def get_samples(self, n_proc):
         pos_anchor_stats = []
         neg_anchor_stats = []
@@ -704,7 +703,7 @@ class ANetDataset(Dataset):
 
                         if n_feat_frames is None:
                             video_path = video_prefix + '.mp4'
-                            feat = self.feat_model.run(video_path, start_id, end_id)
+                            feat, _ = self.feat_model.run(video_path, start_id, end_id)
                     else:
                         """assume that each npy file contains features only for one subsequence"""
                         video_prefix = os.path.join(split_path, vid)
@@ -890,8 +889,6 @@ class ANetDataset(Dataset):
                 end2 = time.time()
                 load_t = (end - start) * 1000
                 torch_t = (end2 - end) * 1000
-
-
 
         return img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t
 
