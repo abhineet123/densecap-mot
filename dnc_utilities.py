@@ -113,9 +113,11 @@ class FeatureExtractor:
                 if isinstance(feat, (tuple, list)):
                     feat = feat[0]
 
+            feat = feat.cpu().numpy()
+
             all_feats.append(feat)
 
-        all_feats = torch.stack(all_feats, dim=0)
+        all_feats = np.stack(all_feats, axis=0)
         feat_end_t = time.time()
 
         read_t = (read_end_t - start_t) * 1000
