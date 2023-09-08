@@ -172,7 +172,8 @@ def get_model(text_proc, args):
 
     # Ship the model to GPU, maybe
     if args.cuda:
-        model.cuda()
+        n_gpu = torch.cuda.device_count()
+        
         if args.distributed:
             model.cuda()
             model = torch.nn.parallel.DistributedDataParallel(
