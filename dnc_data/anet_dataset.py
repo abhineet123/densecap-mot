@@ -875,6 +875,7 @@ class ANetDataset(Dataset):
 
                 video_path = video_prefix + '.mp4'
                 img_feat, times = self.feat_model.run(video_path, start_id, end_id)
+                img_feat = torch.from_numpy(img_feat).float()
                 load_t, torch_t = times
 
             else:
