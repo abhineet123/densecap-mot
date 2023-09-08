@@ -279,7 +279,7 @@ def _get_pos_neg(vid_info,
             pos_seg_ = (_anc_idx, _overlap, _len_offset, _cen_offset, _sentence_idx)
 
             pos_seg[_ann_idx].append(pos_seg_)
-            
+
             anc_len_to_n_pos[anc_len] += 1
 
             anc_to_ann[anc_idx] = (_overlap, _ann_idx)

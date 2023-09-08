@@ -52,7 +52,6 @@ class TrainParams:
     :ivar seed: random number generator seed to use
     :ivar sent_weight: None
     :ivar slide_window_size: the (temporal) size of the sliding window
-    :ivar slide_window_stride: the step size of the sliding window
     :ivar start_from: path to a model checkpoint to initialize model weights from. Empty = dont
     :ivar stride_factor: the proposal temporal conv kernel stride is determined by math.ceil(kernel_len/stride_factor)
     :ivar train_splits: training data folder
@@ -142,7 +141,7 @@ class TrainParams:
         self.sent_weight = 0.25
 
         self.slide_window_size = 480
-        self.slide_window_stride = 20
+        # self.slide_window_stride = 20
         self.stride_factor = 100
 
         self.enable_flow = 0
@@ -242,7 +241,7 @@ def get_args():
 
     # Model settings: Proposal and mask
     parser.add_argument('--slide_window_size', default=480, type=int, help='the (temporal) size of the sliding window')
-    parser.add_argument('--slide_window_stride', default=20, type=int, help='the step size of the sliding window')
+    # parser.add_argument('--slide_window_stride', default=20, type=int, help='the step size of the sliding window')
     parser.add_argument('--fps', default=30.0, type=float)
     parser.add_argument('--sampled_frames', default=1.0, type=float)
 

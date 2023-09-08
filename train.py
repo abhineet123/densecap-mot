@@ -318,7 +318,7 @@ def main():
     training or testing videos exceed this length otherwise the excess part will be ignored rather than 
     any kind of actual sliding window operation happening to process the long video piecewise
     """
-    assert (params.slide_window_size >= params.slide_window_stride)
+    # assert (params.slide_window_size >= params.slide_window_stride)
     # assert (params.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
 
     if not params.train_samplelist_path:
