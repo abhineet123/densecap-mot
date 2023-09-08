@@ -19,6 +19,97 @@ from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_t
 
 from objects import Annotations
 
+reductions = dict(
+    flat=torch.nn.Flatten(),
+    avg_8=torch.nn.AdaptiveAvgPool2d(output_size=(8, 8)),
+    avg_4=torch.nn.AdaptiveAvgPool2d(output_size=(4, 4)),
+    avg_2=torch.nn.AdaptiveAvgPool2d(output_size=(2, 2)),
+    max_2=torch.nn.MaxPool2d(2, stride=2, return_indices=True),
+    max_2_inv=torch.nn.MaxUnpool2d(2, stride=2),
+    max_4=torch.nn.MaxPool2d(4, stride=4, return_indices=True),
+    max_4_inv=torch.nn.MaxUnpool2d(4, stride=4),
+    max_8=torch.nn.MaxPool2d(8, stride=8, return_indices=True),
+    max_8_inv=torch.nn.MaxUnpool2d(8, stride=8),
+    max_16=torch.nn.MaxPool2d(16, stride=16, return_indices=True),
+    max_16_inv=torch.nn.MaxUnpool2d(16, stride=16),
+    f0=lambda x: x[0],
+    f1=lambda x: x[1],
+    f2=lambda x: x[2],
+    f3=lambda x: x[3],
+)
+
+
+class FeatureExtractor:
+    def __init__(self, feat_model, reduction, norm, batch_size):
+        self.feat_model = feat_model
+        self.reduction = reduction
+        mean, std = norm
+        self.mean, self.std = np.asarray(mean), np.asarray(std)
+
+        self.batch_size = batch_size
+
+    def run(self, video_path, start_id, end_id, batch_size):
+        _cap = cv2.VideoCapture()
+        if not _cap.open(video_path):
+            raise AssertionError(f'Failed to open video file for reading: {video_path}')
+
+        if end_id < 0:
+            n_frames = int(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FRAME_COUNT))
+            end_id = n_frames
+
+        if start_id > 0:
+            cv_prop = cv2.CAP_PROP_POS_FRAMES
+            _cap.set(cv_prop, start_id)
+            next_frame_id = _cap.get(cv_prop)
+            if next_frame_id != start_id:
+                for frame_id in range(start_id):
+                    ret, _ = _cap.read()
+                    if not ret:
+                        raise AssertionError(f'Frame {frame_id:d} could not be read')
+        frame_id = start_id
+
+        all_feats = []
+        while True:
+            if frame_id >= end_id:
+                break
+
+            imgs = []
+            batch_size_ = min(batch_size, end_id - frame_id)
+            for batch_id in range(batch_size_):
+                ret, img = _cap.read()
+                if not ret:
+                    raise AssertionError(f'Frame {frame_id:d} could not be read')
+                img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
+
+                imgs.append(img)
+
+                frame_id += 1
+
+            imgs = np.stack(imgs, axis=0)
+            """bring channel to front"""
+            imgs_reshaped = imgs.transpose([0, 3, 1, 2])
+            imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32).cuda()
+
+            feat = self.feat_model.extract_feat(imgs_tensor)
+
+            for r in self.reduction:
+                try:
+                    feat = reductions[r](feat)
+                except KeyError:
+                    raise AssertionError(f'invalid reduction type: {r}')
+
+                if isinstance(feat, (tuple, list)):
+                    feat = feat[0]
+
+            all_feats.append(feat)
+
+        all_feats = torch.stack(all_feats, dim=0)
+        return all_feats
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+
 class GridTokenizer:
     def __init__(self, grid_res, vocab_fmt):
         self.grid_res = grid_res
@@ -29,51 +120,6 @@ class GridTokenizer:
     def preprocess(self, sentence):
         return sentence.split(' ')
 
-def read_frames(video_path, start_id, end_id, norm):
-    """
-
-    :param video_path:
-    :param start_id:
-    :param end_id: exclusive
-    :param norm:
-    :return:
-    """
-    _cap = cv2.VideoCapture()
-    if not _cap.open(video_path):
-        raise AssertionError(f'Failed to open video file for reading: {video_path}')
-
-    if end_id < 0:
-        n_frames = int(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FRAME_COUNT))
-        end_id = n_frames
-
-    if start_id > 0:
-        cv_prop = cv2.CAP_PROP_POS_FRAMES
-        _cap.set(cv_prop, start_id)
-        next_frame_id = _cap.get(cv_prop)
-        if next_frame_id != start_id:
-            for frame_id in range(start_id):
-                ret, _ = _cap.read()
-                if not ret:
-                    raise AssertionError(f'Frame {frame_id:d} could not be read')
-    imgs = []
-    for frame_id in range(start_id, end_id):
-        ret, img = _cap.read()
-        if not ret:
-            raise AssertionError(f'Frame {frame_id:d} could not be read')
-
-        if norm is not None:
-            mean, std = norm
-
-            img = mmcv.imnormalize(img, np.asarray(mean), np.asarray(std), to_rgb=True)
-
-        imgs.append(img)
-
-    imgs = np.stack(imgs, axis=0)
-    """bring channel to front"""
-    imgs_reshaped = imgs.transpose([0, 3, 1, 2])
-    imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32).cuda()
-
-    return imgs_tensor
 
 def get_latest_checkpoint(dir_name, prefix='epoch_', ignore_missing=False):
     ckpt_names = glob.glob(f'{dir_name}/{prefix}*.pth')
@@ -330,7 +376,6 @@ def build_targets_densecap(
                 else:
                     traj_vocab['sentence'] = word
 
-
                 if vis:
                     # _id = f'{target_id}-{traj_id}-{win_id}'
                     _id = word
@@ -367,7 +412,7 @@ def build_targets_densecap(
             n_words = len(words)
 
             if n_words >= fixed_traj_len:
-                traj_sample_ids = list(np.linspace(0, n_words-1, fixed_traj_len, dtype=np.int32))
+                traj_sample_ids = list(np.linspace(0, n_words - 1, fixed_traj_len, dtype=np.int32))
                 sampled_words = [words[i] for i in traj_sample_ids]
                 sentence = ' '.join(sampled_words)
                 valid_traj_ids.append(traj_id)
@@ -395,7 +440,6 @@ def build_targets_densecap(
     #             word = f'R{grid_idy}C{grid_idx}'
     #
     #         traj_vocab['sentence'] = word
-
 
     return vocab_annotations, traj_lengths, vocab
 
@@ -475,8 +519,8 @@ def diff_sentence_to_grid_cells(words, fmt_type, max_diff=1):
             else:
                 raise AssertionError(f'invalid word: {word}')
         elif len(word) == 2 * (n_dig + 1):
-            direction = word[0] + word[n_dig+1]
-            diff_y_, diff_x_= word[1:n_dig+1], word[n_dig + 2:]
+            direction = word[0] + word[n_dig + 1]
+            diff_y_, diff_x_ = word[1:n_dig + 1], word[n_dig + 2:]
             diff_y, diff_x = int(diff_y_), int(diff_x_)
 
             assert diff_y > 0, f"invalid diff_y: {diff_y} in word: {word}"
@@ -556,9 +600,11 @@ def grid_to_direction(prev_grid_ids, curr_grid_ids, max_diff=1):
         if grid_idx < prev_grid_idx:
             return 'NW' if unit_diff else f'N{fmt_diff_y}W{fmt_diff_x}'
 
+
 def divide_chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
 
 def excel_ids_to_grid(grid_res):
     excel_id_dict = {}
@@ -576,7 +622,6 @@ def excel_ids_to_grid(grid_res):
 
 
 def grid_to_excel_ids(grid_idy, grid_idx, grid_res):
-
     n_dig_y, n_dig_x = len(str(grid_res[0])), len(str(grid_res[1]))
 
     fmt_y, fmt_x = f'%0{n_dig_y}d', f'%0{n_dig_x}d'

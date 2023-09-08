@@ -23,7 +23,7 @@ import torch
 from torch.utils.data import Dataset
 
 from dnc_data.utils import segment_iou
-from dnc_utilities import read_frames
+from dnc_utilities import extract_feat
 
 from utilities import linux_path
 
@@ -706,8 +706,7 @@ class ANetDataset(Dataset):
 
                         if n_feat_frames is None:
                             video_path = video_prefix + '.mp4'
-                            img_tensor = read_frames(video_path, start_id, end_id, self.norm)
-                            feat = self.feat_model.extract_feat(img_tensor)
+                            feat = self.feat_model.run(video_path, start_id, end_id)
                     else:
                         """assume that each npy file contains features only for one subsequence"""
                         video_prefix = os.path.join(split_path, vid)
