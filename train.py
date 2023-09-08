@@ -37,7 +37,7 @@ from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_se
 from model.action_prop_dense_cap import ActionPropDenseCap, DropoutTime1D
 from model.transformer import Attention, MultiHead, LayerNorm, ResidualBlock, FeedForward, \
     EncoderLayer, Encoder, Transformer, DecoderLayer, Decoder, RealTransformer
-from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells
+from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells, FeatureExtractor
 
 import dnc_to_mot
 
@@ -75,7 +75,6 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
 
     # Create the dataset and data loader instance
     train_dataset = ANetDataset(
-        norm=(params.mean, params.std),
         feat_model=feat_model,
         feat_shape=params.feat_shape,
         image_path=params.feature_root,
@@ -252,6 +251,12 @@ def main():
 
         if params.cuda:
             feat_model = feat_model.cuda()
+
+        feat_model = FeatureExtractor(
+            feat_model=feat_model,
+            reduction=params.reduction,
+            batch_size=params.feat_batch_size,
+            norm=(params.mean, params.std), )
 
     # dist parallel, optional
     # params.distributed = params.world_size > 1

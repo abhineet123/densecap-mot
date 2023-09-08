@@ -48,6 +48,12 @@ class FeatureExtractor:
         mean, std = norm
         self.mean, self.std = np.asarray(mean), np.asarray(std)
 
+        if self.feat_model.cuda:
+            self.cuda = True
+        else:
+            self.cuda = False
+
+
         self.batch_size = batch_size
 
     def run(self, video_path, start_id, end_id):
