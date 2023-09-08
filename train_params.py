@@ -218,7 +218,7 @@ def get_args():
     parser.add_argument('--feat_ckpt', default='', type=str)
     parser.add_argument('--feat_reduction', default=[], type=str, nargs='+')
     parser.add_argument('--feat_shape', default=[], type=int, nargs='+')
-    parser.add_argument('--feat_batch_size', default=6, type=int)
+    parser.add_argument('--feat_batch_size', default=2, type=int)
     parser.add_argument('--mean', default=[], type=float, nargs='+')
     parser.add_argument('--std', default=[], type=float, nargs='+')
 
