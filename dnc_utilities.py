@@ -10,6 +10,8 @@ import glob
 import torch
 import mmcv
 
+import time
+
 home_path = os.path.expanduser('~')
 dmdp_path = os.path.join(home_path, 'isl_labeling_tool', 'deep_mdp')
 sys.path.append(dmdp_path)
@@ -48,7 +50,8 @@ class FeatureExtractor:
 
         self.batch_size = batch_size
 
-    def run(self, video_path, start_id, end_id, batch_size):
+    def run(self, video_path, start_id, end_id):
+        start_t = time.time()
         _cap = cv2.VideoCapture()
         if not _cap.open(video_path):
             raise AssertionError(f'Failed to open video file for reading: {video_path}')
@@ -68,17 +71,24 @@ class FeatureExtractor:
                         raise AssertionError(f'Frame {frame_id:d} could not be read')
         frame_id = start_id
 
+        all_imgs = {}
+        for frame_id in range(start_id, end_id):
+            ret, img = _cap.read()
+            if not ret:
+                raise AssertionError(f'Frame {frame_id:d} could not be read')
+            all_imgs[frame_id] = img
+
+        read_end_t = time.time()
+
         all_feats = []
         while True:
             if frame_id >= end_id:
                 break
 
             imgs = []
-            batch_size_ = min(batch_size, end_id - frame_id)
-            for batch_id in range(batch_size_):
-                ret, img = _cap.read()
-                if not ret:
-                    raise AssertionError(f'Frame {frame_id:d} could not be read')
+            batch_size = min(self.batch_size, end_id - frame_id)
+            for batch_id in range(batch_size):
+                img = all_imgs[img]
                 img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
 
                 imgs.append(img)
@@ -88,7 +98,9 @@ class FeatureExtractor:
             imgs = np.stack(imgs, axis=0)
             """bring channel to front"""
             imgs_reshaped = imgs.transpose([0, 3, 1, 2])
-            imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32).cuda()
+            imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32)
+            if self.cuda:
+                imgs_tensor = imgs_tensor.cuda()
 
             feat = self.feat_model.extract_feat(imgs_tensor)
 
@@ -104,6 +116,11 @@ class FeatureExtractor:
             all_feats.append(feat)
 
         all_feats = torch.stack(all_feats, dim=0)
+        feat_end_t = time.time()
+
+        load_t = (read_end_t - start_t) * 1000
+        torch_t = (feat_end_t - read_end_t) * 1000
+
         return all_feats
 
     def __call__(self, *args, **kwargs):

@@ -23,7 +23,7 @@ import torch
 from torch.utils.data import Dataset
 
 from dnc_data.utils import segment_iou
-from dnc_utilities import extract_feat
+from dnc_utilities import FeatureExtractor
 
 from utilities import linux_path
 
@@ -415,9 +415,8 @@ def _get_pos_neg(vid_info,
 class ANetDataset(Dataset):
     def __init__(
             self,
-            norm,
             feat_shape,
-            feat_model,
+            feat_model: FeatureExtractor,
             image_path,
             n_vids,
             splits,
@@ -444,7 +443,6 @@ class ANetDataset(Dataset):
             split_paths.append(os.path.join(image_path, split_dev))
 
         self.image_path = image_path
-        self.norm = norm
         self.feat_shape = feat_shape
         self.feat_model = feat_model
         self.slide_window_size = slide_window_size
@@ -876,11 +874,7 @@ class ANetDataset(Dataset):
                     start_id, end_id = 0, -1
 
                 video_path = video_prefix + '.mp4'
-
-                img_tensor = read_frames(video_path, start_id, end_id, self.norm)
-                end = time.time()
-
-                img_feat = self.feat_model.extract_feat(img_tensor)
+                img_feat = self.feat_model.run(video_path, start_id, end_id)
                 end2 = time.time()
             else:
                 img_feat_np = np.load(video_prefix + '.npy',
