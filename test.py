@@ -275,9 +275,6 @@ def main():
 
     assert args.batch_size == 1, "Batch size has to be 1!"
 
-    assert args.slide_window_size > args.slide_window_stride, \
-        "slide_window_size must be > slide_window_stride!"
-
     if args.db_root:
         args.feature_root = linux_path(args.db_root, args.feature_root)
         args.dataset_file = linux_path(args.db_root, args.dataset_file)

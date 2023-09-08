@@ -90,9 +90,6 @@ class TestParams(CFG):
     :ivar slide_window_size: the (temporal) size of the sliding window
     :type slide_window_size: int
 
-    :ivar slide_window_stride: the step size of the sliding window
-    :type slide_window_stride: int
-
     :ivar ckpt: path to a model checkpoint to initialize model weights from. Empty = dont
     :type ckpt: str
 
@@ -148,7 +145,7 @@ class TestParams(CFG):
         self.sampling_sec = 0
 
         self.slide_window_size = 480
-        self.slide_window_stride = 20
+        # self.slide_window_stride = 20
         self.stride_factor = 100
 
         self.rgb_ch = 4
