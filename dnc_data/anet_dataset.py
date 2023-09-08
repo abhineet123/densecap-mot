@@ -703,7 +703,8 @@ class ANetDataset(Dataset):
 
                         if n_feat_frames is None:
                             video_path = video_prefix + '.mp4'
-                            feat, _ = self.feat_model.run(video_path, start_id, end_id)
+                            with torch.no_grad():
+                                feat, _ = self.feat_model.run(video_path, start_id, end_id)
                     else:
                         """assume that each npy file contains features only for one subsequence"""
                         video_prefix = os.path.join(split_path, vid)

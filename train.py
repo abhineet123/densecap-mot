@@ -134,7 +134,7 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
     return train_dataset, valid_dataset, text_proc, train_sampler
 
 
-def get_model(text_proc, feat_model, args):
+def get_model(text_proc, args):
     """
 
     :param text_proc:
@@ -144,7 +144,6 @@ def get_model(text_proc, feat_model, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        feat_model=feat_model,
         feat_shape=args.feat_shape,
         enable_flow=args.enable_flow,
         rgb_ch=args.rgb_ch,

@@ -102,8 +102,7 @@ class FeatureExtractor:
             if self.cuda:
                 imgs_tensor = imgs_tensor.cuda()
 
-            with torch.no_grad():
-                feat = self.feat_model.extract_feat(imgs_tensor)
+            feat = self.feat_model.extract_feat(imgs_tensor)
 
             for r in self.reduction:
                 try:
@@ -114,11 +113,11 @@ class FeatureExtractor:
                 if isinstance(feat, (tuple, list)):
                     feat = feat[0]
 
-            feat = feat.cpu().numpy()
+            # feat = feat.cpu().numpy()
 
             all_feats.append(feat)
 
-        all_feats = np.concatenate(all_feats, axis=0)
+        all_feats = torch.cat(all_feats, dim=0)
         feat_end_t = time.time()
 
         read_t = (read_end_t - start_t) * 1000
