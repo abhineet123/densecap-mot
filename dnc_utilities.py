@@ -42,19 +42,13 @@ reductions = dict(
 
 
 class FeatureExtractor:
-    def __init__(self, feat_model, reduction, norm, batch_size):
+    def __init__(self, feat_model, reduction, norm, batch_size, cuda):
         self.feat_model = feat_model
         self.reduction = reduction
         mean, std = norm
         self.mean, self.std = np.asarray(mean), np.asarray(std)
-
-        if self.feat_model.cuda:
-            self.cuda = True
-        else:
-            self.cuda = False
-
-
         self.batch_size = batch_size
+        self.cuda = cuda
 
     def run(self, video_path, start_id, end_id):
         start_t = time.time()

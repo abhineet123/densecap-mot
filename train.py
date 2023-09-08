@@ -256,7 +256,9 @@ def main():
             feat_model=feat_model,
             reduction=params.feat_reduction,
             batch_size=params.feat_batch_size,
-            norm=(params.mean, params.std), )
+            norm=(params.mean, params.std),
+            cuda=params.cuda,
+        )
 
     # dist parallel, optional
     # params.distributed = params.world_size > 1
