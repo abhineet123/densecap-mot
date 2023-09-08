@@ -102,7 +102,8 @@ class FeatureExtractor:
             if self.cuda:
                 imgs_tensor = imgs_tensor.cuda()
 
-            feat = self.feat_model.extract_feat(imgs_tensor)
+            with torch.no_grad():
+                feat = self.feat_model.extract_feat(imgs_tensor)
 
             for r in self.reduction:
                 try:
