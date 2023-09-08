@@ -38,7 +38,6 @@ from torch.nn.utils import clip_grad_norm_
 import torch.distributed as dist
 import torch.utils.data.distributed
 
-
 # misc
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap, DropoutTime1D
@@ -102,6 +101,11 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
         load_samplelist=params.load_train_samplelist,
         sample_list_dir=params.train_samplelist_path,
     )
+    batch_size = params.batch_size
+    n_train_samples = len(train_dataset.sample_list)
+    residual_train_samples = n_train_samples % batch_size
+    assert residual_train_samples != 1, \
+        f"n_train_samples: {n_train_samples} with batch_size: {batch_size} leads to unit sized batch"
 
     valid_dataset = ANetDataset(
         feat_model=feat_model,
@@ -124,6 +128,10 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
         load_samplelist=params.load_valid_samplelist,
         sample_list_dir=params.valid_samplelist_path,
     )
+    n_valid_samples = len(valid_dataset.sample_list)
+    residual_valid_samples = n_valid_samples % batch_size
+    assert residual_valid_samples != 1, \
+        f"n_valid_samples: {n_valid_samples} with batch_size: {batch_size} leads to unit sized batch"
 
     # if text_proc is not None:
     #     exit()
@@ -358,6 +366,7 @@ def main(params):
     model_parameters = list(model.parameters())
 
     print('initializing weights')
+
     def weights_init(m):
         if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
             torch.nn.init.xavier_uniform_(m.weight)
@@ -406,7 +415,6 @@ def main(params):
         module = model
 
     module.apply(weights_init)
-
 
     # for _p in model.parameters():
     #     print(_p)
