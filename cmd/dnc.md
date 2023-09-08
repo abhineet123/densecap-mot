@@ -11,6 +11,7 @@
       - [best_val_model_178       @ seq_0_to_99_win_2-f0_max_16/1k-9600/n-1](#best_val_model_178___seq_0_to_99_win_2_f0_max_16_1k_9600_n_1_)
   - [100-960       @ n-1](#100_960___n_1_)
     - [live-f0       @ 100-960/n-1](#live_f0___100_960_n_1_)
+    - [live-f0-max_4-slide_24       @ 100-960/n-1](#live_f0_max_4_slide_24___100_960_n_1_)
     - [f0_max_4       @ 100-960/n-1](#f0_max_4___100_960_n_1_)
       - [mask       @ f0_max_4/100-960/n-1](#mask___f0_max_4_100_960_n_1_)
     - [f0_max_16       @ 100-960/n-1](#f0_max_16___100_960_n_1_)
@@ -76,6 +77,11 @@ python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_1000_9600_var/seq_0_to_
 ### live-f0       @ 100-960/n-1-->dnc
 __dbg__
 CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_fix_20-live-f0.cfg --batch_size 16 --num_workers 0
+
+<a id="live_f0_max_4_slide_24___100_960_n_1_"></a>
+### live-f0-max_4-slide_24       @ 100-960/n-1-->dnc
+__dgb__
+CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_slide_24-live-f0_max_4.cfg --batch_size 16 --num_workers 0
 
 <a id="f0_max_4___100_960_n_1_"></a>
 ### f0_max_4       @ 100-960/n-1-->dnc
