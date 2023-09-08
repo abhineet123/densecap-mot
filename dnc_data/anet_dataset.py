@@ -864,8 +864,9 @@ class ANetDataset(Dataset):
                       out=img_feat[:min(total_frame, self.slide_window_size)])
 
             end2 = time.time()
+            load_t = (end - start) * 1000
+            torch_t = (end2 - end) * 1000
         else:
-            start = time.time()
 
             if self.feat_model is not None:
                 if feat_frame_ids is not None:
@@ -874,9 +875,12 @@ class ANetDataset(Dataset):
                     start_id, end_id = 0, -1
 
                 video_path = video_prefix + '.mp4'
-                img_feat = self.feat_model.run(video_path, start_id, end_id)
-                end2 = time.time()
+                img_feat, times = self.feat_model.run(video_path, start_id, end_id)
+                load_t, torch_t = times
+
             else:
+                start = time.time()
+
                 img_feat_np = np.load(video_prefix + '.npy',
                                       # mmap_mode='r'
                                       )
@@ -884,9 +888,10 @@ class ANetDataset(Dataset):
 
                 img_feat = torch.from_numpy(img_feat_np).float()
                 end2 = time.time()
+                load_t = (end - start) * 1000
+                torch_t = (end2 - end) * 1000
 
-        load_t = (end - start) * 1000
-        torch_t = (end2 - end) * 1000
+
 
         return img_feat, total_frame, video_prefix, feat_frame_ids, sample, load_t, torch_t
 

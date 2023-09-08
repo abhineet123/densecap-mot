@@ -118,10 +118,10 @@ class FeatureExtractor:
         all_feats = torch.stack(all_feats, dim=0)
         feat_end_t = time.time()
 
-        load_t = (read_end_t - start_t) * 1000
-        torch_t = (feat_end_t - read_end_t) * 1000
+        read_t = (read_end_t - start_t) * 1000
+        feat_t = (feat_end_t - read_end_t) * 1000
 
-        return all_feats
+        return all_feats, (read_t,feat_t )
 
     def __call__(self, *args, **kwargs):
         pass
