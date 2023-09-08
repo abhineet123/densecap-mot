@@ -254,7 +254,7 @@ def main():
 
         feat_model = FeatureExtractor(
             feat_model=feat_model,
-            reduction=params.reduction,
+            reduction=params.feat_reduction,
             batch_size=params.feat_batch_size,
             norm=(params.mean, params.std), )
 
