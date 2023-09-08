@@ -113,7 +113,7 @@ class FeatureExtractor:
                 if isinstance(feat, (tuple, list)):
                     feat = feat[0]
 
-            # feat = feat.cpu().numpy()
+            feat = feat.cpu()
 
             all_feats.append(feat)
 
@@ -187,7 +187,7 @@ def build_targets_densecap(
         assert frames is not None, "frames must be provided for visualization"
 
     if win_size <= 0:
-        print('Temporal Windows are disabled')
+        # print('Temporal Windows are disabled')
         win_size = n_frames
 
     last_start_frame_id = n_frames - win_size

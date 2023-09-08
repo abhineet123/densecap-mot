@@ -157,19 +157,19 @@ def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, pa
             out_dir=out_dir,
             vis=params.vis,
         )
-        mean_traj_length = np.mean(traj_lengths)
-        std_traj_length = np.std(traj_lengths)
-        median_traj_length = np.median(traj_lengths)
-        min_traj_length = np.amin(traj_lengths)
-        max_traj_length = np.amax(traj_lengths)
+        # mean_traj_length = np.mean(traj_lengths)
+        # std_traj_length = np.std(traj_lengths)
+        # median_traj_length = np.median(traj_lengths)
+        # min_traj_length = np.amin(traj_lengths)
+        # max_traj_length = np.amax(traj_lengths)
 
-        print(f'\nseq traj_length: '
-              f'mean: {mean_traj_length} '
-              f'median: {median_traj_length} '
-              f'min: {min_traj_length} '
-              f'max: {max_traj_length} '
-              f'std: {std_traj_length} '
-              )
+        # print(f'\nseq traj_length: '
+        #       f'mean: {mean_traj_length} '
+        #       f'median: {median_traj_length} '
+        #       f'min: {min_traj_length} '
+        #       f'max: {max_traj_length} '
+        #       f'std: {std_traj_length} '
+        #       )
 
         traj_lengths_out_path = linux_path(traj_lengths_out_dir, f'{seq_name}.txt')
         np.savetxt(traj_lengths_out_path, np.asarray(traj_lengths, dtype=np.uint32), fmt='%d')

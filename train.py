@@ -351,7 +351,6 @@ def main():
 
     model_parameters = list(model.parameters())
 
-
     print('initializing weights')
     def weights_init(m):
         if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
