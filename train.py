@@ -181,8 +181,8 @@ def get_model(text_proc, args):
                 output_device=args.local_rank,
                 find_unused_parameters=True,
             )
-        elif torch.cuda.device_count() > 1:
-            model = torch.nn.DataParallel(model).cuda()
+        # elif torch.cuda.device_count() > 1:
+        #     model = torch.nn.DataParallel(model).cuda()
         else:
             model.cuda()
     return model
