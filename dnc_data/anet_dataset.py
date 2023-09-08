@@ -459,8 +459,6 @@ class ANetDataset(Dataset):
         self.splits = splits
         self.split_paths = split_paths
 
-        self.feat_shape = None
-
         self.samples_loaded = False
 
         self.sample_list = []  # list of list for data samples
@@ -679,7 +677,9 @@ class ANetDataset(Dataset):
                     n_feat_frames = bn_feat.shape[0]
                     bn_feat_dim = bn_feat.shape[1]
 
-                    self.feat_shape = (resnet_feat_dim, bn_feat_dim)
+                    feat_shape = (resnet_feat_dim, bn_feat_dim)
+
+                    assert feat_shape == self.feat_shape, "feat_shape mismatch"
 
                     assert resnet_feat.shape[0] == n_feat_frames, 'resnet and bn feature frames mismatch'
                 else:
