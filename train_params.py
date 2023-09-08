@@ -91,6 +91,9 @@ class TrainParams:
         self.std = []
 
         self.d_model = 1024
+
+        self.gpu = ''
+
         self.dataset = ''
         self.dataset_file = ''
         self.local_rank = 0
@@ -186,6 +189,7 @@ def get_args():
 
     # Data input settings
     parser.add_argument('--cfgs_file', default='cfgs/anet.yml', type=str, help='dataset specific settings. anet | yc2')
+    parser.add_argument('--gpu', default='', type=str)
     parser.add_argument('--dataset', default='', type=str, help='which dataset to use')
     parser.add_argument('--dataset_file', default='', type=str)
     parser.add_argument('--db_root', default='', type=str, help='the dataset root')

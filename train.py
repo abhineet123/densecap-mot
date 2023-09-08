@@ -173,7 +173,7 @@ def get_model(text_proc, args):
     # Ship the model to GPU, maybe
     if args.cuda:
         n_gpu = torch.cuda.device_count()
-        
+
         if args.distributed:
             model.cuda()
             model = torch.nn.parallel.DistributedDataParallel(
@@ -230,6 +230,9 @@ def main():
 
     sampled_frames = params.sampled_frames
     sampling_sec = float(sampled_frames) / float(params.fps)
+
+    if params.gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = params.gpu
 
     feat_model = None
 
