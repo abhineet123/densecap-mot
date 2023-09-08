@@ -347,10 +347,12 @@ def main():
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
 
     print('building model')
-    model = get_model(text_proc, feat_model, params)
+    model = get_model(text_proc, params)
+
+    model_parameters = list(model.parameters())
+
 
     print('initializing weights')
-
     def weights_init(m):
         if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
             torch.nn.init.xavier_uniform_(m.weight)
@@ -399,6 +401,7 @@ def main():
         module = model
 
     module.apply(weights_init)
+
 
     # for _p in model.parameters():
     #     print(_p)
