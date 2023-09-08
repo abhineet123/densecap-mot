@@ -80,6 +80,8 @@ CUDA_VISIBLE_DEVICES=0 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1
 
 <a id="live_f0_max_4_slide_12___100_960_n_1_"></a>
 ### live-f0-max_4-slide_12       @ 100-960/n-1-->dnc
+python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_slide_12-live-f0_max_4.cfg --batch_size 2 --num_workers 0 --distributed 1
+
 __dgb__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_slide_12-live-f0_max_4.cfg --batch_size 2 --num_workers 0 --gpu 0
 

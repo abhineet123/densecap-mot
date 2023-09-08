@@ -8,7 +8,12 @@
 # general packages
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+from train_params import TrainParams, get_args
+
+args = get_args()  # type: TrainParams
+
+if args.gpu:
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
 import sys
 import numpy as np
@@ -33,7 +38,6 @@ from torch.nn.utils import clip_grad_norm_
 import torch.distributed as dist
 import torch.utils.data.distributed
 
-from train_params import TrainParams, get_args
 
 # misc
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
@@ -226,16 +230,11 @@ def get_feat_extractor(feat_cfg, ckpt, fuse_conv_bn):
     return model
 
 
-def main():
-    params = get_args()  # type: TrainParams
-
+def main(params):
     print(f'params.resume: {params.resume}')
 
     sampled_frames = params.sampled_frames
     sampling_sec = float(sampled_frames) / float(params.fps)
-
-    if params.gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = params.gpu
 
     feat_model = None
 
@@ -993,4 +992,4 @@ def visualize(
 
 
 if __name__ == "__main__":
-    main()
+    main(args)
