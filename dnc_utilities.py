@@ -45,7 +45,6 @@ class FeatureExtractor:
     def __init__(self, feat_model, reduction, norm, batch_size, cuda):
         self.feat_model = feat_model
         self.reduction = reduction
-        self.cuda = cuda
         mean, std = norm
         self.mean, self.std = np.asarray(mean), np.asarray(std)
         self.batch_size = batch_size
