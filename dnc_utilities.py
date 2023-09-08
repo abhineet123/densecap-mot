@@ -45,6 +45,7 @@ class FeatureExtractor:
     def __init__(self, feat_model, reduction, norm, batch_size, cuda):
         self.feat_model = feat_model
         self.reduction = reduction
+        self.cuda = cuda
         mean, std = norm
         self.mean, self.std = np.asarray(mean), np.asarray(std)
         self.batch_size = batch_size
@@ -69,7 +70,6 @@ class FeatureExtractor:
                     ret, _ = _cap.read()
                     if not ret:
                         raise AssertionError(f'Frame {frame_id:d} could not be read')
-        frame_id = start_id
 
         all_imgs = {}
         for frame_id in range(start_id, end_id):
@@ -80,6 +80,7 @@ class FeatureExtractor:
 
         read_end_t = time.time()
 
+        frame_id = start_id
         all_feats = []
         while True:
             if frame_id >= end_id:
@@ -88,7 +89,7 @@ class FeatureExtractor:
             imgs = []
             batch_size = min(self.batch_size, end_id - frame_id)
             for batch_id in range(batch_size):
-                img = all_imgs[img]
+                img = all_imgs[frame_id]
                 img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
 
                 imgs.append(img)
