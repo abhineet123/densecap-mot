@@ -443,7 +443,7 @@ class ANetDataset(Dataset):
             split_paths.append(os.path.join(image_path, split_dev))
 
         self.image_path = image_path
-        self.feat_shape = feat_shape
+        self.feat_shape = tuple(feat_shape)
         self.feat_model = feat_model  # type: FeatureExtractor
         self.slide_window_size = slide_window_size
         self.pos_thresh = pos_thresh
