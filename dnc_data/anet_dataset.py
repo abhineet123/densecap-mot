@@ -704,12 +704,12 @@ class ANetDataset(Dataset):
 
                         video_prefix = os.path.join(self.image_path, vid_name)
 
-                        if n_feat_frames is None:
-                            video_path = video_prefix + '.mp4'
-                            with torch.no_grad():
-                                feat, _ = self.feat_model.run(video_path, start_id, end_id)
-
-                            feat = feat.cpu().numpy()
+                        # if n_feat_frames is None:
+                        #     video_path = video_prefix + '.mp4'
+                        #     with torch.no_grad():
+                        #         feat, _ = self.feat_model.run(video_path, start_id, end_id)
+                        #
+                        #     feat = feat.cpu().numpy()
                     else:
                         """assume that each npy file contains features only for one subsequence"""
                         video_prefix = os.path.join(split_path, vid)
@@ -717,22 +717,22 @@ class ANetDataset(Dataset):
                         feat_path = video_prefix + '.npy'
                         # assert os.path.isfile(feat_path), f"nonexistent feat_path: {feat_path}"
 
-                        if n_feat_frames is None:
-                            feat = np.load(feat_path)
+                        # if n_feat_frames is None:
+                        #     feat = np.load(feat_path)
 
-                    if n_feat_frames is None:
-                        n_feat_frames = feat.shape[0]
-
-                        if len(feat.shape) == 4:
-                            ch, h, w = feat.shape[1:]
-                            feat_shape = (ch, h, w)
-                        elif len(feat.shape) == 2:
-                            feat_dim = feat.shape[1]
-                            feat_shape = (feat_dim,)
-                        else:
-                            raise AssertionError(f'invalid feat.shape: {feat.shape}')
-
-                        assert feat_shape == self.feat_shape, "feat_shape mismatch"
+                    # if n_feat_frames is None:
+                    #     n_feat_frames = feat.shape[0]
+                    #
+                    #     if len(feat.shape) == 4:
+                    #         ch, h, w = feat.shape[1:]
+                    #         feat_shape = (ch, h, w)
+                    #     elif len(feat.shape) == 2:
+                    #         feat_dim = feat.shape[1]
+                    #         feat_shape = (feat_dim,)
+                    #     else:
+                    #         raise AssertionError(f'invalid feat.shape: {feat.shape}')
+                    #
+                    #     assert feat_shape == self.feat_shape, "feat_shape mismatch"
 
                 if feat_frame_ids is None:
                     feat_frame_ids = (0, n_feat_frames)
