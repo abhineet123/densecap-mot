@@ -24,6 +24,49 @@ from objects import Annotations
 
 
 
+class VideoReader:
+    def __init__(self, norm):
+        mean, std = norm
+        self.mean, self.std = np.asarray(mean), np.asarray(std)
+
+    def run(self, video_path, start_id, end_id):
+        # start_t = time.time()
+        _cap = cv2.VideoCapture()
+        if not _cap.open(video_path):
+            raise AssertionError(f'Failed to open video file for reading: {video_path}')
+
+        if end_id < 0:
+            n_frames = int(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FRAME_COUNT))
+            end_id = n_frames
+
+        if start_id > 0:
+            cv_prop = cv2.CAP_PROP_POS_FRAMES
+            _cap.set(cv_prop, start_id)
+            next_frame_id = _cap.get(cv_prop)
+            if next_frame_id != start_id:
+                for frame_id in range(start_id):
+                    ret, _ = _cap.read()
+                    if not ret:
+                        raise AssertionError(f'Frame {frame_id:d} could not be read')
+
+        all_imgs = []
+        for frame_id in range(start_id, end_id):
+            ret, img = _cap.read()
+            if not ret:
+                raise AssertionError(f'Frame {frame_id:d} could not be read')
+            img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
+
+            all_imgs.append(img)
+        # read_end_t = time.time()
+
+        imgs = np.stack(all_imgs, axis=0)
+        imgs_reshaped = imgs.transpose([0, 3, 1, 2])
+
+        imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32)
+
+        return imgs_tensor
+
+
 class FeatureExtractor(nn.Module):
     def __init__(self, feat_model, reduction, batch_size, cuda):
         super().__init__()
@@ -86,49 +129,6 @@ class FeatureExtractor(nn.Module):
 
         all_feats = torch.cat(all_feats, dim=0)
         return all_feats
-
-
-class VideoReader:
-    def __init__(self, norm):
-        mean, std = norm
-        self.mean, self.std = np.asarray(mean), np.asarray(std)
-
-    def run(self, video_path, start_id, end_id):
-        # start_t = time.time()
-        _cap = cv2.VideoCapture()
-        if not _cap.open(video_path):
-            raise AssertionError(f'Failed to open video file for reading: {video_path}')
-
-        if end_id < 0:
-            n_frames = int(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FRAME_COUNT))
-            end_id = n_frames
-
-        if start_id > 0:
-            cv_prop = cv2.CAP_PROP_POS_FRAMES
-            _cap.set(cv_prop, start_id)
-            next_frame_id = _cap.get(cv_prop)
-            if next_frame_id != start_id:
-                for frame_id in range(start_id):
-                    ret, _ = _cap.read()
-                    if not ret:
-                        raise AssertionError(f'Frame {frame_id:d} could not be read')
-
-        all_imgs = []
-        for frame_id in range(start_id, end_id):
-            ret, img = _cap.read()
-            if not ret:
-                raise AssertionError(f'Frame {frame_id:d} could not be read')
-            img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
-
-            all_imgs.append(img)
-        # read_end_t = time.time()
-
-        imgs = np.stack(all_imgs, axis=0)
-        imgs_reshaped = imgs.transpose([0, 3, 1, 2])
-
-        imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32)
-
-        return imgs_tensor
 
 
 class GridTokenizer:
