@@ -525,7 +525,7 @@ def main(params):
                 start_epoch = ckpt_epoch + 1
 
     for train_epoch in range(start_epoch, params.max_epochs):
-        t_epoch_start = time.time()
+        # t_epoch_start = time.time()
         # print('Epoch: {}'.format(train_epoch))
 
         if params.distributed:
