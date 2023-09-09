@@ -165,7 +165,6 @@ def get_model(text_proc, feat_extractor, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        feat_extractor=feat_extractor,
         feat_shape=args.feat_shape,
         enable_flow=args.enable_flow,
         rgb_ch=args.rgb_ch,
@@ -208,6 +207,62 @@ def get_model(text_proc, feat_extractor, args):
         #     model = torch.nn.DataParallel(model).cuda()
         else:
             model.cuda()
+
+    print('initializing weights')
+
+    def weights_init(m):
+        if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.nn.init.zeros_(m.bias)
+        elif isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
+            torch.nn.init.normal_(m.weight, 1.0, 0.02)
+            torch.nn.init.constant_(m.bias, 0)
+        elif isinstance(m, (
+                DropoutTime1D,
+                torch.nn.ReLU,
+                torch.nn.Flatten,
+                torch.nn.Dropout,
+                torch.nn.BCEWithLogitsLoss,
+                torch.nn.SmoothL1Loss,
+                torch.nn.MSELoss,
+        )):
+            pass
+        elif isinstance(m, (
+                ActionPropDenseCap,
+                Attention,
+                MultiHead,
+                LayerNorm,
+                ResidualBlock,
+                FeedForward,
+                EncoderLayer,
+                Encoder,
+                Transformer,
+                DecoderLayer,
+                Decoder,
+                RealTransformer,
+        )):
+            for _m in m.children():
+                weights_init(_m)
+        elif isinstance(m, (
+                torch.nn.Sequential,
+                torch.nn.ModuleList,)):
+            for _m in m:
+                weights_init(_m)
+        else:
+            raise AssertionError('unknown layer type')
+
+    try:
+        module = model.module
+    except AttributeError:
+        module = model
+
+    module.apply(weights_init)
+
+    """set feat_extractor after initializing weights to avoid 
+    messing with its pretrained weights"""
+    module.feat_extractor = feat_extractor
+
     return model
 
 
@@ -370,62 +425,9 @@ def main(params):
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
 
     print('building model')
-    model = get_model(text_proc, feat_extractor, params)
+    model = get_model(text_proc, params)
 
     # model_parameters = list(model.parameters())
-
-    print('initializing weights')
-
-    def weights_init(m):
-        if isinstance(m, (torch.nn.Conv2d, torch.nn.Conv1d, torch.nn.Linear)):
-            torch.nn.init.xavier_uniform_(m.weight)
-            if m.bias is not None:
-                torch.nn.init.zeros_(m.bias)
-        elif isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
-            torch.nn.init.normal_(m.weight, 1.0, 0.02)
-            torch.nn.init.constant_(m.bias, 0)
-        elif isinstance(m, (
-                DropoutTime1D,
-                torch.nn.ReLU,
-                torch.nn.Flatten,
-                torch.nn.Dropout,
-                torch.nn.BCEWithLogitsLoss,
-                torch.nn.SmoothL1Loss,
-                torch.nn.MSELoss,
-        )):
-            pass
-        elif isinstance(m, (
-                ActionPropDenseCap,
-                Attention,
-                MultiHead,
-                LayerNorm,
-                ResidualBlock,
-                FeedForward,
-                EncoderLayer,
-                Encoder,
-                Transformer,
-                DecoderLayer,
-                Decoder,
-                RealTransformer,
-        )):
-            for _m in m.children():
-                weights_init(_m)
-        elif isinstance(m, (
-                torch.nn.Sequential,
-                torch.nn.ModuleList,)):
-            for _m in m:
-                weights_init(_m)
-        else:
-            if feat_extractor is not None:
-                return
-            raise AssertionError('unknown layer type')
-
-    try:
-        module = model.module
-    except AttributeError:
-        module = model
-
-    module.apply(weights_init)
 
     # for _p in model.parameters():
     #     print(_p)

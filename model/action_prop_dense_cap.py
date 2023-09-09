@@ -62,7 +62,6 @@ class DropoutTime1D(nn.Module):
 class ActionPropDenseCap(nn.Module):
     def __init__(
             self,
-            feat_extractor,
             feat_shape,
             enable_flow,
             rgb_ch,
@@ -88,7 +87,7 @@ class ActionPropDenseCap(nn.Module):
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
-        self.feat_extractor = feat_extractor
+        self.feat_extractor = None
         self.feat_shape = tuple(feat_shape)
         self.rgb_ch = rgb_ch
 
