@@ -22,24 +22,6 @@ from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_t
 
 from objects import Annotations
 
-reductions = dict(
-    flat=torch.nn.Flatten(),
-    avg_8=torch.nn.AdaptiveAvgPool2d(output_size=(8, 8)),
-    avg_4=torch.nn.AdaptiveAvgPool2d(output_size=(4, 4)),
-    avg_2=torch.nn.AdaptiveAvgPool2d(output_size=(2, 2)),
-    max_2=torch.nn.MaxPool2d(2, stride=2, return_indices=False),
-    max_2_inv=torch.nn.MaxUnpool2d(2, stride=2),
-    max_4=torch.nn.MaxPool2d(4, stride=4, return_indices=False),
-    max_4_inv=torch.nn.MaxUnpool2d(4, stride=4),
-    max_8=torch.nn.MaxPool2d(8, stride=8, return_indices=False),
-    max_8_inv=torch.nn.MaxUnpool2d(8, stride=8),
-    max_16=torch.nn.MaxPool2d(16, stride=16, return_indices=False),
-    max_16_inv=torch.nn.MaxUnpool2d(16, stride=16),
-    f0=lambda x: x[0],
-    f1=lambda x: x[1],
-    f2=lambda x: x[2],
-    f3=lambda x: x[3],
-)
 
 
 class FeatureExtractor(nn.Module):
@@ -50,6 +32,25 @@ class FeatureExtractor(nn.Module):
         self.reduction = reduction
         self.batch_size = batch_size
         self.cuda = cuda
+
+        self._reductions = dict(
+            flat=torch.nn.Flatten(),
+            avg_8=torch.nn.AdaptiveAvgPool2d(output_size=(8, 8)),
+            avg_4=torch.nn.AdaptiveAvgPool2d(output_size=(4, 4)),
+            avg_2=torch.nn.AdaptiveAvgPool2d(output_size=(2, 2)),
+            max_2=torch.nn.MaxPool2d(2, stride=2, return_indices=False),
+            max_2_inv=torch.nn.MaxUnpool2d(2, stride=2),
+            max_4=torch.nn.MaxPool2d(4, stride=4, return_indices=False),
+            max_4_inv=torch.nn.MaxUnpool2d(4, stride=4),
+            max_8=torch.nn.MaxPool2d(8, stride=8, return_indices=False),
+            max_8_inv=torch.nn.MaxUnpool2d(8, stride=8),
+            max_16=torch.nn.MaxPool2d(16, stride=16, return_indices=False),
+            max_16_inv=torch.nn.MaxUnpool2d(16, stride=16),
+            f0=lambda x: x[0],
+            f1=lambda x: x[1],
+            f2=lambda x: x[2],
+            f3=lambda x: x[3],
+        )
 
     def forward(self, imgs_tensor):
         n_imgs = imgs_tensor.size(0)
@@ -72,7 +73,7 @@ class FeatureExtractor(nn.Module):
 
             for r in self.reduction:
                 try:
-                    feat = reductions[r](feat)
+                    feat = self._reductions[r](feat)
                 except KeyError:
                     raise AssertionError(f'invalid reduction type: {r}')
 
