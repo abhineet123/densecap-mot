@@ -65,12 +65,15 @@ dmdp_path = os.path.join(home_path, 'isl_labeling_tool', 'deep_mdp')
 sys.path.append(dmdp_path)
 
 from input import Input
-from objects import Annotations
-
 from utilities import linux_path, CustomLogger
 
 
-def get_dataset(sampling_sec, vid_reader, params: TrainParams):
+def get_dataset(sampling_sec, params: TrainParams):
+    vid_reader = None
+
+    if params.feat_cfg:
+        vid_reader = VideoReader(norm=(params.mean, params.std))
+
     # process text
     train_val_splits = [params.train_splits[0], params.val_splits[0]]
     sample_list_dir = os.path.dirname(params.train_samplelist_path)
@@ -102,6 +105,8 @@ def get_dataset(sampling_sec, vid_reader, params: TrainParams):
         load_samplelist=params.load_train_samplelist,
         sample_list_dir=params.train_samplelist_path,
     )
+    assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
+
     batch_size = params.batch_size
     n_train_samples = len(train_dataset.sample_list)
     residual_train_samples = n_train_samples % batch_size
@@ -133,6 +138,8 @@ def get_dataset(sampling_sec, vid_reader, params: TrainParams):
         load_samplelist=params.load_valid_samplelist,
         sample_list_dir=params.valid_samplelist_path,
     )
+    assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
+
     n_valid_samples = len(valid_dataset.sample_list)
     residual_valid_samples = n_valid_samples % batch_size
     if residual_valid_samples > 0:
@@ -152,55 +159,67 @@ def get_dataset(sampling_sec, vid_reader, params: TrainParams):
     if not valid_dataset.samples_loaded:
         valid_dataset.get_samples(params.n_proc)
 
-    return train_dataset, valid_dataset, text_proc, train_sampler
+    train_loader = DataLoader(train_dataset,
+                              batch_size=params.batch_size,
+                              shuffle=(train_sampler is None), sampler=train_sampler,
+                              num_workers=params.num_workers,
+                              collate_fn=anet_collate_fn)
+
+    valid_loader = DataLoader(valid_dataset,
+                              batch_size=params.valid_batch_size,
+                              shuffle=False,
+                              num_workers=params.num_workers,
+                              collate_fn=anet_collate_fn)
+
+    return train_dataset, valid_dataset, train_loader, valid_loader, text_proc, train_sampler
 
 
-def get_model(text_proc, feat_extractor, args):
+def get_model(text_proc, params):
     """
 
     :param text_proc:
-    :param TrainParams args:
+    :param TrainParams params:
     :return:
     """
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
-        feat_shape=args.feat_shape,
-        enable_flow=args.enable_flow,
-        rgb_ch=args.rgb_ch,
-        dim_model=args.d_model,
-        dim_hidden=args.d_hidden,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
+        feat_shape=params.feat_shape,
+        enable_flow=params.enable_flow,
+        rgb_ch=params.rgb_ch,
+        dim_model=params.d_model,
+        dim_hidden=params.d_hidden,
+        n_layers=params.n_layers,
+        n_heads=params.n_heads,
         vocab=sent_vocab,
-        in_emb_dropout=args.in_emb_dropout,
-        attn_dropout=args.attn_dropout,
-        vis_emb_dropout=args.vis_emb_dropout,
-        cap_dropout=args.cap_dropout,
-        nsamples=args.train_sample,
-        kernel_list=args.kernel_list,
-        stride_factor=args.stride_factor,
-        learn_mask=args.mask_weight > 0,
+        in_emb_dropout=params.in_emb_dropout,
+        attn_dropout=params.attn_dropout,
+        vis_emb_dropout=params.vis_emb_dropout,
+        cap_dropout=params.cap_dropout,
+        nsamples=params.train_sample,
+        kernel_list=params.kernel_list,
+        stride_factor=params.stride_factor,
+        learn_mask=params.mask_weight > 0,
         max_sentence_len=max_sentence_len,
-        window_length=args.slide_window_size,
+        window_length=params.slide_window_size,
     )
 
     # Initialize the networks and the criterion
-    if len(args.start_from) > 0:
-        print("Initializing weights from {}".format(args.start_from))
-        model.load_state_dict(torch.load(args.start_from,
+    if len(params.start_from) > 0:
+        print("Initializing weights from {}".format(params.start_from))
+        model.load_state_dict(torch.load(params.start_from,
                                          map_location=lambda storage, location: storage))
 
     # Ship the model to GPU, maybe
-    if args.cuda:
+    if params.cuda:
         n_gpu = torch.cuda.device_count()
 
-        if args.distributed:
+        if params.distributed:
             model.cuda()
             model = torch.nn.parallel.DistributedDataParallel(
                 model,
-                device_ids=[args.local_rank],
-                output_device=args.local_rank,
+                device_ids=[params.local_rank],
+                output_device=params.local_rank,
                 find_unused_parameters=True,
             )
         # elif torch.cuda.device_count() > 1:
@@ -259,9 +278,34 @@ def get_model(text_proc, feat_extractor, args):
 
     module.apply(weights_init)
 
-    """set feat_extractor after initializing weights to avoid 
-    messing with its pretrained weights"""
-    module.feat_extractor = feat_extractor
+    if params.feat_cfg:
+        feat_cfg_name = os.path.splitext(os.path.basename(params.feat_cfg))[0]
+
+        print(f'loading feature extractor from {feat_cfg_name}')
+
+        params.feat_cfg = linux_path(swi_path, params.feat_cfg)
+
+        if not params.feat_ckpt:
+            params.feat_ckpt = 'latest.pth'
+
+        ckpt_dir = linux_path(swi_path, 'work_dirs', feat_cfg_name)
+        params.feat_ckpt = linux_path(ckpt_dir, params.feat_ckpt)
+
+        feat_model = get_feat_model(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
+
+        if params.cuda:
+            feat_model = feat_model.cuda()
+
+        feat_extractor = FeatureExtractor(
+            feat_model=feat_model,
+            reduction=params.feat_reduction,
+            batch_size=params.feat_batch_size,
+            cuda=params.cuda,
+        )
+
+        """set feat_extractor after initializing weights to avoid 
+        messing with its pretrained weights"""
+        module.feat_extractor = feat_extractor
 
     return model
 
@@ -294,49 +338,17 @@ def get_feat_model(feat_cfg, ckpt, fuse_conv_bn):
     fp16_cfg = cfg_dict.get('fp16', None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
-    checkpoint = load_checkpoint(model, ckpt, map_location='cpu')
+    load_checkpoint(model, ckpt, map_location='cpu')
     if fuse_conv_bn:
         model = fuse_conv_bn(model)
     return model
 
 
 def main(params):
-    print(f'params.resume: {params.resume}')
-
-    sampled_frames = params.sampled_frames
-    sampling_sec = float(sampled_frames) / float(params.fps)
-
-    feat_extractor = None
-    vid_reader = None
-
-    if params.feat_cfg:
-        feat_cfg_name = os.path.splitext(os.path.basename(params.feat_cfg))[0]
-
-        print(f'loading feature extractor from {feat_cfg_name}')
-
-        params.feat_cfg = linux_path(swi_path, params.feat_cfg)
-
-        if not params.feat_ckpt:
-            params.feat_ckpt = 'latest.pth'
-
-        ckpt_dir = linux_path(swi_path, 'work_dirs', feat_cfg_name)
-        params.feat_ckpt = linux_path(ckpt_dir, params.feat_ckpt)
-
-        feat_model = get_feat_model(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
-
-        if params.cuda:
-            feat_model = feat_model.cuda()
-
-        vid_reader = VideoReader(norm=(params.mean, params.std))
-
-        feat_extractor = FeatureExtractor(
-            feat_model=feat_model,
-            reduction=params.feat_reduction,
-            batch_size=params.feat_batch_size,
-            cuda=params.cuda,
-        )
-
     if True:
+        sampled_frames = params.sampled_frames
+        sampling_sec = float(sampled_frames) / float(params.fps)
+
         # dist parallel, optional
         # params.distributed = params.world_size > 1
         # params.distributed = 1
@@ -419,32 +431,17 @@ def main(params):
             params.dataset_file = linux_path(params.db_root, params.dataset_file)
             params.dur_file = linux_path(params.db_root, params.dur_file)
 
-        print('loading dataset')
-        train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, vid_reader, params)
-
-        assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
-        assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
+    print('loading dataset')
+    train_dataset, valid_dataset, train_loader, valid_loader, text_proc, train_sampler = get_dataset(
+        sampling_sec, params)
 
     print('building model')
-    model = get_model(text_proc, feat_extractor, params)
+    model = get_model(text_proc, params)
 
     # model_parameters = list(model.parameters())
 
     # for _p in model.parameters():
     #     print(_p)
-
-    train_loader = DataLoader(train_dataset,
-                              batch_size=params.batch_size,
-                              shuffle=(train_sampler is None), sampler=train_sampler,
-                              num_workers=params.num_workers,
-                              collate_fn=anet_collate_fn)
-
-    valid_loader = DataLoader(valid_dataset,
-                              batch_size=params.valid_batch_size,
-                              shuffle=False,
-                              num_workers=params.num_workers,
-                              collate_fn=anet_collate_fn)
-
 
     if True:
 
