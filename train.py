@@ -43,7 +43,8 @@ from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_se
 from model.action_prop_dense_cap import ActionPropDenseCap, DropoutTime1D
 from model.transformer import Attention, MultiHead, LayerNorm, ResidualBlock, FeedForward, \
     EncoderLayer, Encoder, Transformer, DecoderLayer, Decoder, RealTransformer
-from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells, FeatureExtractor
+from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells, \
+    FeatureExtractor, VideoReader
 
 import dnc_to_mot
 
@@ -69,7 +70,7 @@ from objects import Annotations
 from utilities import linux_path, CustomLogger
 
 
-def get_dataset(sampling_sec, feat_model, params: TrainParams):
+def get_dataset(sampling_sec, vid_reader, params: TrainParams):
     # process text
     train_val_splits = [params.train_splits[0], params.val_splits[0]]
     sample_list_dir = os.path.dirname(params.train_samplelist_path)
@@ -81,7 +82,7 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
 
     # Create the dataset and data loader instance
     train_dataset = ANetDataset(
-        feat_model=feat_model,
+        vid_reader=vid_reader,
         feat_shape=params.feat_shape,
         image_path=params.feature_root,
         n_vids=n_videos['training'],
@@ -112,7 +113,7 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
     #     f"n_train_samples: {n_train_samples} with batch_size: {batch_size} leads to unit sized batch"
 
     valid_dataset = ANetDataset(
-        feat_model=feat_model,
+        vid_reader=vid_reader,
         feat_shape=params.feat_shape,
         image_path=params.feature_root,
         n_vids=n_videos['validation'],
@@ -209,7 +210,7 @@ def get_model(text_proc, args):
     return model
 
 
-def get_feat_extractor(feat_cfg, ckpt, fuse_conv_bn):
+def get_feat_model(feat_cfg, ckpt, fuse_conv_bn):
     cfg_dict = Config.fromfile(feat_cfg)
     # if params.cfg_options is not None:
     #     cfg_dict.merge_from_dict(params.cfg_options)
@@ -249,7 +250,8 @@ def main(params):
     sampled_frames = params.sampled_frames
     sampling_sec = float(sampled_frames) / float(params.fps)
 
-    feat_model = None
+    feat_extractor = None
+    vid_reader = None
 
     if params.feat_cfg:
         feat_cfg_name = os.path.splitext(os.path.basename(params.feat_cfg))[0]
@@ -264,16 +266,17 @@ def main(params):
         ckpt_dir = linux_path(swi_path, 'work_dirs', feat_cfg_name)
         params.feat_ckpt = linux_path(ckpt_dir, params.feat_ckpt)
 
-        feat_model = get_feat_extractor(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
+        feat_model = get_feat_model(params.feat_cfg, params.feat_ckpt, params.fuse_conv_bn)
 
         if params.cuda:
             feat_model = feat_model.cuda()
 
-        feat_model = FeatureExtractor(
+        vid_reader = VideoReader(norm=(params.mean, params.std))
+
+        feat_extractor = FeatureExtractor(
             feat_model=feat_model,
             reduction=params.feat_reduction,
             batch_size=params.feat_batch_size,
-            norm=(params.mean, params.std),
             cuda=params.cuda,
         )
 
@@ -360,7 +363,7 @@ def main(params):
         params.dur_file = linux_path(params.db_root, params.dur_file)
 
     print('loading dataset')
-    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, feat_model, params)
+    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, feat_extractor, params)
 
     assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"

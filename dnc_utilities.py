@@ -41,21 +41,23 @@ reductions = dict(
 )
 
 
-class FeatureExtractor:
-    def __init__(self, feat_model, reduction, norm, batch_size, cuda):
+class FeatureExtractor(nn.Module):
+    def __init__(self, feat_model, reduction, batch_size, cuda):
         self.feat_model = feat_model
         self.reduction = reduction
-        mean, std = norm
-        self.mean, self.std = np.asarray(mean), np.asarray(std)
         self.batch_size = batch_size
         self.cuda = cuda
 
-    def run(self, imgs_tensor):
+    def forward(self, imgs_tensor):
         frame_id = 0
         n_imgs = len(imgs_tensor.size(0))
 
         all_feats = []
         start_id = 0
+
+        if self.cuda:
+            imgs_tensor = imgs_tensor.cuda()
+
         while True:
             if batch_size >= n_imgs:
                 break
@@ -63,9 +65,6 @@ class FeatureExtractor:
             batch_size = min(self.batch_size, n_imgs - start_id)
 
             imgs = imgs_tensor[start_id:start_id+batch_size, ...]
-
-            if self.cuda:
-                imgs = imgs.cuda()
 
             feat = self.feat_model.extract_feat(imgs)
 
@@ -87,7 +86,7 @@ class FeatureExtractor:
 
 
 class VideoReader:
-    def __init__(self, norm,):
+    def __init__(self, norm):
         mean, std = norm
         self.mean, self.std = np.asarray(mean), np.asarray(std)
 
