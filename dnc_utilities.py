@@ -52,14 +52,10 @@ class FeatureExtractor(nn.Module):
         self.cuda = cuda
 
     def forward(self, imgs_tensor):
-        frame_id = 0
         n_imgs = imgs_tensor.size(0)
 
         all_feats = []
         start_id = 0
-
-        if self.cuda:
-            imgs_tensor = imgs_tensor.cuda()
 
         while True:
             if start_id >= n_imgs:
@@ -68,6 +64,9 @@ class FeatureExtractor(nn.Module):
             batch_size = min(self.batch_size, n_imgs - start_id)
 
             imgs = imgs_tensor[start_id:start_id+batch_size, ...]
+
+            if self.cuda:
+                imgs = imgs.cuda()
 
             feat = self.feat_model.extract_feat(imgs)
 
@@ -119,7 +118,6 @@ class VideoReader:
             if not ret:
                 raise AssertionError(f'Frame {frame_id:d} could not be read')
             img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
-
 
             all_imgs.append(img)
         # read_end_t = time.time()
