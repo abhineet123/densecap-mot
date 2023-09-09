@@ -418,8 +418,8 @@ def _get_pos_neg(vid_info,
 class ANetDataset(Dataset):
     def __init__(
             self,
+            vid_reader: VideoReader,
             feat_shape,
-            feat_model: FeatureExtractor,
             image_path,
             n_vids,
             splits,

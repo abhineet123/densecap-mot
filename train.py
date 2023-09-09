@@ -155,7 +155,7 @@ def get_dataset(sampling_sec, vid_reader, params: TrainParams):
     return train_dataset, valid_dataset, text_proc, train_sampler
 
 
-def get_model(text_proc, args):
+def get_model(text_proc, feat_extractor, args):
     """
 
     :param text_proc:
@@ -165,6 +165,7 @@ def get_model(text_proc, args):
     sent_vocab = text_proc.vocab
     max_sentence_len = text_proc.fix_length
     model = ActionPropDenseCap(
+        feat_extractor=feat_extractor,
         feat_shape=args.feat_shape,
         enable_flow=args.enable_flow,
         rgb_ch=args.rgb_ch,
@@ -312,11 +313,6 @@ def main(params):
             # timeout=timedelta(seconds=100),
         )
 
-    # params = TrainParams()
-    # paramparse.process(params)
-
-    # arguments inspection
-
     print(f'params.train_splits: {params.train_splits}')
     print(f'params.train_splits[0]: {params.train_splits[0]}')
 
@@ -363,15 +359,15 @@ def main(params):
         params.dur_file = linux_path(params.db_root, params.dur_file)
 
     print('loading dataset')
-    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, feat_extractor, params)
+    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, vid_reader, params)
 
     assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
 
     print('building model')
-    model = get_model(text_proc, params)
+    model = get_model(text_proc, feat_extractor, params)
 
-    model_parameters = list(model.parameters())
+    # model_parameters = list(model.parameters())
 
     print('initializing weights')
 

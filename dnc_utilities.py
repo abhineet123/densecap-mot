@@ -9,6 +9,7 @@ import glob
 
 import torch
 import mmcv
+from torch import nn
 
 import time
 

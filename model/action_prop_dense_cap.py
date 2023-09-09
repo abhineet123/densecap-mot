@@ -62,6 +62,7 @@ class DropoutTime1D(nn.Module):
 class ActionPropDenseCap(nn.Module):
     def __init__(
             self,
+            feat_extractor,
             feat_shape,
             enable_flow,
             rgb_ch,
@@ -87,6 +88,7 @@ class ActionPropDenseCap(nn.Module):
         self.kernel_list = kernel_list
         self.nsamples = nsamples
         self.learn_mask = learn_mask
+        self.feat_extractor = feat_extractor
         self.feat_shape = tuple(feat_shape)
         self.rgb_ch = rgb_ch
 
@@ -198,9 +200,9 @@ class ActionPropDenseCap(nn.Module):
         dtype = x.data.type()
         batch_size, temporal_size = x.size()[:2]
 
-        # if self.feat_model is not None:
-        #     """live feature extraction"""
-        #     x = self.feat_model.run(x)
+        if self.feat_extractor is not None:
+            """live feature extraction"""
+            x = self.feat_extractor(x)
 
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
