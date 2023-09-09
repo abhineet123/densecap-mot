@@ -62,7 +62,7 @@ class FeatureExtractor(nn.Module):
             imgs_tensor = imgs_tensor.cuda()
 
         while True:
-            if batch_size >= n_imgs:
+            if start_id >= n_imgs:
                 break
 
             batch_size = min(self.batch_size, n_imgs - start_id)
