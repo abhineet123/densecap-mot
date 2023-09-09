@@ -295,8 +295,8 @@ def build_targets_densecap(
 
     win_iter = range(0, last_start_frame_id + 1, frame_gap)
 
-    if len(win_iter) > 1:
-        win_iter = tqdm(win_iter)
+    # if len(win_iter) > 1:
+    #     win_iter = tqdm(win_iter)
 
     """
     Iterate over all the temporal windows in the sequence
@@ -325,10 +325,10 @@ def build_targets_densecap(
         else:
             frame_iter = range(start_frame_id, end_frame_id + 1)
 
-        if len(win_iter) > 1:
-            win_iter.set_description(f'win {win_id}: frame {start_frame_id} --> {end_frame_id}')
-        else:
-            frame_iter = tqdm(frame_iter)
+        # if len(win_iter) > 1:
+        #     win_iter.set_description(f'win {win_id}: frame {start_frame_id} --> {end_frame_id}')
+        # else:
+        #     frame_iter = tqdm(frame_iter)
 
         for frame_id in frame_iter:
 
