@@ -44,6 +44,8 @@ reductions = dict(
 
 class FeatureExtractor(nn.Module):
     def __init__(self, feat_model, reduction, batch_size, cuda):
+        super().__init__()
+
         self.feat_model = feat_model
         self.reduction = reduction
         self.batch_size = batch_size
