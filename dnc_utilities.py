@@ -114,6 +114,8 @@ class FeatureExtractor(nn.Module):
 
             feat = self.feat_model.extract_feat(imgs)
 
+            imgs = None
+
             for r in self.reduction:
                 try:
                     feat = self._reductions[r](feat)
