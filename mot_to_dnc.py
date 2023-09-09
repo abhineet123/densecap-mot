@@ -73,6 +73,7 @@ class Params:
         self.sample_traj = 0
 
         self.fixed_traj_len = 0
+        self.save_traj_lengths = 0
 
         self.win_size = 0
 
@@ -171,8 +172,9 @@ def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, pa
         #       f'std: {std_traj_length} '
         #       )
 
-        traj_lengths_out_path = linux_path(traj_lengths_out_dir, f'{seq_name}.txt')
-        np.savetxt(traj_lengths_out_path, np.asarray(traj_lengths, dtype=np.uint32), fmt='%d')
+        if params.save_traj_lengths:
+            traj_lengths_out_path = linux_path(traj_lengths_out_dir, f'{seq_name}.txt')
+            np.savetxt(traj_lengths_out_path, np.asarray(traj_lengths, dtype=np.uint32), fmt='%d')
 
         duration_frame_csv_row = {
             'name': seq_name,
