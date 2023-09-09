@@ -477,6 +477,13 @@ class ActionPropDenseCap(nn.Module):
         # if not isinstance(actual_frame_length, (list, tuple)):
         #     actual_frame_length = [actual_frame_length, ]
 
+        if self.feat_extractor is not None:
+            """live feature extraction"""
+            img_shape = tuple(x.size()[2:])
+            x = torch.reshape(x, (int(batch_size * temporal_size),) + img_shape)
+            x = self.feat_extractor(x)
+            x = torch.reshape(x, (batch_size, temporal_size,) + self.feat_shape)
+
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
 

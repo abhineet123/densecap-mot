@@ -87,9 +87,9 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29500 train.
 ### live-f0-max_4-slide_12       @ 100-960/n-1-->dnc
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29500 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_slide_12-live-f0_max_4.cfg --batch_size 4 --num_workers 4 --distributed 1
 
-__dgb__
-python train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_slide_12-live-f0_max_4.cfg --batch_size 2 --num_workers 4
+python train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_slide_12-live-f0_max_4.cfg --batch_size 2 --num_workers 0
 
+__dgb__
 python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_slide_12-live-f0_max_4.cfg --batch_size 2 --num_workers 0 --gpu 0
 
 <a id="f0_max_4___100_960_n_1_"></a>
