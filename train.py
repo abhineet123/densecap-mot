@@ -104,8 +104,12 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
     batch_size = params.batch_size
     n_train_samples = len(train_dataset.sample_list)
     residual_train_samples = n_train_samples % batch_size
-    assert residual_train_samples != 1, \
-        f"n_train_samples: {n_train_samples} with batch_size: {batch_size} leads to unit sized batch"
+
+    if residual_train_samples > 0:
+        train_dataset.sample_list = train_dataset.sample_list[:-residual_train_samples]
+        print(f'n_train_samples reduced to {len(train_dataset.sample_list)} to eliminate unequal sized batch')
+    # assert residual_train_samples != 1, \
+    #     f"n_train_samples: {n_train_samples} with batch_size: {batch_size} leads to unit sized batch"
 
     valid_dataset = ANetDataset(
         feat_model=feat_model,
@@ -130,11 +134,12 @@ def get_dataset(sampling_sec, feat_model, params: TrainParams):
     )
     n_valid_samples = len(valid_dataset.sample_list)
     residual_valid_samples = n_valid_samples % batch_size
-    assert residual_valid_samples != 1, \
-        f"n_valid_samples: {n_valid_samples} with batch_size: {batch_size} leads to unit sized batch"
+    if residual_valid_samples > 0:
+        valid_dataset.sample_list = valid_dataset.sample_list[:-residual_valid_samples]
+        print(f'n_valid_samples reduced to {len(valid_dataset.sample_list)} to eliminate unequal sized batch')
 
-    # if text_proc is not None:
-    #     exit()
+    # assert residual_valid_samples != 1, \
+    #     f"n_valid_samples: {n_valid_samples} with batch_size: {batch_size} leads to unit sized batch"
 
     if params.distributed and params.cuda:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
