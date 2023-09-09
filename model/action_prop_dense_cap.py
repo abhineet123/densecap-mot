@@ -691,7 +691,8 @@ class ActionPropDenseCap(nn.Module):
             pred_sentence = []
             # use cap_batch as caption batch size
             cap_batch = math.ceil(480 * 256 / temporal_size)
-            for sent_i in range(math.ceil(window_mask.size(0) / cap_batch)):
+            cap_batch_count = math.ceil(window_mask.size(0) / cap_batch)
+            for sent_i in range(cap_batch_count):
                 batch_start = sent_i * cap_batch
                 batch_end = min((sent_i + 1) * cap_batch, window_mask.size(0))
                 pred_sentence += self.captioning_model.greedy(batch_x[batch_start:batch_end],
