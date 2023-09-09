@@ -23,7 +23,7 @@ import torch
 from torch.utils.data import Dataset
 
 from dnc_data.utils import segment_iou
-from dnc_utilities import FeatureExtractor
+from dnc_utilities import VideoReader
 
 from utilities import linux_path
 
@@ -447,7 +447,7 @@ class ANetDataset(Dataset):
 
         self.image_path = image_path
         self.feat_shape = tuple(feat_shape)
-        self.feat_model = feat_model  # type: FeatureExtractor
+        self.vid_reader = vid_reader  # type: VideoReader
         self.slide_window_size = slide_window_size
         self.pos_thresh = pos_thresh
         self.neg_thresh = neg_thresh
@@ -689,7 +689,7 @@ class ANetDataset(Dataset):
 
                     feat = None
 
-                    if self.feat_model is not None:
+                    if self.vid_reader is not None:
                         if '--' in vid:
                             vid_name, vid_frame_ids = vid.split('--')
                             start_id, end_id = tuple(map(int, vid_frame_ids.split('_')))
@@ -873,16 +873,19 @@ class ANetDataset(Dataset):
             torch_t = (end2 - end) * 1000
         else:
 
-            if self.feat_model is not None:
+            if self.vid_reader is not None:
                 if feat_frame_ids is not None:
                     start_id, end_id = feat_frame_ids
                 else:
                     start_id, end_id = 0, -1
 
                 video_path = video_prefix + '.mp4'
-                img_feat, times = self.feat_model.run(video_path, start_id, end_id)
+                start = time.time()
+                img_feat = self.vid_reader.run(video_path, start_id, end_id)
+                end2 = time.time()
+
                 # img_feat = torch.from_numpy(img_feat).float()
-                load_t, torch_t = times
+                load_t = torch_t = 0
 
             else:
                 start = time.time()

@@ -50,8 +50,49 @@ class FeatureExtractor:
         self.batch_size = batch_size
         self.cuda = cuda
 
+    def run(self, imgs_tensor):
+        frame_id = 0
+        n_imgs = len(imgs_tensor.size(0))
+
+        all_feats = []
+        start_id = 0
+        while True:
+            if batch_size >= n_imgs:
+                break
+
+            batch_size = min(self.batch_size, n_imgs - start_id)
+
+            imgs = imgs_tensor[start_id:start_id+batch_size, ...]
+
+            if self.cuda:
+                imgs = imgs.cuda()
+
+            feat = self.feat_model.extract_feat(imgs)
+
+            for r in self.reduction:
+                try:
+                    feat = reductions[r](feat)
+                except KeyError:
+                    raise AssertionError(f'invalid reduction type: {r}')
+
+                if isinstance(feat, (tuple, list)):
+                    feat = feat[0]
+
+            all_feats.append(feat)
+
+            start_id += batch_size
+
+        all_feats = torch.cat(all_feats, dim=0)
+        return all_feats
+
+
+class VideoReader:
+    def __init__(self, norm,):
+        mean, std = norm
+        self.mean, self.std = np.asarray(mean), np.asarray(std)
+
     def run(self, video_path, start_id, end_id):
-        start_t = time.time()
+        # start_t = time.time()
         _cap = cv2.VideoCapture()
         if not _cap.open(video_path):
             raise AssertionError(f'Failed to open video file for reading: {video_path}')
@@ -70,63 +111,23 @@ class FeatureExtractor:
                     if not ret:
                         raise AssertionError(f'Frame {frame_id:d} could not be read')
 
-        all_imgs = {}
+        all_imgs = []
         for frame_id in range(start_id, end_id):
             ret, img = _cap.read()
             if not ret:
                 raise AssertionError(f'Frame {frame_id:d} could not be read')
-            all_imgs[frame_id] = img
+            img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
 
-        read_end_t = time.time()
 
-        frame_id = start_id
-        all_feats = []
-        while True:
-            if frame_id >= end_id:
-                break
+            all_imgs.append(img)
+        # read_end_t = time.time()
 
-            imgs = []
-            batch_size = min(self.batch_size, end_id - frame_id)
-            for batch_id in range(batch_size):
-                img = all_imgs[frame_id]
-                img = mmcv.imnormalize(img, self.mean, self.std, to_rgb=True)
+        imgs = np.stack(all_imgs, axis=0)
+        imgs_reshaped = imgs.transpose([0, 3, 1, 2])
 
-                imgs.append(img)
+        imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32)
 
-                frame_id += 1
-
-            imgs = np.stack(imgs, axis=0)
-            """bring channel to front"""
-            imgs_reshaped = imgs.transpose([0, 3, 1, 2])
-            imgs_tensor = torch.tensor(imgs_reshaped, dtype=torch.float32)
-            if self.cuda:
-                imgs_tensor = imgs_tensor.cuda()
-
-            feat = self.feat_model.extract_feat(imgs_tensor)
-
-            for r in self.reduction:
-                try:
-                    feat = reductions[r](feat)
-                except KeyError:
-                    raise AssertionError(f'invalid reduction type: {r}')
-
-                if isinstance(feat, (tuple, list)):
-                    feat = feat[0]
-
-            feat = feat.cpu()
-
-            all_feats.append(feat)
-
-        all_feats = torch.cat(all_feats, dim=0)
-        feat_end_t = time.time()
-
-        read_t = (read_end_t - start_t) * 1000
-        feat_t = (feat_end_t - read_end_t) * 1000
-
-        return all_feats, (read_t, feat_t)
-
-    def __call__(self, *args, **kwargs):
-        pass
+        return imgs_tensor
 
 
 class GridTokenizer:
