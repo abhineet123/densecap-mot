@@ -445,84 +445,87 @@ def main(params):
                               num_workers=params.num_workers,
                               collate_fn=anet_collate_fn)
 
-    torch.manual_seed(int(time.time()))
-    np.random.seed(int(time.time()))
-    random.seed(int(time.time()))
 
-    if params.cuda:
-        torch.cuda.manual_seed_all(int(time.time()))
+    if True:
 
-    os.makedirs(params.ckpt, exist_ok=True)
+        torch.manual_seed(int(time.time()))
+        np.random.seed(int(time.time()))
+        random.seed(int(time.time()))
 
-    # filter params that don't require gradient (credit: PyTorch Forum issue 679)
-    # smaller learning rate for the decoder
-    if params.optim == 'adam':
-        optimizer = optim.Adam(
-            filter(lambda p: p.requires_grad, model.parameters()),
-            params.learning_rate, betas=(params.alpha, params.beta), eps=params.epsilon)
-    elif params.optim == 'sgd':
-        optimizer = optim.SGD(
-            filter(lambda p: p.requires_grad, model.parameters()),
-            params.learning_rate,
-            weight_decay=1e-5,
-            momentum=params.alpha,
-            nesterov=True
-        )
-    else:
-        raise NotImplementedError
+        if params.cuda:
+            torch.cuda.manual_seed_all(int(time.time()))
 
-    # learning rate decay every 1 epoch
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=params.reduce_factor,
-                                               patience=params.patience_epoch,
-                                               verbose=True)
-    # scheduler = lr_scheduler.ExponentialLR(optimizer, 0.6)
+        os.makedirs(params.ckpt, exist_ok=True)
 
-    # Number of parameter blocks in the network
-    print("# of param blocks: {}".format(str(len(list(model.parameters())))))
+        # filter params that don't require gradient (credit: PyTorch Forum issue 679)
+        # smaller learning rate for the decoder
+        if params.optim == 'adam':
+            optimizer = optim.Adam(
+                filter(lambda p: p.requires_grad, model.parameters()),
+                params.learning_rate, betas=(params.alpha, params.beta), eps=params.epsilon)
+        elif params.optim == 'sgd':
+            optimizer = optim.SGD(
+                filter(lambda p: p.requires_grad, model.parameters()),
+                params.learning_rate,
+                weight_decay=1e-5,
+                momentum=params.alpha,
+                nesterov=True
+            )
+        else:
+            raise NotImplementedError
 
-    best_train_loss = float('inf')
-    best_train_loss_epoch = None
+        # learning rate decay every 1 epoch
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=params.reduce_factor,
+                                                   patience=params.patience_epoch,
+                                                   verbose=True)
+        # scheduler = lr_scheduler.ExponentialLR(optimizer, 0.6)
 
-    best_valid_loss = float('inf')
-    best_valid_loss_epoch = None
+        # Number of parameter blocks in the network
+        print("# of param blocks: {}".format(str(len(list(model.parameters())))))
 
-    all_eval_losses = []
-    all_cls_losses = []
-    all_reg_losses = []
-    all_sent_losses = []
-    all_mask_losses = []
-    all_training_losses = []
+        best_train_loss = float('inf')
+        best_train_loss_epoch = None
 
-    tb_path = linux_path(params.ckpt, 'tb')
-    vis_path = linux_path(params.ckpt, 'vis')
-    os.makedirs(tb_path, exist_ok=1)
-    os.makedirs(vis_path, exist_ok=1)
+        best_valid_loss = float('inf')
+        best_valid_loss_epoch = None
 
-    print(f'saving tensorboard log to: {tb_path}')
+        all_eval_losses = []
+        all_cls_losses = []
+        all_reg_losses = []
+        all_sent_losses = []
+        all_mask_losses = []
+        all_training_losses = []
 
-    from torch.utils.tensorboard import SummaryWriter
+        tb_path = linux_path(params.ckpt, 'tb')
+        vis_path = linux_path(params.ckpt, 'vis')
+        os.makedirs(tb_path, exist_ok=1)
+        os.makedirs(vis_path, exist_ok=1)
 
-    writer = SummaryWriter(log_dir=tb_path)
+        print(f'saving tensorboard log to: {tb_path}')
 
-    if params.vocab_fmt == 0:
-        word_to_grid_cell = excel_ids_to_grid(params.grid_res)
-        sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
-    else:
-        import functools
-        sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
-                                                   fmt_type=params.vocab_fmt,
-                                                   max_diff=params.max_diff,
-                                                   )
+        from torch.utils.tensorboard import SummaryWriter
 
-    start_epoch = 0
+        writer = SummaryWriter(log_dir=tb_path)
 
-    if params.resume:
-        checkpoint, ckpt_epoch = get_latest_checkpoint(params.ckpt, ignore_missing=True)
-        if checkpoint is not None:
-            print(f"loading weights from {checkpoint}")
-            state_dict = torch.load(checkpoint)
-            model.load_state_dict(state_dict)
-            start_epoch = ckpt_epoch + 1
+        if params.vocab_fmt == 0:
+            word_to_grid_cell = excel_ids_to_grid(params.grid_res)
+            sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
+        else:
+            import functools
+            sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
+                                                       fmt_type=params.vocab_fmt,
+                                                       max_diff=params.max_diff,
+                                                       )
+
+        start_epoch = 0
+
+        if params.resume:
+            checkpoint, ckpt_epoch = get_latest_checkpoint(params.ckpt, ignore_missing=True)
+            if checkpoint is not None:
+                print(f"loading weights from {checkpoint}")
+                state_dict = torch.load(checkpoint)
+                model.load_state_dict(state_dict)
+                start_epoch = ckpt_epoch + 1
 
     for train_epoch in range(start_epoch, params.max_epochs):
         t_epoch_start = time.time()
@@ -675,7 +678,9 @@ def train(
 
         load_t, torch_t, collate_t = times
         if params.cuda:
-            img_batch = img_batch.cuda()
+            if module.feat_extractor is None:
+                img_batch = img_batch.cuda()
+
             tempo_seg_neg = tempo_seg_neg.cuda()
             tempo_seg_pos = tempo_seg_pos.cuda()
             sentence_batch = sentence_batch.cuda()
@@ -815,7 +820,9 @@ def validate(epoch,
         # sentence_batch = Variable(sentence_batch)
 
         if params.cuda:
-            img_batch = img_batch.cuda()
+            if module.feat_extractor is None:
+                img_batch = img_batch.cuda()
+                
             tempo_seg_neg = tempo_seg_neg.cuda()
             tempo_seg_pos = tempo_seg_pos.cuda()
             sentence_batch = sentence_batch.cuda()
