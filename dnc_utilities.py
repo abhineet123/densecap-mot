@@ -53,7 +53,7 @@ class FeatureExtractor(nn.Module):
 
     def forward(self, imgs_tensor):
         frame_id = 0
-        n_imgs = len(imgs_tensor.size(0))
+        n_imgs = imgs_tensor.size(0)
 
         all_feats = []
         start_id = 0

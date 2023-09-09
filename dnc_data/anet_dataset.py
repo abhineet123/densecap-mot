@@ -882,10 +882,12 @@ class ANetDataset(Dataset):
                 video_path = video_prefix + '.mp4'
                 start = time.time()
                 img_feat = self.vid_reader.run(video_path, start_id, end_id)
-                end2 = time.time()
+                end = time.time()
 
                 # img_feat = torch.from_numpy(img_feat).float()
-                load_t = torch_t = 0
+                load_t = (end - start) * 1000
+
+                torch_t = 0
 
             else:
                 start = time.time()

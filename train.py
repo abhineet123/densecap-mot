@@ -412,7 +412,7 @@ def main(params):
                 weights_init(_m)
         else:
             if feat_extractor is not None:
-                return 
+                return
             raise AssertionError('unknown layer type')
 
     try:
