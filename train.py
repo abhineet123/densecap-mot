@@ -336,96 +336,97 @@ def main(params):
             cuda=params.cuda,
         )
 
-    # dist parallel, optional
-    # params.distributed = params.world_size > 1
-    # params.distributed = 1
+    if True:
+        # dist parallel, optional
+        # params.distributed = params.world_size > 1
+        # params.distributed = 1
 
-    if params.distributed and params.cuda:
-        torch.cuda.set_device(params.local_rank)
+        if params.distributed and params.cuda:
+            torch.cuda.set_device(params.local_rank)
 
-        # from datetime import timedelta
-        # from urllib.parse import urlparse
-        #
-        # try:
-        #     timestamp = time.time_ns()
-        # except AttributeError:
-        #     """python 3.6 doesn't have time_ns"""
-        #     timestamp = time.time()
-        #
-        # params.dist_url = f'{params.dist_url}-{int(timestamp)}'
-        #
-        # k = urlparse(params.dist_url)
-        # print()
-        # print(f'dist_url scheme: {k.scheme}')
-        # print(f'dist_url path: {k.path}')
-        # print()
-        # if k.scheme == 'file' and os.path.exists(k.path):
-        #     print(f'removing existing dist_url path: {k.path}')
-        #     os.remove(k.path)
+            # from datetime import timedelta
+            # from urllib.parse import urlparse
+            #
+            # try:
+            #     timestamp = time.time_ns()
+            # except AttributeError:
+            #     """python 3.6 doesn't have time_ns"""
+            #     timestamp = time.time()
+            #
+            # params.dist_url = f'{params.dist_url}-{int(timestamp)}'
+            #
+            # k = urlparse(params.dist_url)
+            # print()
+            # print(f'dist_url scheme: {k.scheme}')
+            # print(f'dist_url path: {k.path}')
+            # print()
+            # if k.scheme == 'file' and os.path.exists(k.path):
+            #     print(f'removing existing dist_url path: {k.path}')
+            #     os.remove(k.path)
 
-        dist.init_process_group(
-            backend='nccl',
-            init_method="env://",
-            # backend=params.dist_backend,
-            # init_method=params.dist_url,
-            # world_size=params.world_size,
-            # rank=params.local_rank,
-            # timeout=timedelta(seconds=100),
-        )
+            dist.init_process_group(
+                backend='nccl',
+                init_method="env://",
+                # backend=params.dist_backend,
+                # init_method=params.dist_url,
+                # world_size=params.world_size,
+                # rank=params.local_rank,
+                # timeout=timedelta(seconds=100),
+            )
 
-    print(f'params.train_splits: {params.train_splits}')
-    print(f'params.train_splits[0]: {params.train_splits[0]}')
+        print(f'params.train_splits: {params.train_splits}')
+        print(f'params.train_splits[0]: {params.train_splits[0]}')
 
-    if params.valid_batch_size <= 0:
-        params.valid_batch_size = params.batch_size
+        if params.valid_batch_size <= 0:
+            params.valid_batch_size = params.batch_size
 
-    # print(f'params.val_splits: {params.val_splits}')
-    # print(f'params.val_splits[0]: {params.val_splits[0]}')
+        # print(f'params.val_splits: {params.val_splits}')
+        # print(f'params.val_splits[0]: {params.val_splits[0]}')
 
-    """
-    slide_window_size is in units of SAMPLED frames rather than original ones
-    this is also a misnomer since there is an implicit and 
-    mind bogglingly annoying assumption underlying this entire gunky operation that none of the 
-    training or testing videos exceed this length otherwise the excess part will be ignored rather than 
-    any kind of actual sliding window operation happening to process the long video piecewise
-    """
-    # assert (params.slide_window_size >= params.slide_window_stride)
-    # assert (params.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
+        """
+        slide_window_size is in units of SAMPLED frames rather than original ones
+        this is also a misnomer since there is an implicit and 
+        mind bogglingly annoying assumption underlying this entire gunky operation that none of the 
+        training or testing videos exceed this length otherwise the excess part will be ignored rather than 
+        any kind of actual sliding window operation happening to process the long video piecewise
+        """
+        # assert (params.slide_window_size >= params.slide_window_stride)
+        # assert (params.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
 
-    if not params.train_samplelist_path:
-        params.train_samplelist_path = linux_path(params.ckpt, f"{params.train_splits[0]}_samples")
-        # print(f'params.train_samplelist_path: {params.train_samplelist_path}')
+        if not params.train_samplelist_path:
+            params.train_samplelist_path = linux_path(params.ckpt, f"{params.train_splits[0]}_samples")
+            # print(f'params.train_samplelist_path: {params.train_samplelist_path}')
 
-    # if not params.train_sentence_dict_path:
-    #     params.train_sentence_dict_path = linux_path(params.ckpt, "train_sentence_dict.pkl")
+        # if not params.train_sentence_dict_path:
+        #     params.train_sentence_dict_path = linux_path(params.ckpt, "train_sentence_dict.pkl")
 
-    if not params.valid_samplelist_path:
-        params.valid_samplelist_path = linux_path(params.ckpt, f"{params.val_splits[0]}_samples")
-        # print(f'params.valid_samplelist_path: {params.valid_samplelist_path}')
+        if not params.valid_samplelist_path:
+            params.valid_samplelist_path = linux_path(params.ckpt, f"{params.val_splits[0]}_samples")
+            # print(f'params.valid_samplelist_path: {params.valid_samplelist_path}')
 
-    # exit()
+        # exit()
 
-    # if not params.valid_sentence_dict_path:
-    #     params.valid_sentence_dict_path = linux_path(params.ckpt, "valid_sentence_dict.pkl")
+        # if not params.valid_sentence_dict_path:
+        #     params.valid_sentence_dict_path = linux_path(params.ckpt, "valid_sentence_dict.pkl")
 
-    print(f'save_valid_samplelist: {params.save_valid_samplelist}')
-    print(f'save_train_samplelist: {params.save_train_samplelist}')
-    print(f'valid_samplelist_path: {params.valid_samplelist_path}')
-    print(f'train_samplelist_path: {params.train_samplelist_path}')
+        print(f'save_valid_samplelist: {params.save_valid_samplelist}')
+        print(f'save_train_samplelist: {params.save_train_samplelist}')
+        print(f'valid_samplelist_path: {params.valid_samplelist_path}')
+        print(f'train_samplelist_path: {params.train_samplelist_path}')
 
-    if params.db_root:
-        params.feature_root = linux_path(params.db_root, params.feature_root)
-        params.dataset_file = linux_path(params.db_root, params.dataset_file)
-        params.dur_file = linux_path(params.db_root, params.dur_file)
+        if params.db_root:
+            params.feature_root = linux_path(params.db_root, params.feature_root)
+            params.dataset_file = linux_path(params.db_root, params.dataset_file)
+            params.dur_file = linux_path(params.db_root, params.dur_file)
 
-    print('loading dataset')
-    train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, vid_reader, params)
+        print('loading dataset')
+        train_dataset, valid_dataset, text_proc, train_sampler = get_dataset(sampling_sec, vid_reader, params)
 
-    assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
-    assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
+        assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
+        assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
 
     print('building model')
-    model = get_model(text_proc, params)
+    model = get_model(text_proc, feat_extractor, params)
 
     # model_parameters = list(model.parameters())
 
