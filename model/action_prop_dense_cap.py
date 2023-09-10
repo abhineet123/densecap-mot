@@ -280,7 +280,7 @@ class ActionPropDenseCap(nn.Module):
             """same size as anchor_c_exp filled with kernel_size
             kernel_size = length offset
             """
-            anchor_l = Variable(torch.FloatTensor(anchor_c.size()).fill_(kernel_size).type(dtype))
+            anchor_l = Variable(torch.FloatTensor(anchor_c_exp.size()).fill_(kernel_size).type(dtype))
 
             """
             kernel size 3 --> 4 x 6 x 478
