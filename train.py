@@ -523,7 +523,8 @@ def main(params):
                 print(f"loading weights from {checkpoint}")
                 state_dict = torch.load(checkpoint)
                 if not hasattr(model, "module"):
-                    state_dict = OrderedDict((k.rreplace('module.'), v) for k, v in state_dict.items())
+                    state_dict = OrderedDict((k[7:], v) if k.startswith('module.') else (k, v)
+                                             for k, v in state_dict.items())
                 model.load_state_dict(state_dict)
                 start_epoch = ckpt_epoch + 1
 
