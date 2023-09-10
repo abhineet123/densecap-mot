@@ -553,6 +553,7 @@ class ActionPropDenseCap(nn.Module):
                     hasoverlap = False
 
                     if crt_nproposal > 0:
+                        """check if current proposal overlaps with any of the previous ones"""
                         pred_start_ = pred_start.cpu().numpy().item()
                         pred_end_ = pred_end.cpu().numpy().item()
 
