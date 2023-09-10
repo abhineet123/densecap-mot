@@ -198,7 +198,6 @@ class ActionPropDenseCap(nn.Module):
 
     def _forward(self, x, stride_factor):
 
-        dtype = x.data.type()
         batch_size, temporal_size = x.size()[:2]
 
         if self.feat_extractor is not None:
@@ -207,6 +206,8 @@ class ActionPropDenseCap(nn.Module):
             x = torch.reshape(x, (int(batch_size * temporal_size),) + img_shape)
             x = self.feat_extractor(x)
             x = torch.reshape(x, (batch_size, temporal_size,) + self.feat_shape)
+
+        dtype = x.data.type()
 
         if self.rgb_conv is not None:
             assert self.flow_emb is None, "cannot have flow features with rgb_conv"
@@ -292,7 +293,6 @@ class ActionPropDenseCap(nn.Module):
         prop_all = torch.cat(prop_lst, 2)
 
         return prop_all
-
 
     def forward(self,
                 x,
@@ -689,71 +689,71 @@ class ActionPropDenseCap(nn.Module):
 
         return all_proposal_results
 
- # dtype = x.data.type()
- #        batch_size, temporal_size = x.size()[:2]
- #
- #        if self.feat_extractor is not None:
- #            """live feature extraction"""
- #            img_shape = tuple(x.size()[2:])
- #            x = torch.reshape(x, (int(batch_size * temporal_size),) + img_shape)
- #            x = self.feat_extractor(x)
- #            x = torch.reshape(x, (batch_size, temporal_size,) + self.feat_shape)
- #
- #        if self.rgb_conv is not None:
- #            assert self.flow_emb is None, "cannot have flow features with rgb_conv"
- #
- #            """concat batch and temporal dims"""
- #            x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
- #
- #            x = self.rgb_conv(x)
- #
- #            x = torch.reshape(x, (batch_size, temporal_size, -1))
- #
- #        if self.enable_flow:
- #            x_rgb, x_flow = torch.split(x, self.dim_rgb, 2)
- #            x_rgb = self.rgb_emb(x_rgb.contiguous())
- #            x_flow = self.flow_emb(x_flow.contiguous())
- #
- #            x = torch.cat((x_rgb, x_flow), 2)
- #        else:
- #            x = self.rgb_emb(x)
- #
- #        """dropout and relu"""
- #        x = self.emb_out(x)
- #
- #        vis_feat, all_emb = self.vis_emb(x)
- #        # vis_feat = self.vis_dropout(vis_feat)
- #
- #        # B x T x H -> B x H x T
- #        # for 1d conv
- #        vis_feat = vis_feat.transpose(1, 2).contiguous()
- #
- #        """collect proposals for all the kernels"""
- #        prop_lst = []
- #        for i, kernel in enumerate(self.proposal_out):
- #
- #            kernel_size = self.kernel_list[i]
- #            if kernel_size > actual_frame_length[0]:
- #                # no need to use larger kernel size in this case, batch size is only 1
- #
- #                print('skipping kernel sizes greater than {}'.format(
- #                    self.kernel_list[i]))
- #                break
- #
- #            pred_o = kernel(vis_feat)
- #            anchor_c = np.arange(
- #                float(kernel_size) / 2.0,
- #                float(temporal_size + 1 - kernel_size / 2.0),
- #                math.ceil(kernel_size / stride_factor)
- #            )
- #            anchor_c = torch.from_numpy(anchor_c).type(dtype)
- #
- #            assert anchor_c.size(0) == pred_o.size(-1), "anchor_c, pred_o size mismatch!"
- #
- #            anchor_c_exp = anchor_c.expand(batch_size, 1, anchor_c.size(0))
- #            anchor_l = torch.FloatTensor(anchor_c_exp.size()).fill_(kernel_size).type(dtype)
- #
- #            pred_final = torch.cat((pred_o, anchor_l, anchor_c_exp), 1)
- #            prop_lst.append(pred_final)
- #
- #        prop_all = torch.cat(prop_lst, 2)
+# dtype = x.data.type()
+#        batch_size, temporal_size = x.size()[:2]
+#
+#        if self.feat_extractor is not None:
+#            """live feature extraction"""
+#            img_shape = tuple(x.size()[2:])
+#            x = torch.reshape(x, (int(batch_size * temporal_size),) + img_shape)
+#            x = self.feat_extractor(x)
+#            x = torch.reshape(x, (batch_size, temporal_size,) + self.feat_shape)
+#
+#        if self.rgb_conv is not None:
+#            assert self.flow_emb is None, "cannot have flow features with rgb_conv"
+#
+#            """concat batch and temporal dims"""
+#            x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
+#
+#            x = self.rgb_conv(x)
+#
+#            x = torch.reshape(x, (batch_size, temporal_size, -1))
+#
+#        if self.enable_flow:
+#            x_rgb, x_flow = torch.split(x, self.dim_rgb, 2)
+#            x_rgb = self.rgb_emb(x_rgb.contiguous())
+#            x_flow = self.flow_emb(x_flow.contiguous())
+#
+#            x = torch.cat((x_rgb, x_flow), 2)
+#        else:
+#            x = self.rgb_emb(x)
+#
+#        """dropout and relu"""
+#        x = self.emb_out(x)
+#
+#        vis_feat, all_emb = self.vis_emb(x)
+#        # vis_feat = self.vis_dropout(vis_feat)
+#
+#        # B x T x H -> B x H x T
+#        # for 1d conv
+#        vis_feat = vis_feat.transpose(1, 2).contiguous()
+#
+#        """collect proposals for all the kernels"""
+#        prop_lst = []
+#        for i, kernel in enumerate(self.proposal_out):
+#
+#            kernel_size = self.kernel_list[i]
+#            if kernel_size > actual_frame_length[0]:
+#                # no need to use larger kernel size in this case, batch size is only 1
+#
+#                print('skipping kernel sizes greater than {}'.format(
+#                    self.kernel_list[i]))
+#                break
+#
+#            pred_o = kernel(vis_feat)
+#            anchor_c = np.arange(
+#                float(kernel_size) / 2.0,
+#                float(temporal_size + 1 - kernel_size / 2.0),
+#                math.ceil(kernel_size / stride_factor)
+#            )
+#            anchor_c = torch.from_numpy(anchor_c).type(dtype)
+#
+#            assert anchor_c.size(0) == pred_o.size(-1), "anchor_c, pred_o size mismatch!"
+#
+#            anchor_c_exp = anchor_c.expand(batch_size, 1, anchor_c.size(0))
+#            anchor_l = torch.FloatTensor(anchor_c_exp.size()).fill_(kernel_size).type(dtype)
+#
+#            pred_final = torch.cat((pred_o, anchor_l, anchor_c_exp), 1)
+#            prop_lst.append(pred_final)
+#
+#        prop_all = torch.cat(prop_lst, 2)

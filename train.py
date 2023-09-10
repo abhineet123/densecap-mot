@@ -683,7 +683,6 @@ def train(
         if params.cuda:
             if module.feat_extractor is None:
                 img_batch = img_batch.cuda()
-
             tempo_seg_neg = tempo_seg_neg.cuda()
             tempo_seg_pos = tempo_seg_pos.cuda()
             sentence_batch = sentence_batch.cuda()
