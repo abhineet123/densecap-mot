@@ -624,6 +624,11 @@ class ActionPropDenseCap(nn.Module):
                 crt_nproposal = 1
 
             pred_masks = Variable(torch.cat(pred_masks, 0))
+            """
+            current batch x with size 1 x T x 1024 is expanded into a view with something like
+            50 x T x 1024 with all 50 of dim 0 referring to the same singleton dim in the original x
+            apparently done for convenience of computation
+             """
             batch_x = x[b].unsqueeze(0).expand(pred_masks.size(0), x.size(1), x.size(2))
 
             if self.learn_mask:

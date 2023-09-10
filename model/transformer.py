@@ -230,7 +230,8 @@ class Decoder(nn.Module):
         hiddens = [Variable(encoding[0].data.new(B, T, H).zero_())
                    for l in range(len(self.layers) + 1)]
         embedW = self.out.weight * math.sqrt(self.d_model)
-        hiddens[0] = hiddens[0] + positional_encodings_like(hiddens[0])
+        positional_encodings_ = positional_encodings_like(hiddens[0])
+        hiddens[0] = hiddens[0] + positional_encodings_
         for t in range(T):
             if t == 0:
                 hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(Variable(
