@@ -281,7 +281,13 @@ def build_targets_densecap(
 
         # traj_length_to_count[traj_length] += 1
 
-        min_time, max_time = float(min_frame_id) / fps, float(max_frame_id) / fps
+        min_time = float(min_frame_id) / fps
+        """
+        Apparently, DNC, the annoying piece of gunk that it is, treats the max segment time as exclusive 
+        at least most of the time
+         in"""
+        max_time = float(max_frame_id + 1) / fps
+        
         vocab_annotations[traj_id] = dict(
             segment=[min_time, max_time],
             id=traj_id,

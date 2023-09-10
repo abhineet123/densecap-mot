@@ -192,10 +192,8 @@ class ActionPropDenseCap(nn.Module):
         self.reg_loss = nn.SmoothL1Loss()
         self.l2_loss = nn.MSELoss()
 
-    def forward(self, x, s_pos, s_neg, sentence,
-                sample_prob=0, stride_factor=10, scst=False,
-                gated_mask=False):
-        """4 x 480 x 3072"""
+    def _forward(self, x, stride_factor):
+
         dtype = x.data.type()
         batch_size, temporal_size = x.size()[:2]
 
@@ -291,39 +289,62 @@ class ActionPropDenseCap(nn.Module):
         # overlapping score (DEPRECATED!), length offset, and center offset, respectively
         prop_all = torch.cat(prop_lst, 2)
 
+        return prop_all
+
+
+    def forward(self,
+                x,
+                s_pos,
+                s_neg,
+                sentence,
+                sample_prob=0,
+                stride_factor=10,
+                scst=False,
+                gated_mask=False):
+
+        x, prop_all, batch_size, temporal_size, dtype = self._forward(x, stride_factor)
+
         assert batch_size == s_pos.size(0) and batch_size == s_neg.size(0), \
             'feature and ground-truth segments do not match!'
 
         """sample half the total train samples which is the sum of pos and neg samples 
         so sample_each is the number of either"""
         sample_each = self.nsamples // 2
-        pred_score = torch.from_numpy(np.zeros((sample_each * batch_size, 2))).type(dtype)
-        gt_score = torch.from_numpy(np.zeros((sample_each * batch_size, 2))).type(dtype)
-        pred_offsets = torch.from_numpy(np.zeros((sample_each * batch_size, 2))).type(dtype)
-        gt_offsets = torch.from_numpy(np.zeros((sample_each * batch_size, 2))).type(dtype)
+        pred_score = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
+        gt_score = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
+        pred_offsets = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
+        gt_offsets = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
 
         # batch_size x temporal_size x H
-        batch_mask = torch.from_numpy(np.zeros((batch_size, temporal_size, 1))).type(dtype)
+        batch_mask = torch.zeros((batch_size, temporal_size, 1), dtype=dtype)
 
-        # store positional encodings, size of batch_size x 4,
-        # the first batch_size values are predicted starts,
-        # second batch_size values are predicted ends,
-        # third batch_size values are anchor starts,
-        # last batch_size values are anchor ends
-        pos_enc_locs = torch.zeros(batch_size * 4).type(dtype)
+        """
+        store positional encodings, size of batch_size x 4,
+        the first batch_size values are predicted starts,
+        second batch_size values are predicted ends,
+        third batch_size values are anchor starts,
+        last batch_size values are anchor ends
+        """
+        pos_enc_locs = torch.zeros(batch_size * 4, dtype=dtype)
 
-        """captioning only done for one proposal per temporal window"""
-        anchor_window_mask = torch.zeros(batch_size, temporal_size, requires_grad=False).type(dtype)
-        pred_bin_window_mask = torch.zeros(batch_size, temporal_size, requires_grad=False).type(dtype)
-        gate_scores = torch.zeros(batch_size, 1, 1).type(dtype)
+        """
+        captioning only done for one proposal per temporal window
+        """
+        anchor_window_mask = torch.zeros(batch_size, temporal_size, requires_grad=False, dtype=dtype)
+        pred_bin_window_mask = torch.zeros(batch_size, temporal_size, requires_grad=False, dtype=dtype)
+        gate_scores = torch.zeros(batch_size, 1, 1, dtype=dtype)
 
         mask_loss = None
 
-        """convert raw pred features into proposals"""
-        """anchor_l * exp(pred_l)
+        """
+        convert raw pred features into proposals
+        """
+        """
+        anchor_l * exp(pred_l)
         """
         pred_len = prop_all[:, 4, :] * torch.exp(prop_all[:, 2, :])
-        """anchor_c + anchor_l*pred_c
+        """
+        anchor_c + anchor_l*pred_c
         """
         pred_cen = prop_all[:, 5, :] + prop_all[:, 4, :] * prop_all[:, 3, :]
 
@@ -469,80 +490,9 @@ class ActionPropDenseCap(nn.Module):
                   min_prop_num_before_nms,
                   pos_thresh,
                   stride_factor,
-                  gated_mask=False):
+                  gated_mask):
 
-        batch_size, temporal_size = x.size()[:2]
-
-        # if not isinstance(actual_frame_length, (list, tuple)):
-        #     actual_frame_length = [actual_frame_length, ]
-
-        if self.feat_extractor is not None:
-            """live feature extraction"""
-            img_shape = tuple(x.size()[2:])
-            x = torch.reshape(x, (int(batch_size * temporal_size),) + img_shape)
-            x = self.feat_extractor(x)
-            x = torch.reshape(x, (batch_size, temporal_size,) + self.feat_shape)
-
-        if self.rgb_conv is not None:
-            assert self.flow_emb is None, "cannot have flow features with rgb_conv"
-
-            """concat batch and temporal dims"""
-            x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
-
-            x = self.rgb_conv(x)
-
-            x = torch.reshape(x, (batch_size, temporal_size, -1))
-
-        dtype = x.data.type()
-
-        if self.enable_flow:
-            x_rgb, x_flow = torch.split(x, self.dim_rgb, 2)
-            x_rgb = self.rgb_emb(x_rgb.contiguous())
-            x_flow = self.flow_emb(x_flow.contiguous())
-
-            x = torch.cat((x_rgb, x_flow), 2)
-        else:
-            x = self.rgb_emb(x)
-
-        """dropout and relu"""
-        x = self.emb_out(x)
-
-        vis_feat, all_emb = self.vis_emb(x)
-        # vis_feat = self.vis_dropout(vis_feat)
-
-        # B x T x H -> B x H x T
-        # for 1d conv
-        vis_feat = vis_feat.transpose(1, 2).contiguous()
-
-        """collect proposals for all the kernels"""
-        prop_lst = []
-        for i, kernel in enumerate(self.proposal_out):
-
-            kernel_size = self.kernel_list[i]
-            if kernel_size > actual_frame_length[0]:
-                # no need to use larger kernel size in this case, batch size is only 1
-
-                print('skipping kernel sizes greater than {}'.format(
-                    self.kernel_list[i]))
-                break
-
-            pred_o = kernel(vis_feat)
-            anchor_c = torch.from_numpy(np.arange(
-                float(kernel_size) / 2.0,
-                float(temporal_size + 1 - kernel_size / 2.0),
-                math.ceil(kernel_size / stride_factor)
-            )).type(dtype)
-            if anchor_c.size(0) != pred_o.size(-1):
-                raise Exception("size mismatch!")
-
-            anchor_c = anchor_c.expand(batch_size, 1, anchor_c.size(0))
-            anchor_l = torch.FloatTensor(anchor_c.size()).fill_(kernel_size).type(dtype)
-
-            pred_final = torch.cat((pred_o, anchor_l, anchor_c), 1)
-            prop_lst.append(pred_final)
-
-        prop_all = torch.cat(prop_lst, 2)
-
+        x, prop_all, batch_size, temporal_size, dtype = self._forward(x, stride_factor)
         # assume 1st and 2nd are action prediction and overlap, respectively
         prop_all[:, :2, :] = torch.sigmoid(prop_all[:, :2, :])
 
@@ -585,7 +535,7 @@ class ActionPropDenseCap(nn.Module):
             _, sel_idx = torch.topk(crt_pred[0], nproposal)
 
             """NMS"""
-            start_t = time.time()
+            # start_t = time.time()
             for nms_thresh in nms_thresh_set:
                 for prop_idx in range(nproposal):
                     original_frame_len = actual_frame_length[
@@ -661,7 +611,7 @@ class ActionPropDenseCap(nn.Module):
                 if crt_nproposal >= min_prop_num:
                     break
 
-            mid1_t = time.time()
+            # mid1_t = time.time()
 
             if len(pred_masks) == 0:  # append all-one window if no window is proposed
                 pred_masks.append(torch.ones(1, temporal_size, 1).type(dtype))
@@ -697,7 +647,7 @@ class ActionPropDenseCap(nn.Module):
             else:
                 window_mask = pred_masks
 
-            mid2_t = time.time()
+            # mid2_t = time.time()
 
             pred_sentence = []
             # use cap_batch as caption batch size
@@ -730,3 +680,72 @@ class ActionPropDenseCap(nn.Module):
             #     end_t - mid2_t))
 
         return all_proposal_results
+
+ # dtype = x.data.type()
+ #        batch_size, temporal_size = x.size()[:2]
+ #
+ #        if self.feat_extractor is not None:
+ #            """live feature extraction"""
+ #            img_shape = tuple(x.size()[2:])
+ #            x = torch.reshape(x, (int(batch_size * temporal_size),) + img_shape)
+ #            x = self.feat_extractor(x)
+ #            x = torch.reshape(x, (batch_size, temporal_size,) + self.feat_shape)
+ #
+ #        if self.rgb_conv is not None:
+ #            assert self.flow_emb is None, "cannot have flow features with rgb_conv"
+ #
+ #            """concat batch and temporal dims"""
+ #            x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
+ #
+ #            x = self.rgb_conv(x)
+ #
+ #            x = torch.reshape(x, (batch_size, temporal_size, -1))
+ #
+ #        if self.enable_flow:
+ #            x_rgb, x_flow = torch.split(x, self.dim_rgb, 2)
+ #            x_rgb = self.rgb_emb(x_rgb.contiguous())
+ #            x_flow = self.flow_emb(x_flow.contiguous())
+ #
+ #            x = torch.cat((x_rgb, x_flow), 2)
+ #        else:
+ #            x = self.rgb_emb(x)
+ #
+ #        """dropout and relu"""
+ #        x = self.emb_out(x)
+ #
+ #        vis_feat, all_emb = self.vis_emb(x)
+ #        # vis_feat = self.vis_dropout(vis_feat)
+ #
+ #        # B x T x H -> B x H x T
+ #        # for 1d conv
+ #        vis_feat = vis_feat.transpose(1, 2).contiguous()
+ #
+ #        """collect proposals for all the kernels"""
+ #        prop_lst = []
+ #        for i, kernel in enumerate(self.proposal_out):
+ #
+ #            kernel_size = self.kernel_list[i]
+ #            if kernel_size > actual_frame_length[0]:
+ #                # no need to use larger kernel size in this case, batch size is only 1
+ #
+ #                print('skipping kernel sizes greater than {}'.format(
+ #                    self.kernel_list[i]))
+ #                break
+ #
+ #            pred_o = kernel(vis_feat)
+ #            anchor_c = np.arange(
+ #                float(kernel_size) / 2.0,
+ #                float(temporal_size + 1 - kernel_size / 2.0),
+ #                math.ceil(kernel_size / stride_factor)
+ #            )
+ #            anchor_c = torch.from_numpy(anchor_c).type(dtype)
+ #
+ #            assert anchor_c.size(0) == pred_o.size(-1), "anchor_c, pred_o size mismatch!"
+ #
+ #            anchor_c_exp = anchor_c.expand(batch_size, 1, anchor_c.size(0))
+ #            anchor_l = torch.FloatTensor(anchor_c_exp.size()).fill_(kernel_size).type(dtype)
+ #
+ #            pred_final = torch.cat((pred_o, anchor_l, anchor_c_exp), 1)
+ #            prop_lst.append(pred_final)
+ #
+ #        prop_all = torch.cat(prop_lst, 2)
