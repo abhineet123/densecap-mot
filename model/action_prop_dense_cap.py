@@ -292,7 +292,7 @@ class ActionPropDenseCap(nn.Module):
         # overlapping score (DEPRECATED!), length offset, and center offset, respectively
         prop_all = torch.cat(prop_lst, 2)
 
-        return prop_all
+        return x, prop_all, batch_size, temporal_size, dtype
 
     def forward(self,
                 x,
