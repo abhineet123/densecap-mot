@@ -657,9 +657,11 @@ class ActionPropDenseCap(nn.Module):
             for sent_i in range(cap_batch_count):
                 batch_start = sent_i * cap_batch
                 batch_end = min((sent_i + 1) * cap_batch, window_mask.size(0))
-                pred_sentence += self.captioning_model.greedy(batch_x[batch_start:batch_end],
-                                                              window_mask[batch_start:batch_end],
-                                                              self.max_sentence_len)
+                batch_x_ = batch_x[batch_start:batch_end]
+                window_mask_ = window_mask[batch_start:batch_end]
+                pred_sentence_ = self.captioning_model.greedy(batch_x_,
+                                                              window_mask_,
+                                                              self.max_sentence_len)                pred_sentence += pred_sentence_
 
             pred_results = pred_results[:crt_nproposal]
             assert len(pred_sentence) == crt_nproposal, (

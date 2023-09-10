@@ -656,7 +656,9 @@ def train(
     pbar = tqdm(train_loader, total=nbatches, ncols=140, desc=f'training epoch {epoch}')
 
     if epoch >= params.vis_from:
-        vis_batch_id = random.randint(0, nbatches - 1)
+        vis_batch_id = params.vis_batch_id
+        if vis_batch_id < 0:
+            vis_batch_id = random.randint(0, nbatches - 1)
         print(f'\nvisualizing batch {vis_batch_id}\n')
 
     sample_prob = min(params.sample_prob, int(epoch / 5) * 0.05)
@@ -728,7 +730,10 @@ def train(
 
         if epoch >= params.vis_from and train_iter == vis_batch_id:
             batch_size = img_batch.size()[0]
-            vis_sample_id = random.randint(0, batch_size - 1)
+
+            vis_sample_id = params.vis_sample_id
+            if vis_sample_id < 0:
+                vis_sample_id = random.randint(0, batch_size - 1)
             print(f'\nvisualizing sample {vis_sample_id}\n')
 
             img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
@@ -799,7 +804,9 @@ def validate(epoch,
     pbar = tqdm(loader, total=nbatches, ncols=140, desc=f'validation epoch {epoch}')
 
     if epoch >= params.vis_from:
-        vis_batch_id = random.randint(0, nbatches - 1)
+        vis_batch_id = params.vis_batch_id
+        if vis_batch_id < 0:
+            vis_batch_id = random.randint(0, nbatches - 1)
         print(f'\nvisualizing batch {vis_batch_id}\n')
 
     for val_iter, data in enumerate(pbar):
@@ -857,7 +864,10 @@ def validate(epoch,
 
         if epoch >= params.vis_from and val_iter == vis_batch_id:
             batch_size = img_batch.size()[0]
-            vis_sample_id = random.randint(0, batch_size - 1)
+            vis_sample_id = params.vis_sample_id
+            if vis_sample_id < 0:
+                vis_sample_id = random.randint(0, batch_size - 1)
+
             print(f'\nvisualizing sample {vis_sample_id}\n')
 
             img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
