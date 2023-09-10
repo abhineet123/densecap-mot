@@ -7,11 +7,13 @@
 
 from torch import nn
 from .transformer import Transformer, RealTransformer
+from torch.autograd import Variable
 import torch
-import numpy as np
 import torch.nn.functional as F
+
+import numpy as np
 import math
-from dnc_data.utils import segment_iou, round_up_to
+from dnc_data.utils import segment_iou
 import time
 
 
@@ -20,6 +22,8 @@ def positional_encodings(x, D):
     encodings = torch.zeros(x.size(0), D)
     if x.is_cuda:
         encodings = encodings.cuda(x.get_device())
+
+    encodings = Variable(encodings)
 
     for channel in range(D):
         if channel % 2 == 0:
@@ -44,7 +48,7 @@ class DropoutTime1D(nn.Module):
     def forward(self, x):
         if self.training:
             mask = x.data.new(x.data.size(0), x.data.size(1), 1).uniform_()
-            mask = (mask > self.p_drop).float()
+            mask = Variable((mask > self.p_drop).float())
             return x * mask
         else:
             return x * (1 - self.p_drop)
@@ -259,13 +263,11 @@ class ActionPropDenseCap(nn.Module):
             480 - kernel_size + 1
             kernel size 1 --> 480
             kernel size 3 --> 478"""
-            anchor_c = np.arange(
+            anchor_c = Variable(torch.FloatTensor(np.arange(
                 float(kernel_size) / 2.0,
                 float(temporal_size + 1 - kernel_size / 2.0),
                 math.ceil(kernel_size / stride_factor)
-            )
-
-            anchor_c = torch.from_numpy(anchor_c).type(dtype)
+            )).type(dtype))
 
             assert anchor_c.size(0) == pred_o.size(-1), "anchor_c, pred_o size mismatch!"
 
@@ -277,7 +279,7 @@ class ActionPropDenseCap(nn.Module):
             """same size as anchor_c_exp filled with kernel_size
             kernel_size = length offset
             """
-            anchor_l = torch.FloatTensor(anchor_c_exp.size()).fill_(kernel_size).type(dtype)
+            anchor_l = Variable(torch.FloatTensor(anchor_c.size()).fill_(kernel_size).type(dtype))
 
             """
             kernel size 3 --> 4 x 6 x 478
@@ -310,13 +312,13 @@ class ActionPropDenseCap(nn.Module):
         """sample half the total train samples which is the sum of pos and neg samples 
         so sample_each is the number of either"""
         sample_each = self.nsamples // 2
-        pred_score = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
-        gt_score = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
-        pred_offsets = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
-        gt_offsets = torch.zeros((sample_each * batch_size, 2), dtype=dtype)
+        pred_score = Variable(torch.FloatTensor(np.zeros((sample_each * batch_size, 2))).type(dtype))
+        gt_score = Variable(torch.FloatTensor(np.zeros((sample_each * batch_size, 2))).type(dtype))
+        pred_offsets = Variable(torch.FloatTensor(np.zeros((sample_each * batch_size, 2))).type(dtype))
+        gt_offsets = Variable(torch.FloatTensor(np.zeros((sample_each * batch_size, 2))).type(dtype))
 
         # batch_size x temporal_size x H
-        batch_mask = torch.zeros((batch_size, temporal_size, 1), dtype=dtype)
+        batch_mask = Variable(torch.FloatTensor(np.zeros((batch_size, temporal_size, 1))).type(dtype))
 
         """
         store positional encodings, size of batch_size x 4,
@@ -325,14 +327,16 @@ class ActionPropDenseCap(nn.Module):
         third batch_size values are anchor starts,
         last batch_size values are anchor ends
         """
-        pos_enc_locs = torch.zeros(batch_size * 4, dtype=dtype)
+        pos_enc_locs = Variable(torch.zeros(batch_size * 4).type(dtype))
 
         """
         captioning only done for one proposal per temporal window
         """
-        anchor_window_mask = torch.zeros(batch_size, temporal_size, requires_grad=False, dtype=dtype)
-        pred_bin_window_mask = torch.zeros(batch_size, temporal_size, requires_grad=False, dtype=dtype)
-        gate_scores = torch.zeros(batch_size, 1, 1, dtype=dtype)
+        anchor_window_mask = Variable(torch.zeros(batch_size, temporal_size).type(dtype),
+                                      requires_grad=False)
+        pred_bin_window_mask = Variable(torch.zeros(batch_size, temporal_size).type(dtype),
+                                        requires_grad=False)
+        gate_scores = Variable(torch.zeros(batch_size, 1, 1).type(dtype))
 
         mask_loss = None
 
@@ -417,8 +421,8 @@ class ActionPropDenseCap(nn.Module):
                 gt_window_mask[
                 max(0, math.floor(gt_cen - gt_len / 2.)):
                 min(temporal_size, math.ceil(gt_cen + gt_len / 2.)), :] = 1.
-                # gt_window_mask = Variable(gt_window_mask,
-                #                           requires_grad=False)
+                gt_window_mask = Variable(gt_window_mask,
+                                          requires_grad=False)
 
                 batch_mask[b] = gt_window_mask
                 # batch_mask[b] = anchor_window_mask
@@ -439,10 +443,10 @@ class ActionPropDenseCap(nn.Module):
 
                     pos_enc_locs[b] = pred_start_w
                     pos_enc_locs[batch_size + b] = pred_end_w
-                    pos_enc_locs[batch_size * 2 + b] = torch.Tensor([max(0, math.floor(anc_cen - anc_len / 2.))]).type(
-                        dtype)
-                    pos_enc_locs[batch_size * 3 + b] = torch.Tensor(
-                        [min(temporal_size, math.ceil(anc_cen + anc_len / 2.))]).type(dtype)
+                    pos_enc_locs[batch_size * 2 + b] = Variable(
+                        torch.Tensor([max(0, math.floor(anc_cen - anc_len / 2.))]).type(dtype))
+                    pos_enc_locs[batch_size * 3 + b] = Variable(
+                        torch.Tensor([min(temporal_size, math.ceil(anc_cen + anc_len / 2.))]).type(dtype))
 
                     # gate_scores[b] = pred_score[b*sample_each+sample_idx, 0].detach()
                     gate_scores[b] = pred_score[b * sample_each + sample_idx, 0]
@@ -619,7 +623,7 @@ class ActionPropDenseCap(nn.Module):
                 pred_results[0] = np.array([0, min(original_frame_len, temporal_size), pos_thresh])
                 crt_nproposal = 1
 
-            pred_masks = torch.cat(pred_masks, 0)
+            pred_masks = Variable(torch.cat(pred_masks, 0))
             batch_x = x[b].unsqueeze(0).expand(pred_masks.size(0), x.size(1), x.size(2))
 
             if self.learn_mask:
@@ -631,7 +635,7 @@ class ActionPropDenseCap(nn.Module):
                 pe_locs = torch.cat((pe_pred_start, pe_pred_end, pe_anchor_start, pe_anchor_end), 0)
                 pos_encs = positional_encodings(pe_locs, self.dim_model // 4)
                 npos = pos_encs.size(0)
-                anchor_window_mask = torch.cat(anchor_window_mask, 0)
+                anchor_window_mask = Variable(torch.cat(anchor_window_mask, 0))
                 in_pred_mask = torch.cat((pos_encs[:npos // 4], pos_encs[npos // 4:npos // 4 * 2],
                                           pos_encs[npos // 4 * 2:npos // 4 * 3],
                                           pos_encs[npos // 4 * 3:npos // 4 * 4],
@@ -639,7 +643,7 @@ class ActionPropDenseCap(nn.Module):
                 pred_cont_masks = self.mask_model(in_pred_mask).unsqueeze(2)
 
                 if gated_mask:
-                    gate_scores = torch.cat(gate_scores, 0).view(-1, 1, 1)
+                    gate_scores = Variable(torch.cat(gate_scores, 0).view(-1, 1, 1))
                     window_mask = (gate_scores * pred_masks
                                    + (1 - gate_scores) * pred_cont_masks)
 
