@@ -225,11 +225,24 @@ class Decoder(nn.Module):
     def greedy(self, encoding, T):
         B, _, H = encoding[0].size()
 
-        prediction = Variable(encoding[0].data.new(B, T).long().fill_(
-            self.vocab.stoi['<pad>']))
+        """
+        amazingly annoying convoluted way of creating a tensor of type long filled with 1 which is the 
+        numerical equivalent of '<pad>'
+        it is not here at all as to why encoding[0].data.new is even used here since the datatype is 
+        immediately changed to long
+        """
+        prediction = Variable(
+            encoding[0].data.new(B, T).long().fill_(
+            self.vocab.stoi['<pad>'])
+        )
         hiddens = [Variable(encoding[0].data.new(B, T, H).zero_())
                    for l in range(len(self.layers) + 1)]
+        """
+        1024 x 1024 tensor created by multiplyinghe weight matrix of the linear layer 
+        that is self.out with 32
+        """
         embedW = self.out.weight * math.sqrt(self.d_model)
+
         positional_encodings_ = positional_encodings_like(hiddens[0])
         hiddens[0] = hiddens[0] + positional_encodings_
         for t in range(T):
@@ -242,11 +255,30 @@ class Decoder(nn.Module):
                                                                   embedW)
             hiddens[0][:, t] = self.dropout(hiddens[0][:, t])
             for l in range(len(self.layers)):
-                x = hiddens[l][:, :t + 1]
-                x = self.layers[l].selfattn(hiddens[l][:, t], x, x)
-                hiddens[l + 1][:, t] = self.layers[l].feedforward(
-                    self.layers[l].attention(x, encoding[l], encoding[l]))
+                _layer = self.layers[l]
+                """
+                a whole bunch of annoying MLPs and matrix multiplications
+                selfattn and attention are pretty much identical gunky MultiHeadmodules 
+                while feedforward is a 2 layer MLP that amounts to a small variation on the same
+                """
+                _selfattn = _layer.selfattn
+                _attention = _layer.attention
+                _feedforward = _layer.feedforward
 
+                """current hidden, next time"""
+                x = hiddens[l][:, :t + 1]
+                """current hidden, current time"""
+                x = _selfattn(
+                    hiddens[l][:, t],
+                    x, x)
+                """next hidden, current time"""
+                hiddens[l + 1][:, t] = _feedforward(
+                    _attention(x, encoding[l], encoding[l]))
+
+            """
+            this is finally where we collect the indices of maximum value in each row so the values 
+            outputted by self.out are supposedly the probabilities over the vocabulary
+            """
             _, prediction[:, t] = self.out(hiddens[-1][:, t]).max(-1)
         return hiddens, prediction
 
