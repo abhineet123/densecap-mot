@@ -20,6 +20,7 @@ import numpy as np
 import random
 import time
 
+from collections import OrderedDict
 from tqdm import tqdm
 
 # import paramparse
@@ -521,6 +522,8 @@ def main(params):
             if checkpoint is not None:
                 print(f"loading weights from {checkpoint}")
                 state_dict = torch.load(checkpoint)
+                if not hasattr(model, "module"):
+                    state_dict = OrderedDict((k.rreplace('module.'), v) for k, v in state_dict.items())
                 model.load_state_dict(state_dict)
                 start_epoch = ckpt_epoch + 1
 
