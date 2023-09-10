@@ -226,7 +226,7 @@ def get_model(text_proc, params):
         # elif torch.cuda.device_count() > 1:
         #     model = torch.nn.DataParallel(model).cuda()
         else:
-            model.cuda()
+            model = model.cuda()
 
     print('initializing weights')
 
