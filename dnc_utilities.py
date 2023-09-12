@@ -95,6 +95,75 @@ class FeatureExtractor(nn.Module):
             f3=lambda x: x[3],
         )
 
+    def draw_dets(self, imgs_tensor, img_list, img_metas, classes):
+        n_imgs = imgs_tensor.size(0)
+
+        all_feats = []
+        start_id = 0
+        score_thr = 0.3
+
+        all_results = []
+
+        while True:
+            if start_id >= n_imgs:
+                break
+
+            batch_size = min(self.batch_size, n_imgs - start_id)
+
+            imgs = imgs_tensor[start_id:start_id+batch_size, ...]
+
+            if self.cuda:
+                imgs = imgs.cuda()
+
+            _results = self.feat_model(return_loss=False,
+                                      rescale=True, img=[imgs, ],
+                                      img_metas=[img_metas, ], x=None)
+
+            all_results += _results
+
+            start_id += batch_size
+
+        for img_id, img in enumerate(img_list):
+
+            curr_result = all_results[img_id]
+
+            bboxes = np.vstack(curr_result)
+            labels = [
+                np.full(bbox.shape[0], i, dtype=np.int32)
+                for i, bbox in enumerate(curr_result)
+            ]
+            labels = np.concatenate(labels)
+
+            if score_thr > 0:
+                assert bboxes.shape[1] == 5
+                scores = bboxes[:, -1]
+                inds = scores > score_thr
+                bboxes = bboxes[inds, :]
+                labels = labels[inds]
+
+            for i, (bbox, label) in enumerate(zip(bboxes, labels)):
+                # bbox_int = bbox.astype(np.int32)
+                try:
+                    xmin, ymin, xmax, ymax, conf = bbox
+                except ValueError:
+                    xmin, ymin, xmax, ymax = bbox
+                    conf = 1.0
+
+                xmin, ymin, xmax, ymax = [int(x) for x in [xmin, ymin, xmax, ymax]]
+
+                class_id = label
+                class_name = classes[class_id]
+
+                w, h = xmax - xmin, ymax - ymin
+
+                bbox_wh = np.asarray([xmin, ymin, w, h])
+
+                draw_box(img, bbox_wh, _id=None, color='black', thickness=2,
+                         is_dotted=0, transparency=0.,
+                         text_col=None,
+                         font=cv2.FONT_HERSHEY_TRIPLEX, font_size=0.5, label=class_name)
+
+
     def forward(self, imgs_tensor):
         n_imgs = imgs_tensor.size(0)
 
@@ -287,7 +356,7 @@ def build_targets_densecap(
         at least most of the time
          in"""
         max_time = float(max_frame_id + 1) / fps
-        
+
         vocab_annotations[traj_id] = dict(
             segment=[min_time, max_time],
             id=traj_id,

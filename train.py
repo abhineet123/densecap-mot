@@ -350,6 +350,10 @@ def main(params):
         sampled_frames = params.sampled_frames
         sampling_sec = float(sampled_frames) / float(params.fps)
 
+        classes, composite_classes = read_class_info(params.class_info_path)
+        class_to_color = {i: k[1] for i, k in enumerate(classes)}
+        classes = {i: k[0] for i, k in enumerate(classes)}
+
         # dist parallel, optional
         # params.distributed = params.world_size > 1
         # params.distributed = 1
@@ -536,15 +540,18 @@ def main(params):
             train_sampler.set_epoch(train_epoch)
 
         train_loss_dict = train(
-            train_epoch,
-            model,
-            optimizer,
-            train_loader,
-            vis_path,
-            sampled_frames,
-            sampling_sec,
-            sentence_to_grid_cells,
-            params)
+            epoch=train_epoch,
+            model=model,
+            optimizer=optimizer,
+            train_loader=train_loader,
+            vis_path=vis_path,
+            sampled_frames=sampled_frames,
+            sampling_sec=sampling_sec,
+            sentence_to_grid_cells=sentence_to_grid_cells,
+            classes=classes,
+            params=params
+
+        )
 
         epoch_loss = np.mean(train_loss_dict['loss'])
         cls_loss = np.mean(train_loss_dict['cls_loss'])
@@ -582,14 +589,16 @@ def main(params):
 
             (valid_loss, val_cls_loss,
              val_reg_loss, val_sent_loss, val_mask_loss) = validate(
-                train_epoch,
-                model,
-                valid_loader,
-                vis_path,
-                sampled_frames,
-                sampling_sec,
-                sentence_to_grid_cells,
-                params)
+                epoch=train_epoch,
+                model=model,
+                loader=valid_loader,
+                vis_path=vis_path,
+                sampled_frames=sampled_frames,
+                sampling_sec=sampling_sec,
+                sentence_to_grid_cells=sentence_to_grid_cells,
+                classes=classes,
+                params=params,
+            )
 
             writer.add_scalar('val/loss', valid_loss, train_epoch)
             writer.add_scalar('val/cls_loss', val_cls_loss, train_epoch)
@@ -639,7 +648,9 @@ def train(
         sampled_frames,
         sampling_sec,
         sentence_to_grid_cells,
-        params: TrainParams):
+        classes,
+        params: TrainParams
+):
     model.train()  # training mode
 
     if hasattr(model, 'module'):
@@ -755,6 +766,7 @@ def train(
                 sampling_sec=sampling_sec,
                 vis_path=vis_path,
                 sentence_to_grid_cells=sentence_to_grid_cells,
+                classes=classes,
                 params=params)
 
             model.train()
@@ -790,6 +802,7 @@ def validate(epoch,
              sampled_frames,
              sampling_sec,
              sentence_to_grid_cells,
+             classes,
              params: TrainParams):
     if hasattr(model, 'module'):
         module = model.module
@@ -888,6 +901,7 @@ def validate(epoch,
                 sampling_sec=sampling_sec,
                 vis_path=vis_path,
                 sentence_to_grid_cells=sentence_to_grid_cells,
+                classes=classes,
                 params=params,
             )
 
@@ -911,6 +925,7 @@ def visualize(
         sampling_sec,
         vis_path,
         sentence_to_grid_cells,
+        classes,
         params: TrainParams):
     invalid_words = ['<UNK>', ]
     start_t = time.time()
@@ -930,7 +945,6 @@ def visualize(
     end_t = time.time()
     inference_t = (end_t - start_t) * 1000
 
-    _input = None
     start_t = time.time()
 
     annotations = []
@@ -967,13 +981,8 @@ def visualize(
 
     if not annotations:
         print('\nno valid annotations found for visualization\n')
-        return inference_t, 0
-
-    n_traj = len(annotations)
-
-    if n_traj > params.max_vis_traj:
-        random.shuffle(annotations)
-        annotations = annotations[:params.max_vis_traj]
+        if module.feat_extractor is None:
+            return inference_t, 0
 
     start_id = end_id = -1
 
@@ -991,27 +1000,59 @@ def visualize(
             start_id, end_id = int(feat_start_id * sampled_frames), int(feat_end_id * sampled_frames)
 
     out_name = f'{epoch}-{vid_name}'
-    if _input is None:
-        src_dir_path = params.db_root
-        if params.img_dir_name:
-            src_dir_path = linux_path(src_dir_path, params.img_dir_name)
-        vid_path = linux_path(src_dir_path, vid_name)
+    src_dir_path = params.db_root
+    if params.img_dir_name:
+        src_dir_path = linux_path(src_dir_path, params.img_dir_name)
+    vid_path = linux_path(src_dir_path, vid_name)
 
-        _input_params = Input.Params(source_type=-1,
-                                     batch_mode=True,
-                                     path=vid_path,
-                                     frame_ids=(start_id, end_id - 1))
+    _input_params = Input.Params(source_type=-1,
+                                 batch_mode=True,
+                                 path=vid_path,
+                                 frame_ids=(start_id, end_id - 1))
 
-        _logger = CustomLogger.setup(__name__)
-        _input = Input(_input_params, _logger)
+    _logger = CustomLogger.setup(__name__)
+    _input = Input(_input_params, _logger)
 
-        if not _input.initialize(None):
-            _logger.error('Input pipeline could not be initialized')
-            return False
+    if not _input.initialize(None):
+        _logger.error('Input pipeline could not be initialized')
+        return False
+
+    img_list = _input.all_frames
+
+    if module.feat_extractor is not None:
+        img_metas = []
+        for img_id, img in enumerate(img_list):
+            global_img_id = img_id
+            img_meta = dict(
+                filename=linux_path(_input.source_path, f'image{global_img_id + 1:06d}.jpg'),
+                ori_filename=linux_path(_input.seq_name, f'image{global_img_id + 1:06d}.jpg'),
+                ori_shape=img.shape,
+                img_shape=img.shape,
+                pad_shape=img.shape,
+                scale_factor=[1., 1., 1., 1.],
+                flip=False,
+                flip_direction=None,
+                img_norm_cfg=dict(
+                    mean=params.mean,
+                    std=params.std,
+                    to_rgb=True
+                ),
+                batch_input_shape=img.shape[:2]
+            )
+            img_metas.append(img_meta)
+
+        with torch.no_grad():
+            module.feat_extractor.draw_dets(img_batch_vis, img_list, img_metas, classes)
+
+    n_traj = len(annotations)
+
+    if n_traj > params.max_vis_traj:
+        random.shuffle(annotations)
+        annotations = annotations[:params.max_vis_traj]
 
     dnc_to_mot.run(
         dnc_data=annotations,
-        frames=_input.all_frames,
+        frames=img_list,
         seq_info=None,
         json_data=None,
         n_seq=None,
