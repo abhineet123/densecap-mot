@@ -74,6 +74,7 @@ class Params:
         self.max_diff = 1
         self.sample_traj = 0
 
+        self.min_traj_len = 0
         self.fixed_traj_len = 0
         self.save_traj_lengths = 0
 
@@ -87,7 +88,7 @@ class Params:
         self.ann = Annotations.Params()
 
 
-def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, params: Params):
+def run(seq_info, sample_traj, min_traj_len, fixed_traj_len, out_dir, traj_lengths_out_dir, params: Params):
     seq_id, start_id, end_id = seq_info
 
     import logging
@@ -147,6 +148,7 @@ def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, pa
             params.vocab_fmt,
             params.max_diff,
             sample_traj,
+            min_traj_len,
             fixed_traj_len,
             n_frames,
             frame_size,
@@ -309,6 +311,7 @@ def main():
     import functools
     func = functools.partial(
         run,
+        min_traj_len=params.min_traj_len,
         fixed_traj_len=params.fixed_traj_len,
         sample_traj=sample_traj,
         out_dir=out_dir,

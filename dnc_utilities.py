@@ -242,6 +242,7 @@ def build_targets_densecap(
         vocab_fmt: int,
         max_diff: int,
         sample_traj: int,
+        min_traj_len: int,
         fixed_traj_len: int,
         n_frames: int,
         frame_size: tuple,
@@ -507,6 +508,10 @@ def build_targets_densecap(
         for traj_id, traj_vocab in enumerate(vocab_annotations):
             words = traj_vocab['sentence']
             n_words = len(words)
+
+            if n_words < min_traj_len > 0:
+                continue
+
 
             if n_words >= fixed_traj_len:
                 traj_sample_ids = list(np.linspace(0, n_words - 1, fixed_traj_len, dtype=np.int32))

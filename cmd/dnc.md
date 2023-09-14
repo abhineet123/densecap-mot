@@ -115,12 +115,9 @@ python3 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/seq_0_1_fi
 #### mask       @ f0_max_16/100-960/n-1-->dnc
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29500 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20-f0_max_16-mask.cfg --batch_size 24 --num_workers 4 --world_size 2 --distributed 1
 
-
 <a id="dnc_to_mot___f0_max_16_100_960_n_1_"></a>
 #### dnc_to_mot       @ f0_max_16/100-960/n-1-->dnc
 python3 dnc_to_mot.py json=/data/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_fix_20.json set=MNIST_MOT_RGB_512x512_1_100_960_var seq=100 @slide size=480 sample=1
-
-
 
 <a id="n_3_"></a>
 # n-3

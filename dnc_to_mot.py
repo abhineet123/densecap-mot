@@ -5,6 +5,7 @@ import os
 
 
 import sys
+import logging
 import math
 
 # sys.path.append(script_parent_dir)
@@ -104,7 +105,7 @@ def compress_traj(grid_ids, start_frame, end_frame):
 
     assert n_grid_ids > n_frames, "trajectory size must exceed n_frames for compression"
 
-    # print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
+    print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_ids[0],
@@ -129,7 +130,7 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
     assert n_grid_ids < n_frames, "trajectory size must not exceed n_frames for expansion"
 
-    # print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
+    print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_cells[0],
@@ -219,6 +220,7 @@ def run(seq_info, dnc_data, frames, json_data,
         seq_id, seq_suffix, start_id, end_id = seq_info
 
         _logger = CustomLogger.setup(__name__)
+        _logger.setLevel(logging.WARNING)
 
         _data = Data(params.data, _logger)
 
@@ -318,16 +320,20 @@ def run(seq_info, dnc_data, frames, json_data,
         grid_cells = sentence_to_grid_cells(words)
 
         n_grid_cells = len(grid_cells)
+        orig_grid_cells = copy.deepcopy(grid_cells)
+
         disp_fn = functools.partial(draw_grid_cell,
                                     grid_centers=(grid_cy, grid_cx),
                                     grid_cell_size=grid_cell_size)
 
-        # frame = _input.all_frames[start_frame]
         if n_grid_cells > traj_n_frames:
             frame_to_grid_cell = compress_traj(grid_cells, start_frame, end_frame - 1)
         elif n_grid_cells < traj_n_frames:
+            if n_grid_cells < 2:
+                continue
             grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame - 1, frames, disp_fn)
         else:
+            print(f'trajectory length {n_grid_cells} matches n_frames')
             frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
                 for frame_id in range(start_frame, end_frame)
@@ -342,6 +348,9 @@ def run(seq_info, dnc_data, frames, json_data,
                 frame_disp = np.copy(frames[frame_id])
 
                 for grid_cell in grid_cells:
+                    disp_fn(frame_disp, grid_cell, color='red')
+
+                for grid_cell in orig_grid_cells:
                     disp_fn(frame_disp, grid_cell, color='green')
 
                 grid_cell = frame_to_grid_cell[frame_id]
@@ -501,6 +510,7 @@ def main():
         run,
         dnc_data=None,
         frames=None,
+        out_name='',
         n_seq=n_seq,
         json_data=json_data,
         sentence_to_grid_cells=sentence_to_grid_cells,
