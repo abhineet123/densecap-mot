@@ -291,7 +291,6 @@ def run(seq_info, dnc_data, frames, json_data,
     if save_img:
         save_fmt = 'mp4'
         codec = 'mp4v'
-        fps = 30
         out_vis_path = linux_path(out_dir, f'{out_name}.{save_fmt}')
 
         print(f'saving visualization video to {out_vis_path}')
