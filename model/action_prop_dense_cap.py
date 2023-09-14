@@ -122,13 +122,14 @@ class ActionPropDenseCap(nn.Module):
                 ch, h, w = feat_shape
 
                 feat_size = int(h * w)
-                """1x1 conv"""
+
+                from mmdet.models.necks.channel_mapper import ChannelMapper
 
                 self.rgb_conv = nn.Sequential(
-                    nn.Conv2d(
-                        in_channels=ch,
+                    ChannelMapper(
+                        in_channels=[ch, ],
                         out_channels=self.rgb_ch,
-                        kernel_size=1,
+                        kernel_size=3,
                     ),
                     nn.Flatten()
                 )

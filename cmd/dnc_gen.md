@@ -49,6 +49,7 @@
             - [slide-24       @ 100-960/n-1/mot_to_dnc](#slide_24___100_960_n_1_mot_to_dnc_)
             - [slide-16       @ 100-960/n-1/mot_to_dnc](#slide_16___100_960_n_1_mot_to_dnc_)
             - [slide-12       @ 100-960/n-1/mot_to_dnc](#slide_12___100_960_n_1_mot_to_dnc_)
+                - [64x64       @ slide-12/100-960/n-1/mot_to_dnc](#64x64___slide_12_100_960_n_1_mot_to_dn_c_)
     - [n-3       @ mot_to_dnc](#n_3___mot_to_dnc_)
         - [25-2000-f       @ n-3/mot_to_dnc](#25_2000_f___n_3_mot_to_dnc_)
             - [all       @ 25-2000-f/n-3/mot_to_dnc](#all___25_2000_f_n_3_mot_to_dnc_)
@@ -236,6 +237,10 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=16 sam
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=12 sample=1
 
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=12 sample=1 @ start_seq=0,100 end_seq=1,101
+
+<a id="64x64___slide_12_100_960_n_1_mot_to_dn_c_"></a>
+##### 64x64       @ slide-12/100-960/n-1/mot_to_dnc-->dnc_gen
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var grid_res=64,64 no_repeat=1 @slide size=12 sample=1
 
 <a id="n_3___mot_to_dnc_"></a>
 ## n-3       @ mot_to_dnc-->dnc_gen

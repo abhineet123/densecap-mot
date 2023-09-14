@@ -59,6 +59,8 @@ class Params:
         self.save = 1
         self.start = 0
 
+        self.no_repeat = 0
+
         self.grid_res = (32, 32)
         self.frame_gap = 1
         self.fps = 30
@@ -156,6 +158,7 @@ def run(seq_info, sample_traj, fixed_traj_len, out_dir, traj_lengths_out_dir, pa
             win_size=params.win_size,
             fps=params.fps,
             out_dir=out_dir,
+            no_repeat=params.no_repeat,
             vis=params.vis,
         )
         # mean_traj_length = np.mean(traj_lengths)

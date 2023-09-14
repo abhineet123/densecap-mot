@@ -23,7 +23,6 @@ from utilities import draw_box, show, annotate_and_show, compute_overlap, prob_t
 from objects import Annotations
 
 
-
 class VideoReader:
     def __init__(self, norm):
         mean, std = norm
@@ -110,14 +109,14 @@ class FeatureExtractor(nn.Module):
 
             batch_size = min(self.batch_size, n_imgs - start_id)
 
-            imgs = imgs_tensor[start_id:start_id+batch_size, ...]
+            imgs = imgs_tensor[start_id:start_id + batch_size, ...]
 
             if self.cuda:
                 imgs = imgs.cuda()
 
             _results = self.feat_model(return_loss=False,
-                                      rescale=True, img=[imgs, ],
-                                      img_metas=[img_metas, ], x=None)
+                                       rescale=True, img=[imgs, ],
+                                       img_metas=[img_metas, ], x=None)
 
             all_results += _results
 
@@ -163,7 +162,6 @@ class FeatureExtractor(nn.Module):
                          text_col=None,
                          font=cv2.FONT_HERSHEY_TRIPLEX, font_size=0.5, label=class_name)
 
-
     def forward(self, imgs_tensor):
         n_imgs = imgs_tensor.size(0)
 
@@ -176,7 +174,7 @@ class FeatureExtractor(nn.Module):
 
             batch_size = min(self.batch_size, n_imgs - start_id)
 
-            imgs = imgs_tensor[start_id:start_id+batch_size, ...]
+            imgs = imgs_tensor[start_id:start_id + batch_size, ...]
 
             if self.cuda:
                 imgs = imgs.cuda()
@@ -255,6 +253,7 @@ def build_targets_densecap(
         win_size,
         fps,
         out_dir,
+        no_repeat,
         vis):
     if vis:
         assert frames is not None, "frames must be provided for visualization"
@@ -360,7 +359,7 @@ def build_targets_densecap(
         vocab_annotations[traj_id] = dict(
             segment=[min_time, max_time],
             id=traj_id,
-            sentence='',
+            sentence=[],
             # grid_cells=[],
         )
 
@@ -469,10 +468,11 @@ def build_targets_densecap(
 
                 excel_idy, excel_idx = grid_to_excel_ids(grid_idy, grid_idx, grid_res)
                 word = excel_idx + excel_idy
-                if traj_vocab['sentence']:
-                    traj_vocab['sentence'] += ' ' + word
+
+                if no_repeat and traj_vocab['sentence'] and traj_vocab['sentence'][-1] == word:
+                    pass
                 else:
-                    traj_vocab['sentence'] = word
+                    traj_vocab['sentence'].append(word)
 
                 if vis:
                     # _id = f'{target_id}-{traj_id}-{win_id}'
@@ -505,39 +505,32 @@ def build_targets_densecap(
         valid_traj_ids = []
 
         for traj_id, traj_vocab in enumerate(vocab_annotations):
-            sentence = traj_vocab['sentence']
-            words = sentence.split(' ')
+            words = traj_vocab['sentence']
             n_words = len(words)
 
             if n_words >= fixed_traj_len:
                 traj_sample_ids = list(np.linspace(0, n_words - 1, fixed_traj_len, dtype=np.int32))
                 sampled_words = [words[i] for i in traj_sample_ids]
-                sentence = ' '.join(sampled_words)
                 valid_traj_ids.append(traj_id)
 
-                traj_vocab['sentence'] = sentence
+                traj_vocab['sentence'] = sampled_words
 
         n_valid_traj_ids = len(valid_traj_ids)
         print(f'found {n_valid_traj_ids} / {n_traj_ids} valid trajectories')
         vocab_annotations = [vocab_annotations[traj_id] for traj_id in valid_traj_ids]
 
-    # if False:
-    #     if traj_vocab['sentence']:
-    #         _prev_grid_idy, _prev_grid_idx = prev_grid_ids[traj_id]
-    #         word = grid_to_direction(
-    #             (_prev_grid_idy, _prev_grid_idx),
-    #             (grid_idy, grid_idx),
-    #             max_diff=max_diff
-    #         )
-    #
-    #         traj_vocab['sentence'] += ' ' + word
-    #     else:
-    #         if vocab_fmt == 1:
-    #             word = f'R{grid_idy} C{grid_idx}'
-    #         elif vocab_fmt == 2:
-    #             word = f'R{grid_idy}C{grid_idx}'
-    #
-    #         traj_vocab['sentence'] = word
+    if False:
+        if vocab_fmt > 0:
+            traj_vocab['sentence'] = convert_trajectory(traj_vocab['sentence'], vocab_fmt)
+        # if vocab_fmt == 1:
+        #     word = f'R{grid_idy} C{grid_idx}'
+        # elif vocab_fmt == 2:
+        #     word = f'R{grid_idy}C{grid_idx}'
+
+    for traj_id, traj_vocab in enumerate(vocab_annotations):
+        words = traj_vocab['sentence']
+        sentence = ' '.join(words)
+        traj_vocab['sentence'] = sentence
 
     return vocab_annotations, traj_lengths, vocab
 
