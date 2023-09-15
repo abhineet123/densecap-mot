@@ -471,6 +471,7 @@ def build_targets_densecap(
                     pass
                 else:
                     traj_vocab['sentence'].append(word)
+                    vocab.append(word)
 
                 if vis:
                     # _id = f'{target_id}-{traj_id}-{win_id}'
@@ -493,7 +494,7 @@ def build_targets_densecap(
 
                 _pause = show('frame_disp', frame_disp, _pause=_pause)
 
-    vocab = sorted(list(set(vocab)))
+            vocab = sorted(list(set(vocab)))
 
     n_traj_ids = len(vocab_annotations)
 
@@ -524,7 +525,6 @@ def build_targets_densecap(
     if min_traj_len > 0:
         vocab_annotations = [ann for ann in vocab_annotations
                              if len(ann['sentence']) >= min_traj_length]
-
 
     # if False:
     #     if vocab_fmt > 0:
