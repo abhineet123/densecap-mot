@@ -287,8 +287,8 @@ def build_targets_densecap(
     vocab_annotations = [None] * annotations.n_traj
     vocab = []
 
-    max_traj_length = 0
-    min_traj_length = np.inf
+    # max_traj_length = 0
+    # min_traj_length = np.inf
 
     for traj_id in range(annotations.n_traj):
         traj_frame_ids = list(annotations.traj_idx_by_frame[traj_id].keys())
@@ -296,15 +296,15 @@ def build_targets_densecap(
 
         traj_length = max_frame_id - min_frame_id + 1
 
-        vis_traj = 0
-
-        if traj_length < min_traj_length:
-            min_traj_length = traj_length
-            vis_traj = 1
-
-        if traj_length > max_traj_length:
-            max_traj_length = traj_length
-            vis_traj = 1
+        # vis_traj = 0
+        #
+        # if traj_length < min_traj_length:
+        #     min_traj_length = traj_length
+        #     vis_traj = 1
+        #
+        # if traj_length > max_traj_length:
+        #     max_traj_length = traj_length
+        #     vis_traj = 1
 
         # if vis_traj:
         #     obj_id = annotations.traj_to_obj[traj_id]
@@ -356,6 +356,7 @@ def build_targets_densecap(
 
         vocab_annotations[traj_id] = dict(
             segment=[min_time, max_time],
+            segment_frames=[min_frame_id, max_frame_id + 1],
             id=traj_id,
             sentence=[],
             # grid_cells=[],
@@ -525,7 +526,7 @@ def build_targets_densecap(
     if min_traj_len > 0:
         print(f'min_traj_len: {min_traj_len}')
         vocab_annotations = [ann for ann in vocab_annotations
-                             if len(ann['sentence']) >= min_traj_length]
+                             if len(ann['sentence']) >= min_traj_len]
 
     # if False:
     #     if vocab_fmt > 0:
