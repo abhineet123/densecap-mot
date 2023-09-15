@@ -286,7 +286,6 @@ def build_targets_densecap(
     n_obj_cols = len(obj_cols)
     vocab_annotations = [None] * annotations.n_traj
     vocab = []
-    traj_lengths = []
 
     max_traj_length = 0
     min_traj_length = np.inf
@@ -296,8 +295,6 @@ def build_targets_densecap(
         min_frame_id, max_frame_id = np.amin(traj_frame_ids), np.amax(traj_frame_ids)
 
         traj_length = max_frame_id - min_frame_id + 1
-
-        traj_lengths.append(traj_length)
 
         vis_traj = 0
 
@@ -509,31 +506,38 @@ def build_targets_densecap(
             words = traj_vocab['sentence']
             n_words = len(words)
 
-            if n_words < min_traj_len > 0:
+            if n_words < fixed_traj_len:
                 continue
 
-
-            if n_words >= fixed_traj_len:
+            if n_words > fixed_traj_len:
                 traj_sample_ids = list(np.linspace(0, n_words - 1, fixed_traj_len, dtype=np.int32))
                 sampled_words = [words[i] for i in traj_sample_ids]
-                valid_traj_ids.append(traj_id)
 
                 traj_vocab['sentence'] = sampled_words
+
+            valid_traj_ids.append(traj_id)
 
         n_valid_traj_ids = len(valid_traj_ids)
         print(f'found {n_valid_traj_ids} / {n_traj_ids} valid trajectories')
         vocab_annotations = [vocab_annotations[traj_id] for traj_id in valid_traj_ids]
 
-    if False:
-        if vocab_fmt > 0:
-            traj_vocab['sentence'] = convert_trajectory(traj_vocab['sentence'], vocab_fmt)
-        # if vocab_fmt == 1:
-        #     word = f'R{grid_idy} C{grid_idx}'
-        # elif vocab_fmt == 2:
-        #     word = f'R{grid_idy}C{grid_idx}'
+    if min_traj_len > 0:
+        vocab_annotations = [ann for ann in vocab_annotations
+                             if len(ann['sentence']) >= min_traj_length]
 
+
+    # if False:
+    #     if vocab_fmt > 0:
+    #         traj_vocab['sentence'] = convert_trajectory(traj_vocab['sentence'], vocab_fmt)
+    #     # if vocab_fmt == 1:
+    #     #     word = f'R{grid_idy} C{grid_idx}'
+    #     # elif vocab_fmt == 2:
+    #     #     word = f'R{grid_idy}C{grid_idx}'
+
+    traj_lengths = []
     for traj_id, traj_vocab in enumerate(vocab_annotations):
         words = traj_vocab['sentence']
+        traj_lengths.append(len(words))
         sentence = ' '.join(words)
         traj_vocab['sentence'] = sentence
 
