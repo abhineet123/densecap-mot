@@ -292,7 +292,7 @@ def build_targets_densecap(
 
     for traj_id in range(annotations.n_traj):
         traj_frame_ids = list(annotations.traj_idx_by_frame[traj_id].keys())
-        min_frame_id, max_frame_id = np.amin(traj_frame_ids), np.amax(traj_frame_ids)
+        min_frame_id, max_frame_id = int(np.amin(traj_frame_ids)), int(np.amax(traj_frame_ids))
 
         traj_length = max_frame_id - min_frame_id + 1
 
