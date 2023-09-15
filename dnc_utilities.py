@@ -523,6 +523,7 @@ def build_targets_densecap(
         vocab_annotations = [vocab_annotations[traj_id] for traj_id in valid_traj_ids]
 
     if min_traj_len > 0:
+        print(f'min_traj_len: {min_traj_len}')
         vocab_annotations = [ann for ann in vocab_annotations
                              if len(ann['sentence']) >= min_traj_length]
 
