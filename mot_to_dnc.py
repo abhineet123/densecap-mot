@@ -340,7 +340,7 @@ def main():
             results, desc='postprocessing results'):
         if not vocab_annotations:
             continue
-            
+
         all_vocab += vocab
 
         seq_name = duration_frame_csv_row['name']
