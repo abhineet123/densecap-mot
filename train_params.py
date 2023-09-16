@@ -89,6 +89,8 @@ class TrainParams:
         self.mean = []
         self.std = []
 
+        self.class_info_path = 'data/mnist_mot.txt'
+
         self.d_model = 1024
 
         self.gpu = ''
@@ -190,6 +192,7 @@ def get_args():
 
     # Data input settings
     parser.add_argument('--cfgs_file', default='cfgs/anet.yml', type=str, help='dataset specific settings. anet | yc2')
+    parser.add_argument('--class_info_path', default='data/mnist_mot.txt', type=str)
     parser.add_argument('--gpu', default='', type=str)
     parser.add_argument('--dataset', default='', type=str, help='which dataset to use')
     parser.add_argument('--dataset_file', default='', type=str)
