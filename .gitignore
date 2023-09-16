@@ -13,7 +13,7 @@ sync.ffs_db
 .*.swp
 
 dnc/
-data/
+data/mnist/
 build/
 log/
 results/
