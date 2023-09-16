@@ -338,6 +338,9 @@ def main():
 
     for seq_id, traj_lengths, duration_frame_csv_row, vocab_annotations, subset, vocab in tqdm(
             results, desc='postprocessing results'):
+        if not vocab_annotations:
+            continue
+            
         all_vocab += vocab
 
         seq_name = duration_frame_csv_row['name']
