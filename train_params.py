@@ -130,6 +130,7 @@ class TrainParams:
         self.reduce_factor = 0.5
         self.reg_weight = 10
         self.sample_prob = 0
+        self.vis_fps = 10.0
         self.fps = 30.0
         self.sampled_frames = 1.0
         self.keep_checkpoints = 3
@@ -247,6 +248,7 @@ def get_args():
     # Model settings: Proposal and mask
     parser.add_argument('--slide_window_size', default=480, type=int, help='the (temporal) size of the sliding window')
     # parser.add_argument('--slide_window_stride', default=20, type=int, help='the step size of the sliding window')
+    parser.add_argument('--vis_fps', default=10, type=float)
     parser.add_argument('--fps', default=30.0, type=float)
     parser.add_argument('--sampled_frames', default=1.0, type=float)
 

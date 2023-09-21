@@ -1062,6 +1062,7 @@ def visualize(
         grid_res=params.grid_res,
         fps=params.fps,
         vis=params.vis,
+        vis_fps=params.vis_fps,
         params=None,
     )
     end_t = time.time()

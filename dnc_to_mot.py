@@ -69,7 +69,9 @@ class Params:
         self.grid_res = (32, 32)
         self.frame_gap = 1
         self.fps = 30
+
         self.vis = 1
+        self.vis_fps = 10
 
         self.win_size = 0
 
@@ -213,7 +215,7 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
 def run(seq_info, dnc_data, frames, json_data,
         sentence_to_grid_cells, n_seq, out_dir, out_name,
-        grid_res, fps, vis,
+        grid_res, fps, vis, vis_fps,
         params: Params
         ):
     if frames is None:
@@ -299,7 +301,7 @@ def run(seq_info, dnc_data, frames, json_data,
 
         fourcc = cv2.VideoWriter_fourcc(*codec)
 
-        video_out = cv2.VideoWriter(out_vis_path, fourcc, fps, (vis_w, vis_h))
+        video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
 
     n_traj = len(dnc_data)
 
@@ -519,6 +521,7 @@ def main():
         grid_res=params.grid_res,
         fps=params.fps,
         vis=params.vis,
+        vis_fps=params.vis_fps,
         params=params,
     )
 

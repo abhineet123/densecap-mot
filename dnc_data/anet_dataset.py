@@ -823,12 +823,11 @@ class ANetDataset(Dataset):
         avg_pos_anc = np.mean(pos_anchor_stats)
         avg_neg_anc = np.mean(neg_anchor_stats)
 
-
         n_samples = len(self.sample_list)
         print(f'total number of {self.splits} videos: {vid_counter}')
 
         assert n_samples > 0, f"No {self.splits} samples found"
-        
+
         print(f'total number of {self.splits} samples (unique segments): {n_samples}')
         print(f'total number of missing annotations: {missing_prop}')
         print(f'avg pos anc: {avg_pos_anc:.2f} avg neg anc: {avg_neg_anc:.2f}')
