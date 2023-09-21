@@ -125,17 +125,13 @@ class ActionPropDenseCap(nn.Module):
 
                 from mmdet.models.necks.channel_mapper import ChannelMapper
 
-                rgb_conv = ChannelMapper(
+                self.rgb_conv = ChannelMapper(
                     in_channels=[ch, ],
                     out_channels=self.rgb_ch,
                     kernel_size=3,
                 )
-                rgb_conv.init_weights()
+                self.rgb_conv.init_weights()
 
-                self.rgb_conv = nn.Sequential(
-                    rgb_conv,
-                    nn.Flatten()
-                )
                 self.dim_rgb = int(self.rgb_ch * feat_size)
             elif len(feat_shape) == 1:
                 self.dim_rgb = feat_shape[0]
@@ -219,7 +215,8 @@ class ActionPropDenseCap(nn.Module):
             """concat batch and temporal dims"""
             x = torch.reshape(x, (int(batch_size * temporal_size),) + self.feat_shape)
 
-            x = self.rgb_conv(x)
+            x = self.rgb_conv([x, ])[0]
+            x = torch.flatten(x)
 
             x = torch.reshape(x, (batch_size, temporal_size, -1))
 
