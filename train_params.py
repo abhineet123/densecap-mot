@@ -152,7 +152,7 @@ class TrainParams:
         self.max_vis_traj = 50
         self.vis_batch_id = -1
         self.vis_sample_id = -1
-        self.vis_from = 10
+        self.vis_from = 0
         self.vis = 2
         self.vocab_fmt = 0
         self.max_diff = 0
