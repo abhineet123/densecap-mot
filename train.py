@@ -30,6 +30,11 @@ import torch
 
 # torch.multiprocessing.set_sharing_strategy('file_system')
 
+home_path = os.path.expanduser('~')
+
+swi_path = os.path.join(home_path, 'ipsc', 'ipsc_static_segmentation', 'swin_detection')
+sys.path.append(swi_path)
+
 import torch.nn.functional as F
 # from torch.autograd import Variable
 import torch.optim as optim
@@ -51,11 +56,6 @@ from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentenc
     FeatureExtractor, VideoReader
 
 import dnc_to_mot
-
-home_path = os.path.expanduser('~')
-
-swi_path = os.path.join(home_path, 'ipsc', 'ipsc_static_segmentation', 'swin_detection')
-sys.path.append(swi_path)
 
 import mmcv
 from mmcv import Config
