@@ -1024,6 +1024,7 @@ def visualize(
         return False
 
     img_list = _input.all_frames
+    vis_empty = False
 
     if module.feat_extractor is not None:
         img_metas = []
@@ -1049,6 +1050,7 @@ def visualize(
 
         with torch.no_grad():
             module.feat_extractor.draw_dets(img_batch_vis, img_list, img_metas, classes)
+        vis_empty = True
 
     n_traj = len(annotations)
 
@@ -1069,6 +1071,7 @@ def visualize(
         fps=params.fps,
         vis=params.vis,
         vis_fps=params.vis_fps,
+        vis_empty=vis_empty,
         params=None,
     )
     end_t = time.time()

@@ -215,7 +215,7 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
 def run(seq_info, dnc_data, frames, json_data,
         sentence_to_grid_cells, n_seq, out_dir, out_name,
-        grid_res, fps, vis, vis_fps,
+        grid_res, fps, vis, vis_fps,vis_empty,
         params: Params
         ):
     if frames is None:
@@ -289,19 +289,14 @@ def run(seq_info, dnc_data, frames, json_data,
 
     if save_img:
         assert out_name, "out_name must be provided"
-
-    vis_w, vis_h = 1280, 720
-
-    if save_img:
         save_fmt = 'mp4'
         codec = 'mp4v'
         out_vis_path = linux_path(out_dir, f'{out_name}.{save_fmt}')
-
-        print(f'saving visualization video to {out_vis_path}')
-
         fourcc = cv2.VideoWriter_fourcc(*codec)
 
-        video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
+    vis_w, vis_h = 1280, 720
+
+    video_out = None
 
     n_traj = len(dnc_data)
 
@@ -379,8 +374,18 @@ def run(seq_info, dnc_data, frames, json_data,
                     _pause = show('frame_disp', frame_disp, _pause=_pause)
 
                 if save_img:
+                    if video_out is None:
+                        print(f'saving visualization video to {out_vis_path}')
+                        video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
                     video_out.write(frame_disp)
     if save_img:
+        if video_out is None:
+            print(f'saving empty visualization video to {out_vis_path}')
+            video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
+            for frame_id in range(start_frame, end_frame):
+                frame_disp = frames[frame_id]
+                frame_disp = resize_ar(frame_disp, width=vis_w, height=vis_h, only_border=2)
+                video_out.write(frame_disp)
         video_out.release()
 
 
