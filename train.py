@@ -39,6 +39,9 @@ from torch.nn.utils import clip_grad_norm_
 import torch.distributed as dist
 import torch.utils.data.distributed
 
+from mmcv.cnn import ConvModule
+from mmdet.models.necks.channel_mapper import ChannelMapper
+
 # misc
 from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_sentences
 from model.action_prop_dense_cap import ActionPropDenseCap, DropoutTime1D
@@ -246,6 +249,8 @@ def get_model(text_proc, params):
                 torch.nn.BCEWithLogitsLoss,
                 torch.nn.SmoothL1Loss,
                 torch.nn.MSELoss,
+                ConvModule,
+                ConvModule,
         )):
             pass
         elif isinstance(m, (
@@ -260,6 +265,7 @@ def get_model(text_proc, params):
                 Transformer,
                 DecoderLayer,
                 Decoder,
+                RealTransformer,
                 RealTransformer,
         )):
             for _m in m.children():

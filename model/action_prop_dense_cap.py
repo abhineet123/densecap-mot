@@ -125,12 +125,15 @@ class ActionPropDenseCap(nn.Module):
 
                 from mmdet.models.necks.channel_mapper import ChannelMapper
 
+                rgb_conv = ChannelMapper(
+                    in_channels=[ch, ],
+                    out_channels=self.rgb_ch,
+                    kernel_size=3,
+                )
+                rgb_conv.init_weights()
+
                 self.rgb_conv = nn.Sequential(
-                    ChannelMapper(
-                        in_channels=[ch, ],
-                        out_channels=self.rgb_ch,
-                        kernel_size=3,
-                    ),
+                    rgb_conv,
                     nn.Flatten()
                 )
                 self.dim_rgb = int(self.rgb_ch * feat_size)
