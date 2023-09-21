@@ -250,7 +250,7 @@ def get_model(text_proc, params):
                 torch.nn.SmoothL1Loss,
                 torch.nn.MSELoss,
                 ConvModule,
-                ConvModule,
+                ChannelMapper,
         )):
             pass
         elif isinstance(m, (
