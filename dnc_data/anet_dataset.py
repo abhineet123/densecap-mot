@@ -76,8 +76,8 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
         fid.write('\n'.join(sentence_lengths))
 
     # for split in splits:
-        # print(f'# of {split} videos: {n_videos[split]}')
-        # print(f'# of {split} sentences {n_sentences[split]}')
+    # print(f'# of {split} videos: {n_videos[split]}')
+    # print(f'# of {split} sentences {n_sentences[split]}')
 
     # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
     #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
@@ -636,10 +636,13 @@ class ANetDataset(Dataset):
 
         vid_info_list = []
         n_feat_frames = None
-        for vid_id, (vid, val) in enumerate(tqdm(self.raw_data.items(),
-                                                 desc='generating vid_info_list',
-                                                 ncols=100,
-                                                 total=self.n_vids)):
+
+        vid_info_iter = self.raw_data.items()
+
+        # vid_info_iter = tqdm(vid_info_iter,desc='generating vid_info_list',
+        #                                          ncols=100,
+        #                                          total=self.n_vids)
+        for vid_id, (vid, val) in enumerate(vid_info_iter):
             annotations = val['annotations']
             for split, split_path in zip(self.splits, self.split_paths):
                 if val['subset'] != split:
