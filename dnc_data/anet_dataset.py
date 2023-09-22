@@ -529,7 +529,9 @@ class ANetDataset(Dataset):
         # else:
 
         train_sentences = []
-        for vid, val in tqdm(self.raw_data.items(), desc="sentence_idx"):
+        for vid, val in tqdm(self.raw_data.items(),
+                             ncols=100,
+                             desc="sentence_idx"):
             annotations = val['annotations']
             if val['subset'] in splits:
                 for ind, ann in enumerate(annotations):
