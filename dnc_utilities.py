@@ -114,6 +114,11 @@ class FeatureExtractor(nn.Module):
             if self.cuda:
                 imgs = imgs.cuda()
 
+            batch_size, temporal_size = imgs.size()[:2]
+
+            img_shape = tuple(imgs.size()[2:])
+            imgs = torch.reshape(imgs, (int(batch_size * temporal_size),) + img_shape)
+
             _results = self.feat_model(return_loss=False,
                                        rescale=True, img=[imgs, ],
                                        img_metas=[img_metas, ], x=None)
