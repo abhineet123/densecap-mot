@@ -626,7 +626,7 @@ class ANetDataset(Dataset):
     def get_samples(self, n_proc):
         pos_anchor_stats = []
         neg_anchor_stats = []
-        print(f"generating samples for {self.splits} set")
+        # print(f"generating samples for {self.splits} set")
 
         missing_prop = 0
         vid_idx = 0
@@ -759,8 +759,8 @@ class ANetDataset(Dataset):
             with open(feat_shape_path, 'wb') as f:
                 pickle.dump(self.feat_shape, f)
 
-        print('matching anchors to ground truth segments')
-        print(f'out_txt_dir: {out_txt_dir}')
+        # print('matching anchors to ground truth segments')
+        # print(f'out_txt_dir: {out_txt_dir}')
 
         # return
 
@@ -824,13 +824,14 @@ class ANetDataset(Dataset):
         avg_neg_anc = np.mean(neg_anchor_stats)
 
         n_samples = len(self.sample_list)
-        print(f'total number of {self.splits} videos: {vid_counter}')
-
         assert n_samples > 0, f"No {self.splits} samples found"
 
-        print(f'total number of {self.splits} samples: {n_samples}')
-        print(f'total number of missing annotations: {missing_prop}')
-        print(f'avg pos anc: {avg_pos_anc:.2f} avg neg anc: {avg_neg_anc:.2f}')
+        print(f'{self.splits}: '
+              f'videos: {vid_counter} '
+              f'samples: {n_samples} '
+              f'missing annotations: {missing_prop} '
+              f'avg pos anc: {avg_pos_anc:.2f} '
+              f'avg neg anc: {avg_neg_anc:.2f}')
 
     def __len__(self):
         return len(self.sample_list)
