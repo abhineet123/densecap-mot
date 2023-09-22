@@ -112,7 +112,7 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
     else:
         print('text_proc.preprocess')
         sentences_proc = list(map(text_proc.preprocess, all_sentences))
-        print(f'saving sentences_proc to {sentences_proc_path}')
+        # print(f'saving sentences_proc to {sentences_proc_path}')
         with open(sentences_proc_path, 'wb') as f:
             pickle.dump(sentences_proc, f)
 
@@ -511,11 +511,11 @@ class ANetDataset(Dataset):
             if load_samplelist == 2:
                 raise AssertionError(f'nonexistent sample_list_dir: {sample_list_dir}')
 
-            print(f'sample list path not found so continuing with sample generation: {sample_list_dir}')
+            # print(f'sample list path not found so continuing with sample generation: {sample_list_dir}')
 
         if save_samplelist:
             assert sample_list_dir is not None, "sample list dir must be provided"
-            print(f'saving sample list to {sample_list_dir}')
+            # print(f'saving sample list to {sample_list_dir}')
 
         sentences_dict_path = os.path.join(self.sample_list_parent_dir, f"{self.splits[0]}_sentences_dict.pkl")
         if os.path.isfile(sentences_dict_path):
@@ -541,7 +541,7 @@ class ANetDataset(Dataset):
             sentence_idx = sentence_idx_np.tolist()
 
             sentences_dict = dict(train_sentences=train_sentences, sentence_idx=sentence_idx)
-            print(f'saving sentences_dict to: {sentences_dict_path}')
+            # print(f'saving sentences_dict to: {sentences_dict_path}')
             os.makedirs(self.sample_list_parent_dir, exist_ok=1)
             with open(sentences_dict_path, 'wb') as f:
                 pickle.dump(sentences_dict, f)
@@ -752,7 +752,7 @@ class ANetDataset(Dataset):
         assert n_vids == self.n_vids, "n_vids mismatch"
 
         if self.save_samplelist:
-            print(f'saving samples to: {self.sample_list_dir}')
+            # print(f'saving samples to: {self.sample_list_dir}')
             attr_dir = os.path.join(self.sample_list_dir, f'attributes')
             os.makedirs(attr_dir, exist_ok=1)
             feat_shape_path = os.path.join(attr_dir, f'feat_shape.pkl')
