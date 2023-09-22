@@ -111,7 +111,7 @@ python train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_sli
 ### live-r50-f0-max_4-slide_12-64x64-no_repeat       @ 100-960/n-1-->dnc
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29500 train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_slide_12-live-r50-f0_max_4-64x64-no_repeat.cfg --batch_size 8 --num_workers 4 --world_size 2 --distributed 1
 
-python train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_slide_12-live-r50-f0_max_4-64x64-no_repeat.cfg --batch_size 2 --num_workers 4 --world_size 2 --distributed 0 --vis_batch_id=0 --vis_sample_id=0
+python train.py --cfgs_file cfgs/MNIST_MOT_RGB_512x512_1_100_960_var/all_seq_slide_12-live-r50-f0_max_4-64x64-no_repeat.cfg --batch_size 2 --num_workers 4 --world_size 2 --distributed 0 --vis_id=0
 
 
 <a id="f0_max_4___100_960_n_1_"></a>

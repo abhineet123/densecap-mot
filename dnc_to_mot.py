@@ -107,7 +107,7 @@ def compress_traj(grid_ids, start_frame, end_frame):
 
     assert n_grid_ids > n_frames, "trajectory size must exceed n_frames for compression"
 
-    print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
+    # print(f'compressing trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_ids[0],
@@ -132,7 +132,7 @@ def expand_traj(grid_cells, start_frame, end_frame, frames, disp_fn):
 
     assert n_grid_ids < n_frames, "trajectory size must not exceed n_frames for expansion"
 
-    print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
+    # print(f'expanding trajectory from {n_grid_ids} to {n_frames}')
 
     frame_to_traj_dict = {
         start_frame: grid_cells[0],
@@ -330,7 +330,7 @@ def run(seq_info, dnc_data, frames, json_data,
                 continue
             grid_cells, frame_to_grid_cell = expand_traj(grid_cells, start_frame, end_frame - 1, frames, disp_fn)
         else:
-            print(f'trajectory length {n_grid_cells} matches n_frames')
+            # print(f'trajectory length {n_grid_cells} matches n_frames')
             frame_to_grid_cell = {
                 frame_id: grid_cells[frame_id - start_frame]
                 for frame_id in range(start_frame, end_frame)
@@ -375,12 +375,12 @@ def run(seq_info, dnc_data, frames, json_data,
 
                 if save_img:
                     if video_out is None:
-                        print(f'saving visualization video to {out_vis_path}')
+                        print(f'saving visualization video:\n{out_vis_path}')
                         video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
                     video_out.write(frame_disp)
     if save_img:
         if video_out is None:
-            print(f'saving empty visualization video to {out_vis_path}')
+            print(f'saving empty visualization video:\n{out_vis_path}')
             video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
             for frame in frames:
                 frame_disp = resize_ar(frame, width=vis_w, height=vis_h, only_border=2)
