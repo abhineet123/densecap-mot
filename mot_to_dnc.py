@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 # script_dir = os.path.dirname(os.path.abspath(__file__))
 # script_parent_dir = script_dir.replace(os.sep, '/') + '/..'
@@ -90,8 +91,6 @@ class Params:
 
 def run(seq_info, sample_traj, min_traj_len, fixed_traj_len, out_dir, traj_lengths_out_dir, params: Params):
     seq_id, start_id, end_id = seq_info
-
-    import logging
 
     _logger = CustomLogger.setup(__name__)
     _logger.setLevel(logging.WARNING)

@@ -7,6 +7,7 @@
 
 # general packages
 import os
+import logging
 
 from train_params import TrainParams, get_args
 
@@ -703,7 +704,7 @@ def train(
         vis_batch_id = params.vis_batch_id
         if vis_batch_id < 0:
             vis_batch_id = random.randint(0, nbatches - 1)
-        print(f'\nvisualizing batch {vis_batch_id}\n')
+        print(f'\nvisualizing batch {vis_batch_id}')
 
     sample_prob = min(params.sample_prob, int(epoch / 5) * 0.05)
 
@@ -777,7 +778,7 @@ def train(
             vis_sample_id = params.vis_sample_id
             if vis_sample_id < 0:
                 vis_sample_id = random.randint(0, batch_size - 1)
-            print(f'\nvisualizing sample {vis_sample_id}\n')
+            print(f'\nvisualizing sample {vis_sample_id}')
 
             img_batch_vis = img_batch[vis_sample_id:vis_sample_id + 1, ...]
             video_prefix = video_prefix_list[vis_sample_id]
@@ -1041,6 +1042,7 @@ def visualize(
 
     _logger = CustomLogger.setup(__name__)
     _input = Input(_input_params, _logger)
+    _logger.setLevel(logging.WARNING)
 
     if not _input.initialize(None):
         _logger.error('Input pipeline could not be initialized')
