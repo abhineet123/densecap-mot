@@ -110,6 +110,8 @@ def get_dataset(sampling_sec, params: TrainParams):
         sample_list_dir=params.train_samplelist_path,
     )
     assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
+    if not train_dataset.samples_loaded:
+        train_dataset.get_samples(params.n_proc)
 
     if params.distributed:
         batch_size = params.batch_size * params.world_size
@@ -154,6 +156,8 @@ def get_dataset(sampling_sec, params: TrainParams):
         sample_list_dir=params.valid_samplelist_path,
     )
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
+    if not valid_dataset.samples_loaded:
+        valid_dataset.get_samples(params.n_proc)
 
     n_valid_samples = len(valid_dataset.sample_list)
     assert n_valid_samples > 0, "no validation samples found"
@@ -175,14 +179,10 @@ def get_dataset(sampling_sec, params: TrainParams):
     else:
         train_sampler = None
 
-    if not train_dataset.samples_loaded:
-        train_dataset.get_samples(params.n_proc)
-    if not valid_dataset.samples_loaded:
-        valid_dataset.get_samples(params.n_proc)
-
     train_loader = DataLoader(train_dataset,
                               batch_size=params.batch_size,
-                              shuffle=(train_sampler is None), sampler=train_sampler,
+                              shuffle=(train_sampler is None),
+                              sampler=train_sampler,
                               num_workers=params.num_workers,
                               collate_fn=anet_collate_fn)
 
