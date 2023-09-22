@@ -104,17 +104,19 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
         fix_length=max_sentence_length)
 
     """divide sentences into words to have a list of list of words or tokens as they're called"""
-    sentences_proc_path = os.path.join(save_path, f"sentences_proc.pkl")
-    if os.path.isfile(sentences_proc_path):
-        print(f'loading sentences_proc from {sentences_proc_path}')
-        with open(sentences_proc_path, 'rb') as f:
-            sentences_proc = pickle.load(f)
-    else:
-        # print('text_proc.preprocess')
-        sentences_proc = list(map(text_proc.preprocess, all_sentences))
-        # print(f'saving sentences_proc to {sentences_proc_path}')
-        with open(sentences_proc_path, 'wb') as f:
-            pickle.dump(sentences_proc, f)
+    # sentences_proc_path = os.path.join(save_path, f"sentences_proc.pkl")
+    # if os.path.isfile(sentences_proc_path):
+    #     print(f'loading sentences_proc from {sentences_proc_path}')
+    #     with open(sentences_proc_path, 'rb') as f:
+    #         sentences_proc = pickle.load(f)
+    # else:
+    # print('text_proc.preprocess')
+
+    sentences_proc = list(map(text_proc.preprocess, all_sentences))
+
+    # print(f'saving sentences_proc to {sentences_proc_path}')
+    # with open(sentences_proc_path, 'wb') as f:
+    #     pickle.dump(sentences_proc, f)
 
     # print('building vocab')
     text_proc.build_vocab(sentences_proc, min_freq=0)

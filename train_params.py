@@ -113,8 +113,8 @@ class TrainParams:
         self.kernel_list = [1, 2, 3, 4, 5, 7, 9, 11, 15, 21,
                             29, 41, 57, 71, 111, 161, 211, 251]
         self.learning_rate = 0.1
-        self.load_train_samplelist = 1
-        self.load_valid_samplelist = 1
+        self.load_train_samplelist = 0
+        self.load_valid_samplelist = 0
         self.loss_alpha_r = 2
         self.losses_log_every = 1
         self.mask_weight = 0.0
@@ -208,8 +208,8 @@ def get_args():
     parser.add_argument('--load_train_samplelist', default=1, type=int)
     parser.add_argument('--train_samplelist_path', type=str, default='')
     # parser.add_argument('--train_sentence_dict_path', type=str, default='')
-    parser.add_argument('--save_valid_samplelist', default=1, type=int)
-    parser.add_argument('--load_valid_samplelist', default=1, type=int)
+    parser.add_argument('--save_valid_samplelist', default=0, type=int)
+    parser.add_argument('--load_valid_samplelist', default=0, type=int)
     parser.add_argument('--valid_samplelist_path', type=str, default='')
     # parser.add_argument('--valid_sentence_dict_path', type=str, default='')
 
