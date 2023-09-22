@@ -418,8 +418,8 @@ def main(params):
                 # timeout=timedelta(seconds=100),
             )
 
-        print(f'params.train_splits: {params.train_splits}')
-        print(f'params.train_splits[0]: {params.train_splits[0]}')
+        # print(f'params.train_splits: {params.train_splits}')
+        # print(f'params.train_splits[0]: {params.train_splits[0]}')
 
         if params.valid_batch_size <= 0:
             params.valid_batch_size = params.batch_size
@@ -436,6 +436,12 @@ def main(params):
         """
         # assert (params.slide_window_size >= params.slide_window_stride)
         # assert (params.sampling_sec == 0.5)  # attention! sampling_sec is hard coded as 0.5
+
+        if not os.path.isdir(params.ckpt):
+            params.load_train_samplelist = 0
+            params.load_valid_samplelist = 0
+
+
 
         if not params.train_samplelist_path:
             params.train_samplelist_path = linux_path(params.ckpt, f"{params.train_splits[0]}_samples")

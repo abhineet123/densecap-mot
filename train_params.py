@@ -205,13 +205,16 @@ def get_args():
     parser.add_argument('--val_splits', default=['validation'], help='validation data folder')
 
     parser.add_argument('--save_train_samplelist', default=1, type=int)
-    parser.add_argument('--load_train_samplelist', default=1, type=int)
-    parser.add_argument('--train_samplelist_path', type=str, default='')
-    # parser.add_argument('--train_sentence_dict_path', type=str, default='')
-    parser.add_argument('--save_valid_samplelist', default=0, type=int)
+    parser.add_argument('--save_valid_samplelist', default=1, type=int)
+
+    parser.add_argument('--load_train_samplelist', default=0, type=int)
     parser.add_argument('--load_valid_samplelist', default=0, type=int)
+    
     parser.add_argument('--valid_samplelist_path', type=str, default='')
+    parser.add_argument('--train_samplelist_path', type=str, default='')
+
     # parser.add_argument('--valid_sentence_dict_path', type=str, default='')
+    # parser.add_argument('--train_sentence_dict_path', type=str, default='')
 
     parser.add_argument('--start_from', default='',
                         help='path to a model checkpoint to initialize model weights from. Empty = dont')
