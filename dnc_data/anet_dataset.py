@@ -110,13 +110,13 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
         with open(sentences_proc_path, 'rb') as f:
             sentences_proc = pickle.load(f)
     else:
-        print('text_proc.preprocess')
+        # print('text_proc.preprocess')
         sentences_proc = list(map(text_proc.preprocess, all_sentences))
         # print(f'saving sentences_proc to {sentences_proc_path}')
         with open(sentences_proc_path, 'wb') as f:
             pickle.dump(sentences_proc, f)
 
-    print('building vocab')
+    # print('building vocab')
     text_proc.build_vocab(sentences_proc, min_freq=0)
     print(f'# of words in the vocab: {len(text_proc.vocab)}')
 
