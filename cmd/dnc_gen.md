@@ -128,7 +128,7 @@ python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=9600 img_h=512 n_objs=3 
 python3 gen_mnist_mot.py show_img=0 n_seq=25 n_frames=2e3 img_h=512 n_objs=5 velocity=10.6
 <a id="1k_9600___n_5_512_gen_mnist_mo_t_"></a>
 #### 1k-9600       @ n-5/512/gen_mnist_mot-->dnc_gen
-python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=9600 img_h=512 n_objs=5 n_proc=10
+python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=9600 img_h=512 n_objs=5 n_proc=1
 
 <a id="minst_dd_rgb___gen_mnist_mo_t_"></a>
 ## minst_dd_rgb       @ gen_mnist_mot-->dnc_gen

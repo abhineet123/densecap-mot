@@ -353,6 +353,9 @@ def get_feat_model(feat_cfg, ckpt, fuse_conv_bn):
 
 def main(params):
     if True:
+        if args.vis_id >= 0:
+            args.vis_batch_id = args.vis_sample_id = args.vis_id
+            
         sampled_frames = params.sampled_frames
         sampling_sec = float(sampled_frames) / float(params.fps)
 

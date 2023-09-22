@@ -150,6 +150,7 @@ class TrainParams:
         self.enable_flow = 0
 
         self.max_vis_traj = 50
+        self.vis_id = -1
         self.vis_batch_id = -1
         self.vis_sample_id = -1
         self.vis_from = 0
@@ -269,6 +270,7 @@ def get_args():
 
     parser.add_argument('--max_vis_traj', default=50, type=int)
     parser.add_argument('--vis_from', default=0, type=int)
+    parser.add_argument('--vis_id', default=-1, type=int)
     parser.add_argument('--vis_batch_id', default=-1, type=int)
     parser.add_argument('--vis_sample_id', default=-1, type=int)
     parser.add_argument('--vis', default=2, type=int)
