@@ -115,7 +115,7 @@ def get_dataset(sampling_sec, params: TrainParams):
         batch_size = params.batch_size*params.world_size
     else:
         batch_size = params.batch_size
-        
+
     n_train_samples = len(train_dataset.sample_list)
     residual_train_samples = n_train_samples % batch_size
 
