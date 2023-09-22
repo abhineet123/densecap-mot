@@ -382,9 +382,8 @@ def run(seq_info, dnc_data, frames, json_data,
         if video_out is None:
             print(f'saving empty visualization video to {out_vis_path}')
             video_out = cv2.VideoWriter(out_vis_path, fourcc, vis_fps, (vis_w, vis_h))
-            for frame_id in range(start_frame, end_frame):
-                frame_disp = frames[frame_id]
-                frame_disp = resize_ar(frame_disp, width=vis_w, height=vis_h, only_border=2)
+            for frame in frames:
+                frame_disp = resize_ar(frame, width=vis_w, height=vis_h, only_border=2)
                 video_out.write(frame_disp)
         video_out.release()
 
