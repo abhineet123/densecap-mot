@@ -32,7 +32,7 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
     # train_sentences = []
     all_sentences = []
 
-    print(f'loading dataset_file: {dataset_file}')
+    # print(f'loading dataset_file: {dataset_file}')
     with open(dataset_file, 'r', encoding='utf-8') as data_file:
         data_all = json.load(data_file)
     raw_data = data_all['database']
@@ -64,20 +64,20 @@ def get_vocab_and_sentences(dataset_file, splits, save_path):
             all_sentences.append(ann['sentence'])
             n_sentences[split] += 1
 
-    print(f'max_sentence_length: {max_sentence_length}')
+    # print(f'max_sentence_length: {max_sentence_length}')
 
     sentence_lengths_path = os.path.join(save_path, f"sentence_lengths.txt")
     os.makedirs(save_path, exist_ok=1)
 
-    print(f'sentence_lengths_path: {sentence_lengths_path}')
+    # print(f'sentence_lengths_path: {sentence_lengths_path}')
 
     sentence_lengths = list(map(str, sentence_lengths))
     with open(sentence_lengths_path, 'w') as fid:
         fid.write('\n'.join(sentence_lengths))
 
-    for split in splits:
-        print(f'# of {split} videos: {n_videos[split]}')
-        print(f'# of {split} sentences {n_sentences[split]}')
+    # for split in splits:
+        # print(f'# of {split} videos: {n_videos[split]}')
+        # print(f'# of {split} sentences {n_sentences[split]}')
 
     # if all(os.path.isfile(sentences_dict_path) for sentences_dict_path in sentences_dict_paths):
     #     print(f'ignoring annoying text_proc since sentences_dict can be loaded')
