@@ -815,14 +815,14 @@ def main():
 
             results.append(result)
 
-    seq_names, seq_n_frames = list(zip(*results))
+    global_ids, seq_names, seq_n_frames = list(zip(*results))
     n_seq = len(seq_names)
     seq_names_list_str = ',\n'.join(map(
-        lambda _seq_id: f"{_seq_id}: ('{seq_names[_seq_id]}', {seq_n_frames[_seq_id]})",
+        lambda _seq_id: f"{global_ids[_seq_id]}: ('{seq_names[_seq_id]}', {seq_n_frames[_seq_id]})",
         range(n_seq)))
 
     seq_info_path = linux_path(output_dir, 'seq_info.txt')
-    print('saving seq_info  to {}'.format(seq_info_path))
+    print(f'saving seq_info  to {seq_info_path}')
 
     with open(seq_info_path, "w") as fid:
         fid.write(seq_names_list_str)
