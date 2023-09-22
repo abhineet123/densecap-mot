@@ -209,7 +209,7 @@ def get_args():
 
     parser.add_argument('--load_train_samplelist', default=0, type=int)
     parser.add_argument('--load_valid_samplelist', default=0, type=int)
-    
+
     parser.add_argument('--valid_samplelist_path', type=str, default='')
     parser.add_argument('--train_samplelist_path', type=str, default='')
 

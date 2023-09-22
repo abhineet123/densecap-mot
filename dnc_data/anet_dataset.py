@@ -519,21 +519,22 @@ class ANetDataset(Dataset):
             assert sample_list_dir is not None, "sample list dir must be provided"
             # print(f'saving sample list to {sample_list_dir}')
 
-        sentences_dict_path = os.path.join(self.sample_list_parent_dir, f"{self.splits[0]}_sentences_dict.pkl")
-        if os.path.isfile(sentences_dict_path):
-            print(f'loading sentences_dict from: {sentences_dict_path}')
-            with open(sentences_dict_path, 'rb') as f:
-                sentences_dict = pickle.load(f)
-            train_sentences = sentences_dict['train_sentences']
-            sentence_idx = sentences_dict['sentence_idx']
-        else:
-            train_sentences = []
-            for vid, val in self.raw_data.items():
-                annotations = val['annotations']
-                if val['subset'] in splits:
-                    for ind, ann in enumerate(annotations):
-                        ann['sentence'] = ann['sentence'].strip()
-                        train_sentences.append(ann['sentence'])
+        # sentences_dict_path = os.path.join(self.sample_list_parent_dir, f"{self.splits[0]}_sentences_dict.pkl")
+        # if os.path.isfile(sentences_dict_path):
+        #     print(f'loading sentences_dict from: {sentences_dict_path}')
+        #     with open(sentences_dict_path, 'rb') as f:
+        #         sentences_dict = pickle.load(f)
+        #     train_sentences = sentences_dict['train_sentences']
+        #     sentence_idx = sentences_dict['sentence_idx']
+        # else:
+
+        train_sentences = []
+        for vid, val in self.raw_data.items():
+            annotations = val['annotations']
+            if val['subset'] in splits:
+                for ind, ann in enumerate(annotations):
+                    ann['sentence'] = ann['sentence'].strip()
+                    train_sentences.append(ann['sentence'])
 
             train_sentences = list(map(text_proc.preprocess, train_sentences))
             sentence_idx = text_proc.numericalize(text_proc.pad(train_sentences), device=None)  # put in memory
@@ -542,11 +543,10 @@ class ANetDataset(Dataset):
             sentence_idx_np = sentence_idx.numpy()
             sentence_idx = sentence_idx_np.tolist()
 
-            sentences_dict = dict(train_sentences=train_sentences, sentence_idx=sentence_idx)
-            # print(f'saving sentences_dict to: {sentences_dict_path}')
-            os.makedirs(self.sample_list_parent_dir, exist_ok=1)
-            with open(sentences_dict_path, 'wb') as f:
-                pickle.dump(sentences_dict, f)
+            # sentences_dict = dict(train_sentences=train_sentences, sentence_idx=sentence_idx)
+            # os.makedirs(self.sample_list_parent_dir, exist_ok=1)
+            # with open(sentences_dict_path, 'wb') as f:
+            #     pickle.dump(sentences_dict, f)
 
         idx = 0
         for vid, val in self.raw_data.items():
