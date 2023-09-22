@@ -116,8 +116,15 @@ def get_dataset(sampling_sec, params: TrainParams):
     else:
         batch_size = params.batch_size
 
+    print(f'batch_size: {batch_size}')
+
     n_train_samples = len(train_dataset.sample_list)
     residual_train_samples = n_train_samples % batch_size
+
+    assert n_train_samples > 0, "no training samples found"
+
+    print(f'n_train_samples: {n_train_samples}')
+    print(f'residual_train_samples: {residual_train_samples}')
 
     if residual_train_samples > 0:
         train_dataset.sample_list = train_dataset.sample_list[:-residual_train_samples]
@@ -149,7 +156,13 @@ def get_dataset(sampling_sec, params: TrainParams):
     assert tuple(valid_dataset.feat_shape) == tuple(params.feat_shape), "valid_dataset feat_shape mismatch"
 
     n_valid_samples = len(valid_dataset.sample_list)
+    assert n_valid_samples > 0, "no validation samples found"
+
     residual_valid_samples = n_valid_samples % batch_size
+
+    print(f'n_valid_samples: {n_valid_samples}')
+    print(f'residual_valid_samples: {residual_valid_samples}')
+
     if residual_valid_samples > 0:
         valid_dataset.sample_list = valid_dataset.sample_list[:-residual_valid_samples]
         print(f'n_valid_samples reduced to {len(valid_dataset.sample_list)} to eliminate unequal sized batch')
@@ -679,7 +692,7 @@ def train(
     train_mask_loss = []
 
     nbatches = len(train_loader)
-    
+
     assert nbatches > 0, "no train batches found"
 
     # t_iter_start = time.time()

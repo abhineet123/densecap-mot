@@ -828,7 +828,7 @@ class ANetDataset(Dataset):
 
         assert n_samples > 0, f"No {self.splits} samples found"
 
-        print(f'total number of {self.splits} samples (unique segments): {n_samples}')
+        print(f'total number of {self.splits} samples: {n_samples}')
         print(f'total number of missing annotations: {missing_prop}')
         print(f'avg pos anc: {avg_pos_anc:.2f} avg neg anc: {avg_neg_anc:.2f}')
 
