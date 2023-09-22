@@ -441,8 +441,6 @@ def main(params):
             params.load_train_samplelist = 0
             params.load_valid_samplelist = 0
 
-
-
         if not params.train_samplelist_path:
             params.train_samplelist_path = linux_path(params.ckpt, f"{params.train_splits[0]}_samples")
             # print(f'params.train_samplelist_path: {params.train_samplelist_path}')
