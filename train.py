@@ -112,7 +112,7 @@ def get_dataset(sampling_sec, params: TrainParams):
     assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
 
     if params.distributed:
-        batch_size = params.batch_size*params.world_size
+        batch_size = params.batch_size * params.world_size
     else:
         batch_size = params.batch_size
 
@@ -679,6 +679,9 @@ def train(
     train_mask_loss = []
 
     nbatches = len(train_loader)
+    
+    assert nbatches > 0, "no train batches found"
+
     # t_iter_start = time.time()
 
     pbar = tqdm(train_loader, total=nbatches, ncols=140, desc=f'training epoch {epoch}')
