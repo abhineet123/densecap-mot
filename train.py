@@ -111,7 +111,11 @@ def get_dataset(sampling_sec, params: TrainParams):
     )
     assert tuple(train_dataset.feat_shape) == tuple(params.feat_shape), "train_dataset feat_shape mismatch"
 
-    batch_size = params.batch_size
+    if params.distributed:
+        batch_size = params.batch_size*params.world_size
+    else:
+        batch_size = params.batch_size
+        
     n_train_samples = len(train_dataset.sample_list)
     residual_train_samples = n_train_samples % batch_size
 
@@ -355,7 +359,7 @@ def main(params):
     if True:
         if args.vis_id >= 0:
             args.vis_batch_id = args.vis_sample_id = args.vis_id
-            
+
         sampled_frames = params.sampled_frames
         sampling_sec = float(sampled_frames) / float(params.fps)
 
