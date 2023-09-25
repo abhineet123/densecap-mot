@@ -290,8 +290,8 @@ def get_args():
     parser.add_argument('--valid_batch_size', default=0, type=int)
 
     parser.add_argument('--cls_weight', default=1.0, type=float)
-    parser.add_argument('--reg_weight', default=10, type=float)
-    parser.add_argument('--sent_weight', default=0.25, type=float)
+    parser.add_argument('--reg_weight', default=1.0, type=float)
+    parser.add_argument('--sent_weight', default=1.0, type=float)
 
     parser.add_argument('--scst_weight', default=0.0, type=float)
     parser.add_argument('--mask_weight', default=0.0, type=float)
