@@ -364,7 +364,7 @@ class ActionPropDenseCap(nn.Module):
             # randomly choose one of the positive samples to caption
             pred_index = np.random.randint(sample_each)
 
-            # random sample anchors from different length
+            # randomly sample anchors from different length
             for sample_idx in range(sample_each):
                 # sample pos anchors
                 pos_sam = pos_anchor[sample_idx].data
