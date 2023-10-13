@@ -53,7 +53,7 @@ from dnc_data.anet_dataset import ANetDataset, anet_collate_fn, get_vocab_and_se
 from model.action_prop_dense_cap import ActionPropDenseCap, DropoutTime1D
 from model.transformer import Attention, MultiHead, LayerNorm, ResidualBlock, FeedForward, \
     EncoderLayer, Encoder, Transformer, DecoderLayer, Decoder, RealTransformer
-from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_sentence_to_grid_cells, \
+from dnc_utilities import get_latest_checkpoint, excel_ids_to_grid, diff_to_grid_cells, \
     FeatureExtractor, VideoReader
 
 import dnc_to_mot
@@ -545,7 +545,7 @@ def main(params):
             sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
         else:
             import functools
-            sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
+            sentence_to_grid_cells = functools.partial(diff_to_grid_cells,
                                                        fmt_type=params.vocab_fmt,
                                                        max_diff=params.max_diff,
                                                        )

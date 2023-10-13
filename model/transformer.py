@@ -233,12 +233,12 @@ class Decoder(nn.Module):
         """
         prediction = Variable(
             encoding[0].data.new(B, T).long().fill_(
-            self.vocab.stoi['<pad>'])
+                self.vocab.stoi['<pad>'])
         )
         hiddens = [Variable(encoding[0].data.new(B, T, H).zero_())
                    for l in range(len(self.layers) + 1)]
         """
-        1024 x 1024 tensor created by multiplyinghe weight matrix of the linear layer 
+        1024 x 1024 tensor created by multiplying the weight matrix of the linear layer 
         that is self.out with 32
         """
         embedW = self.out.weight * math.sqrt(self.d_model)
@@ -247,12 +247,13 @@ class Decoder(nn.Module):
         hiddens[0] = hiddens[0] + positional_encodings_
         for t in range(T):
             if t == 0:
-                hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(Variable(
-                    encoding[0].data.new(B).long().fill_(
-                        self.vocab.stoi['<init>'])), embedW)
+                hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(
+                    Variable(encoding[0].data.new(B).long().fill_(self.vocab.stoi['<init>'])),
+                    embedW)
             else:
-                hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(prediction[:, t - 1],
-                                                                  embedW)
+                hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(
+                    prediction[:, t - 1],
+                    embedW)
             hiddens[0][:, t] = self.dropout(hiddens[0][:, t])
             for l in range(len(self.layers)):
                 _layer = self.layers[l]
@@ -372,35 +373,35 @@ class RealTransformer(nn.Module):
         return ' '.join(self.decoder.vocab.itos[i] for i in data).replace(
             ' <eos>', '').replace(' <pad>', '').replace(' .', '').replace('  ', '')
 
-    def forward(self, x, s, x_mask=None, sample_prob=0):
+    def forward(self, x, sentence, x_mask=None, sample_prob=0):
         encoding = self.encoder(x, x_mask)
 
         if not self.training:
-            if isinstance(s, list):
+            if isinstance(sentence, list):
                 hiddens, _ = self.decoder.greedy(encoding, self.max_sentence_len)
                 h = hiddens[-1]
                 targets = None
             else:
-                h = self.decoder(s[:, :-1].contiguous(), encoding)
-                targets, h = mask(s[:, 1:].contiguous(), h)
+                h = self.decoder(sentence[:, :-1].contiguous(), encoding)
+                targets, h = mask(sentence[:, 1:].contiguous(), h)
             logits = self.decoder.out(h)
         else:
             if sample_prob == 0:
-                h = self.decoder(s[:, :-1].contiguous(), encoding)
-                targets, h = mask(s[:, 1:].contiguous(), h)
+                h = self.decoder(sentence[:, :-1].contiguous(), encoding)
+                targets, h = mask(sentence[:, 1:].contiguous(), h)
                 logits = self.decoder.out(h)
             else:
-                model_pred = self.decoder.sampling(encoding, s,
-                                                   s.size(1) - 2,
+                model_pred = self.decoder.sampling(encoding, sentence,
+                                                   sentence.size(1) - 2,
                                                    sample_prob,
                                                    is_argmax=True)
                 model_pred.detach_()
                 new_y = torch.cat((
-                    Variable(model_pred.data.new(s.size(0), 1).long().fill_(
+                    Variable(model_pred.data.new(sentence.size(0), 1).long().fill_(
                         self.decoder.vocab.stoi['<init>'])),
                     model_pred), 1)
                 h = self.decoder(new_y, encoding)
-                targets, h = mask(s[:, 1:].contiguous(), h)
+                targets, h = mask(sentence[:, 1:].contiguous(), h)
                 logits = self.decoder.out(h)
 
         return logits, targets

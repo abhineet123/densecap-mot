@@ -1,7 +1,9 @@
 import os
 import sys
+home_path = os.path.expanduser('~')
+dmdp_path = os.path.join(home_path, 'isl_labeling_tool', 'deep_mdp')
 
-sys.path.append('/home/abhineet/isl_labeling_tool/deep_mdp')
+sys.path.append(dmdp_path)
 
 import paramparse
 

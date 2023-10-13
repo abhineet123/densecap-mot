@@ -20,21 +20,6 @@
             - [25-2000-f       @ n-5/512/gen_mnist_mot](#25_2000_f___n_5_512_gen_mnist_mo_t_)
             - [1k-9600       @ n-5/512/gen_mnist_mot](#1k_9600___n_5_512_gen_mnist_mo_t_)
     - [minst_dd_rgb       @ gen_mnist_mot](#minst_dd_rgb___gen_mnist_mo_t_)
-- [extract_feature](#extract_feature_)
-    - [n-1       @ extract_feature](#n_1___extract_featur_e_)
-        - [1k-9600       @ n-1/extract_feature](#1k_9600___n_1_extract_featur_e_)
-            - [interval-15       @ 1k-9600/n-1/extract_feature](#interval_15___1k_9600_n_1_extract_featur_e_)
-            - [interval-6       @ 1k-9600/n-1/extract_feature](#interval_6___1k_9600_n_1_extract_featur_e_)
-        - [25-2400       @ n-1/extract_feature](#25_2400___n_1_extract_featur_e_)
-        - [25-2000-f       @ n-1/extract_feature](#25_2000_f___n_1_extract_featur_e_)
-    - [n-3       @ extract_feature](#n_3___extract_featur_e_)
-        - [1k-9600       @ n-3/extract_feature](#1k_9600___n_3_extract_featur_e_)
-            - [interval-15       @ 1k-9600/n-3/extract_feature](#interval_15___1k_9600_n_3_extract_featur_e_)
-            - [interval-6       @ 1k-9600/n-3/extract_feature](#interval_6___1k_9600_n_3_extract_featur_e_)
-        - [25-2400       @ n-3/extract_feature](#25_2400___n_3_extract_featur_e_)
-        - [25-2000-f       @ n-3/extract_feature](#25_2000_f___n_3_extract_featur_e_)
-    - [n-5       @ extract_feature](#n_5___extract_featur_e_)
-        - [25-2000-f       @ n-5/extract_feature](#25_2000_f___n_5_extract_featur_e_)
 - [mot_to_dnc](#mot_to_dn_c_)
     - [n-1       @ mot_to_dnc](#n_1___mot_to_dnc_)
         - [25-2000-f       @ n-1/mot_to_dnc](#25_2000_f___n_1_mot_to_dnc_)
@@ -136,56 +121,6 @@ python3 gen_mnist_mot.py show_img=1 n_train_seq=10 n_test_seq=10 n_frames=1 img_
 
 python3 gen_mnist_mot.py show_img=0 n_seq=1000 n_frames=1000 img_h=256 n_objs=2 velocity=10.6 max_obj_size=128 min_obj_size=32
 
-<a id="extract_feature_"></a>
-# extract_feature
-<a id="n_1___extract_featur_e_"></a>
-## n-1       @ extract_feature-->dnc_gen
-<a id="1k_9600___n_1_extract_featur_e_"></a>
-### 1k-9600       @ n-1/extract_feature-->dnc_gen
-<a id="interval_15___1k_9600_n_1_extract_featur_e_"></a>
-#### interval-15       @ 1k-9600/n-1/extract_feature-->dnc_gen
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 n_proc=8 gpus=1,2
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=15 n_proc=8 gpus=2
-<a id="interval_6___1k_9600_n_1_extract_featur_e_"></a>
-#### interval-6       @ 1k-9600/n-1/extract_feature-->dnc_gen
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 n_proc=8 gpus=1,2
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var interval=6 n_proc=8 gpus=1
-
-<a id="25_2400___n_1_extract_featur_e_"></a>
-### 25-2400       @ n-1/extract_feature-->dnc_gen
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_1_25_2400_var interval=15
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_1_25_2400_var interval=6
-<a id="25_2000_f___n_1_extract_featur_e_"></a>
-### 25-2000-f       @ n-1/extract_feature-->dnc_gen
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_1_25_2000 interval=15
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_1_25_2000 interval=6
-
-<a id="n_3___extract_featur_e_"></a>
-## n-3       @ extract_feature-->dnc_gen
-<a id="1k_9600___n_3_extract_featur_e_"></a>
-### 1k-9600       @ n-3/extract_feature-->dnc_gen
-<a id="interval_15___1k_9600_n_3_extract_featur_e_"></a>
-#### interval-15       @ 1k-9600/n-3/extract_feature-->dnc_gen
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var interval=15 n_proc=8
-<a id="interval_6___1k_9600_n_3_extract_featur_e_"></a>
-#### interval-6       @ 1k-9600/n-3/extract_feature-->dnc_gen
-python3 run_mp.py set=MNIST_MOT_RGB_512x512_3_1000_9600_var interval=6 n_proc=8
-<a id="25_2400___n_3_extract_featur_e_"></a>
-### 25-2400       @ n-3/extract_feature-->dnc_gen
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_3_25_2400_var interval=15
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_3_25_2400_var interval=6
-<a id="25_2000_f___n_3_extract_featur_e_"></a>
-### 25-2000-f       @ n-3/extract_feature-->dnc_gen
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_3_25_2000 interval=15
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_3_25_2000 interval=6
-
-<a id="n_5___extract_featur_e_"></a>
-## n-5       @ extract_feature-->dnc_gen
-<a id="25_2000_f___n_5_extract_featur_e_"></a>
-### 25-2000-f       @ n-5/extract_feature-->dnc_gen
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_5_25_2000 interval=15
-python3 extract_feature.py set=MNIST_MOT_RGB_512x512_5_25_2000 interval=6
-
 <a id="mot_to_dn_c_"></a>
 # mot_to_dnc
 <a id="n_1___mot_to_dnc_"></a>
@@ -222,6 +157,11 @@ python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_1000_9600_var start_seq=1000 e
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=480 sample=1 @ fixed_traj_len=20
 
 python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var @slide size=480 sample=1 @ fixed_traj_len=20 start_seq=0,100 end_seq=1,101
+
+__vocab_fmt__
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var sample=1 start_seq=100 end_seq=100 vocab_fmt=1 @slide size=480
+
+python3 mot_to_dnc.py set=MNIST_MOT_RGB_512x512_1_100_960_var sample=1 start_seq=100 end_seq=100 vocab_fmt=2 @slide size=480
 
 <a id="slide_24___100_960_n_1_mot_to_dnc_"></a>
 #### slide-24       @ 100-960/n-1/mot_to_dnc-->dnc_gen

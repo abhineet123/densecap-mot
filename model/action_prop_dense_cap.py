@@ -183,14 +183,15 @@ class ActionPropDenseCap(nn.Module):
                 for i in range(len(self.kernel_list))
             ])
 
-        self.captioning_model = RealTransformer(dim_model,
-                                                self.vis_emb.encoder,  # share the encoder
-                                                vocab,
-                                                max_sentence_len=max_sentence_len,
-                                                d_hidden=dim_hidden,
-                                                n_layers=n_layers,
-                                                n_heads=n_heads,
-                                                drop_ratio=cap_dropout)
+        self.captioning_model = RealTransformer(
+            dim_model,
+            self.vis_emb.encoder,  # share the encoder
+            vocab,
+            max_sentence_len=max_sentence_len,
+            d_hidden=dim_hidden,
+            n_layers=n_layers,
+            n_heads=n_heads,
+            drop_ratio=cap_dropout)
 
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.reg_loss = nn.SmoothL1Loss()
@@ -265,11 +266,11 @@ class ActionPropDenseCap(nn.Module):
             480 - kernel_size + 1
             kernel size 1 --> 480
             kernel size 3 --> 478"""
-            anchor_c = Variable(torch.FloatTensor(np.arange(
+            anchor_c_np = np.arange(
                 float(kernel_size) / 2.0,
                 float(temporal_size + 1 - kernel_size / 2.0),
-                math.ceil(kernel_size / stride_factor)
-            )).type(dtype))
+                math.ceil(kernel_size / stride_factor))
+            anchor_c = Variable(torch.FloatTensor(anchor_c_np).type(dtype))
 
             assert anchor_c.size(0) == pred_o.size(-1), "anchor_c, pred_o size mismatch!"
 
@@ -454,8 +455,10 @@ class ActionPropDenseCap(nn.Module):
 
         if self.learn_mask:
             pos_encs = positional_encodings(pos_enc_locs, self.dim_model // 4)
-            in_pred_mask = torch.cat((pos_encs[:batch_size], pos_encs[batch_size:batch_size * 2],
-                                      pos_encs[batch_size * 2:batch_size * 3], pos_encs[batch_size * 3:batch_size * 4],
+            in_pred_mask = torch.cat((pos_encs[:batch_size],
+                                      pos_encs[batch_size:batch_size * 2],
+                                      pos_encs[batch_size * 2:batch_size * 3],
+                                      pos_encs[batch_size * 3:batch_size * 4],
                                       anchor_window_mask), 1)
             pred_mask = self.mask_model(in_pred_mask).view(batch_size, temporal_size, 1)
 
@@ -642,10 +645,13 @@ class ActionPropDenseCap(nn.Module):
                 pos_encs = positional_encodings(pe_locs, self.dim_model // 4)
                 npos = pos_encs.size(0)
                 anchor_window_mask = Variable(torch.cat(anchor_window_mask, 0))
-                in_pred_mask = torch.cat((pos_encs[:npos // 4], pos_encs[npos // 4:npos // 4 * 2],
-                                          pos_encs[npos // 4 * 2:npos // 4 * 3],
-                                          pos_encs[npos // 4 * 3:npos // 4 * 4],
-                                          anchor_window_mask), 1)
+                in_pred_mask = torch.cat((
+                    pos_encs[:npos // 4],
+                    pos_encs[npos // 4:npos // 4 * 2],
+                    pos_encs[npos // 4 * 2:npos // 4 * 3],
+                    pos_encs[npos // 4 * 3:npos // 4 * 4],
+                    anchor_window_mask
+                ), 1)
                 pred_cont_masks = self.mask_model(in_pred_mask).unsqueeze(2)
 
                 if gated_mask:

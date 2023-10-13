@@ -206,11 +206,26 @@ class FeatureExtractor(nn.Module):
 
 
 class GridTokenizer:
+    class Vocab:
+        def __init__(self, grid_res, vocab_fmt):
+            self.stoi = None
+            self.itos = None
+
     def __init__(self, grid_res, vocab_fmt):
         self.grid_res = grid_res
         self.vocab_fmt = vocab_fmt
+        self.vocab = GridTokenizer.Vocab(grid_res, vocab_fmt)
 
         self.n_dig = len(str(self.grid_res[0]))
+
+    def build_vocab(self, sentence):
+        pass
+
+    def pad(self, sentence):
+        pass
+
+    def numericalize(self, sentence):
+        pass
 
     def preprocess(self, sentence):
         return sentence.split(' ')
@@ -533,13 +548,9 @@ def build_targets_densecap(
         vocab_annotations = [ann for ann in vocab_annotations
                              if len(ann['sentence']) >= min_traj_len]
 
-    # if False:
-    #     if vocab_fmt > 0:
-    #         traj_vocab['sentence'] = convert_trajectory(traj_vocab['sentence'], vocab_fmt)
-    #     # if vocab_fmt == 1:
-    #     #     word = f'R{grid_idy} C{grid_idx}'
-    #     # elif vocab_fmt == 2:
-    #     #     word = f'R{grid_idy}C{grid_idx}'
+    if vocab_fmt > 0:
+        for ann in vocab_annotations:
+            ann['sentence'] = grid_cells_to_diff(ann['sentence'], vocab_fmt, grid_res, max_diff)
 
     traj_lengths = []
     for traj_id, traj_vocab in enumerate(vocab_annotations):
@@ -551,13 +562,35 @@ def build_targets_densecap(
     return vocab_annotations, traj_lengths, vocab
 
 
-def diff_sentence_to_grid_cells(words, fmt_type, max_diff=1):
+def grid_cells_to_diff(words, vocab_fmt, grid_res, max_diff):
+    diff_words = []
+    grid_idy, grid_idx = excel_id_to_grid(words[0], grid_res)
+    if vocab_fmt == 1:
+        diff_words.append(f'{grid_idy}')
+        diff_words.append(f'{grid_idx}')
+    elif vocab_fmt == 2:
+        diff_words.append(f'{grid_idy}{grid_idx}')
+    else:
+        raise AssertionError(f'invalid vocab_fmt: {vocab_fmt}')
+
+    n_words = len(words)
+    for i in range(n_words - 1):
+        grid_idy, grid_idx = excel_id_to_grid(words[i], grid_res)
+        next_grid_idy, next_grid_idx = excel_id_to_grid(words[i + 1], grid_res)
+
+        diff_word = grid_to_direction((grid_idy, grid_idx), (next_grid_idy, next_grid_idx), max_diff)
+        diff_words.append(diff_word)
+
+    return diff_words
+
+
+def diff_to_grid_cells(words, fmt_type, max_diff=1):
     n_dig = len(str(max_diff))
     unit_diff = max_diff == 1
 
     if fmt_type == 1:
-        assert words[0][0] == 'R', f"Invalid first word {words[0]}"
-        assert words[1][0] == 'C', f"Invalid second word {words[1]}"
+        # assert words[0][0] == 'R', f"Invalid first word {words[0]}"
+        # assert words[1][0] == 'C', f"Invalid second word {words[1]}"
 
         start_row_id = words[0][1:]
         start_col_id = words[1][1:]
@@ -566,7 +599,7 @@ def diff_sentence_to_grid_cells(words, fmt_type, max_diff=1):
 
     elif fmt_type == 2:
 
-        assert words[0][0] == 'R' and words[0][n_dig] == 'C', f"Invalid first word {words[0]}"
+        # assert words[0][0] == 'R' and words[0][n_dig] == 'C', f"Invalid first word {words[0]}"
 
         start_row_id = words[0][1:n_dig + 1]
         start_col_id = words[0][-n_dig:]
@@ -711,6 +744,18 @@ def grid_to_direction(prev_grid_ids, curr_grid_ids, max_diff=1):
 def divide_chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
+
+def excel_id_to_grid(word, grid_res):
+    n_dig_y, n_dig_x = len(str(grid_res[0])), len(str(grid_res[1]))
+
+    assert len(word) == n_dig_y + n_dig_x, \
+        f"invalid word: {word} for grid_res: {grid_res} with n_dig_x: {(n_dig_x, n_dig_x)}"
+
+    grid_y = int(word[:n_dig_y])
+    grid_x = int(word[n_dig_y:])
+
+    return grid_y, grid_x
 
 
 def excel_ids_to_grid(grid_res):

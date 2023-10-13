@@ -35,7 +35,7 @@ from data import Data
 from utilities import CustomLogger, SIIF, linux_path, draw_box, resize_ar, show, annotate_and_show
 from utilities import CVText, col_bgr
 
-from dnc_utilities import excel_ids_to_grid, diff_sentence_to_grid_cells, divide_chunks
+from dnc_utilities import excel_ids_to_grid, diff_to_grid_cells, divide_chunks
 
 
 class Params:
@@ -434,7 +434,7 @@ def main():
         word_to_grid_cell = excel_ids_to_grid(params.grid_res)
         sentence_to_grid_cells = lambda words: [word_to_grid_cell[word] for word in words]
     else:
-        sentence_to_grid_cells = functools.partial(diff_sentence_to_grid_cells,
+        sentence_to_grid_cells = functools.partial(diff_to_grid_cells,
                                                    fmt_type=params.vocab_fmt,
                                                    max_diff=params.max_diff,
                                                    )
