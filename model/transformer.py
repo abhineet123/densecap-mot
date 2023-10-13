@@ -34,7 +34,8 @@ INF = 1e10
 
 def positional_encodings_like(x, t=None):
     if t is None:
-        positions = torch.arange(0, x.size(1)).float()
+        n_positions = x.size(1)
+        positions = torch.arange(0, n_positions).float()
         if x.is_cuda:
             positions = positions.cuda(x.get_device())
     else:
@@ -43,7 +44,8 @@ def positional_encodings_like(x, t=None):
     if x.is_cuda:
         encodings = encodings.cuda(x.get_device())
 
-    for channel in range(x.size(-1)):
+    n_channels = x.size(-1)
+    for channel in range(n_channels):
         if channel % 2 == 0:
             encodings[:, channel] = torch.sin(
                 positions / 10000 ** (channel / x.size(2)))
