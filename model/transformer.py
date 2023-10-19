@@ -229,10 +229,10 @@ class Decoder(nn.Module):
         B, _, H = encoding[0].size()
 
         """
-        amazingly annoying convoluted way of creating a tensor of type long filled with 1 which is the 
-        numerical equivalent of '<pad>'
-        it is not here at all as to why encoding[0].data.new is even used here since the datatype is 
-        immediately changed to long
+        amazingly annoyingly convoluted way of creating a tensor of type long 
+        filled with 1 which is the numerical equivalent of '<pad>'
+        it is not clear at all as to why encoding[0].data.new is even used here 
+        since the datatype is immediately changed to long
         """
         prediction = Variable(
             encoding[0].data.new(B, T).long().fill_(
@@ -241,17 +241,20 @@ class Decoder(nn.Module):
         hiddens = [Variable(encoding[0].data.new(B, T, H).zero_())
                    for l in range(len(self.layers) + 1)]
         """
-        1024 x 1024 tensor created by multiplying the weight matrix of the linear layer 
-        that is self.out with 32
+        1024 x 1024 tensor created by multiplying with 32 the weight matrix of the linear
+        layer that is self.out 
         """
         embed_w = self.out.weight * math.sqrt(self.d_model)
 
         positional_encodings_ = positional_encodings_like(hiddens[0])
         hiddens[0] = hiddens[0] + positional_encodings_
+        """hiddens[0] contains positional_encodings_ at the start of this loop"""
         for t in range(T):
             if t == 0:
+                init_token_idx = Variable(encoding[0].data.new(B).long().fill_(
+                    self.vocab.stoi['<init>']))
                 hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(
-                    Variable(encoding[0].data.new(B).long().fill_(self.vocab.stoi['<init>'])),
+                    init_token_idx,
                     embed_w)
             else:
                 hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(
@@ -259,34 +262,43 @@ class Decoder(nn.Module):
                     embed_w)
             hiddens[0][:, t] = self.dropout(hiddens[0][:, t])
             for l in range(len(self.layers)):
-                _layer = self.layers[l]
+                _layer = self.layers[l]  # type: DecoderLayer
                 """
                 a whole bunch of annoying MLPs and matrix multiplications
                 selfattn and attention are pretty much identical gunky MultiHeadmodules 
-                while feedforward is a 2 layer MLP that amounts to a small variation on the same
+                while feedforward is a 2 layer MLP that amounts to a 
+                small variation on the same
                 """
                 _selfattn = _layer.selfattn
                 _attention = _layer.attention
                 _feedforward = _layer.feedforward
 
-                """current hidden, next time"""
+                """current hidden, upto current time"""
                 x = hiddens[l][:, :t + 1]
-                """current hidden, current time"""
-                x = _selfattn(
-                    hiddens[l][:, t],
-                    x, x)
-                """next hidden, current time"""
-                hiddens[l + 1][:, t] = _feedforward(
-                    _attention(x, encoding[l], encoding[l]))
+                """
+                current hidden, current time
+                apply 
+                """
+                x = _selfattn(query=hiddens[l][:, t], key=x, value=x)
+                """next hidden, current time
+                cross module attention between same-layer decoder and encoder features
+                """
+                x_temp = _attention(query=x, key=encoding[l], value=encoding[l])
+                hiddens[l + 1][:, t] = _feedforward(x_temp)
 
             """
-            this is finally where we collect the indices of maximum value in each row so the values 
-            outputted by self.out are supposedly the probabilities over the vocabulary
+            this is finally where we collect the indices of maximum value in each row 
+            so the values outputted by self.out are supposedly the 
+            probabilities over the vocabulary
             """
             _, prediction[:, t] = self.out(hiddens[-1][:, t]).max(-1)
         return hiddens, prediction
 
     def sampling(self, encoding, gt_token, T, sample_prob, is_argmax=True):
+        """
+        Identical to greedy except that the word embedding from the second layer
+        onwards are randomly taken either for the previous predicted word
+        or for the GT token"""
         B, _, H = encoding[0].size()
         prediction = Variable(encoding[0].data.new(B, T).long().fill_(
             self.vocab.stoi['<pad>']))
@@ -298,9 +310,10 @@ class Decoder(nn.Module):
         hiddens[0] = hiddens[0] + positional_encodings_like(hiddens[0])
         for t in range(T):
             if t == 0:
-                hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(Variable(
+                init_token_idx = Variable(
                     encoding[0].data.new(B).long().fill_(
-                        self.vocab.stoi['<init>'])), embed_w)
+                        self.vocab.stoi['<init>']))
+                hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(init_token_idx, embed_w)
             else:
                 use_model_pred = np.random.binomial(1, sample_prob, 1)[0]
                 if use_model_pred > 0:
@@ -309,9 +322,11 @@ class Decoder(nn.Module):
                         embed_w)
                 else:
                     hiddens[0][:, t] = hiddens[0][:, t] + F.embedding(
-                        gt_token[:, t],  # t since gt_token start with init
+                        # t instead of t-1 since gt_token starts with init
+                        gt_token[:, t],
                         embed_w)
             hiddens[0][:, t] = self.dropout(hiddens[0][:, t])
+
             for l in range(len(self.layers)):
                 x = hiddens[l][:, :t + 1]
                 x = self.layers[l].selfattn(hiddens[l][:, t], x, x)
@@ -406,7 +421,7 @@ class RealTransformer(nn.Module):
                                                    is_argmax=True)
                 model_pred.detach_()
                 new_y_1 = Variable(model_pred.data.new(sentence.size(0), 1).long().fill_(
-                        self.decoder.vocab.stoi['<init>']))
+                    self.decoder.vocab.stoi['<init>']))
 
                 new_y = torch.cat((
                     new_y_1, model_pred), 1)
