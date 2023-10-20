@@ -6,7 +6,6 @@
   - [windows       @ virtualenv](#windows___virtualenv_)
 - [install](#install_)
 - [torch](#torch_)
-  - [windows/py3.7       @ torch](#windows_py3_7___torc_h_)
 - [extract_feature](#extract_feature_)
   - [opencv_from_source       @ extract_feature](#opencv_from_source___extract_featur_e_)
     - [x99_/CUDA_11.3/rtx3060       @ opencv_from_source/extract_feature](#x99__cuda_11_3_rtx3060___opencv_from_source_extract_feature_)
@@ -51,9 +50,6 @@ python -m pip install -r requirements.txt
 <a id="torch_"></a>
 # torch
 python -m pip install torch==0.4.0+cu113
-python -m pip install torch==1.8.0+cu111 torchvision==0.9.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-<a id="windows_py3_7___torc_h_"></a>
-## windows/py3.7       @ torch-->dnc_setup
 python -m pip install torch==1.8.0+cu111 torchvision==0.9.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
 
 <a id="extract_feature_"></a>

@@ -279,11 +279,11 @@ class Decoder(nn.Module):
                 current hidden, current time
                 apply 
                 """
-                x = _selfattn(query=hiddens[l][:, t], key=x, value=x)
+                x = _selfattn(hiddens[l][:, t], x, x)
                 """next hidden, current time
                 cross module attention between same-layer decoder and encoder features
                 """
-                x_temp = _attention(query=x, key=encoding[l], value=encoding[l])
+                x_temp = _attention(x, encoding[l], encoding[l])
                 hiddens[l + 1][:, t] = _feedforward(x_temp)
 
             """

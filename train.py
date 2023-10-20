@@ -79,6 +79,10 @@ def get_dataset(sampling_sec, params: TrainParams):
     if params.feat_cfg:
         vid_reader = VideoReader(norm=(params.mean, params.std))
 
+    max_kernel_size = max(params.kernel_list)
+
+    assert max_kernel_size <= params.slide_window_size, "max_kernel_size exceeds slide_window_size"
+
     # process text
     train_val_splits = [params.train_splits[0], params.val_splits[0]]
     sample_list_dir = os.path.dirname(params.train_samplelist_path)

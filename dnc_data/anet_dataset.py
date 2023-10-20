@@ -177,12 +177,21 @@ def _get_pos_neg(vid_info,
     total_n_pos = 0
     max_seg_len = 0
 
+    gt_extents = [(ann['segment'][0] / sampling_sec, ann['segment'][1] / sampling_sec) for ann in annotations]
+
     for anc_idx in anc_iter:
         """
         anchor centres and length are in units of frames - sampled rather than original
         """
         anc_cen = anc_cen_all[anc_idx]
         anc_len = anc_len_all[anc_idx]
+
+        anc_end = anc_cen + anc_len / 2.
+
+        if anc_end > n_frames:
+            continue
+
+        anc_start = anc_cen - anc_len / 2.
 
         # if not is_parallel:
         # anc_iter.set_description(f'anc_len: {anc_len}: n_pos: {anc_len_to_n_pos[anc_len]} / {total_n_pos}')
@@ -217,13 +226,6 @@ def _get_pos_neg(vid_info,
                     # print(f'\ngt_len: {gt_len} id: {seg_id}\n')
 
                 gt_len_to_count[gt_len_int] += 1
-
-            anc_end = anc_cen + anc_len / 2.
-
-            if anc_end > n_frames:
-                continue
-
-            anc_start = anc_cen - anc_len / 2.
 
             if window_start_t > gt_start_t or window_end_t + sampling_sec * 2 < gt_end_t:
                 continue
@@ -565,9 +567,8 @@ class ANetDataset(Dataset):
         """generate anchors"""
         anc_len_lst = []
         anc_cen_lst = []
-        for i in range(0, len(kernel_list)):
-            kernel_len = kernel_list[i]
-
+        anc_extents_lst = []
+        for kernel_len in kernel_list:
             # anc_stride = math.ceil(kernel_len / stride_factor)
             anc_stride = math.ceil(kernel_len / stride_factor)
             """
@@ -582,9 +583,14 @@ class ANetDataset(Dataset):
             )
 
             anc_len = np.full(anc_cen.shape, kernel_len)
+
+            anc_extents_lst += [(anc_cen_ - anc_len_ / 2., anc_cen_ + anc_len_ / 2)
+                                for anc_cen_, anc_len_ in zip(anc_cen, anc_len)]
+
             anc_len_lst.append(anc_len)
             anc_cen_lst.append(anc_cen)
 
+        self.anc_extents_all = list(set(anc_extents_lst))
         self.anc_len_all = np.hstack(anc_len_lst)
         self.anc_cen_all = np.hstack(anc_cen_lst)
 
@@ -611,11 +617,13 @@ class ANetDataset(Dataset):
             elif dataset.startswith('MNIST_MOT_RGB'):
                 for line in f:
                     vid_name, vid_dur, vid_frame = [l.strip() for l in line.split(',')]
+                    vid_dur, vid_frame = float(vid_dur), int(vid_frame)
+                    assert vid_frame <= slide_window_size, "vid_frame exceeds slide_window_size"
                     # vid_fps = float(vid_frame) / float(vid_dur)
                     # sampling_frames = math.ceil(vid_fps * sampling_sec)
                     # frame_to_second[vid_name] = float(vid_dur) * sampling_frames / float(vid_frame)
-                    self.vid_dur[vid_name] = float(vid_dur)
-                    self.vid_frame[vid_name] = float(vid_frame)
+                    self.vid_dur[vid_name] = vid_dur
+                    self.vid_frame[vid_name] = vid_frame
                     self.fps[vid_name] = float(vid_frame) / float(vid_dur)
                     self.sampled_frames[vid_name] = int(self.fps[vid_name] * sampling_sec)
 
